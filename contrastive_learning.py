@@ -9,22 +9,23 @@ Original file is located at
 
 import os
 import pickle
+
 import matplotlib.pyplot as plt
 import numpy as np
-from tqdm.auto import tqdm
-
 import torch
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.nn.utils import weight_norm
 from torch.utils import data
-from torchvision import transforms, models, datasets
+from torchvision import transforms, datasets
+from torchvision.models.resnet import BasicBlock, ResNet
 from torchvision.utils import make_grid
-from torchvision.models.resnet import BasicBlock, BottleNeck, ResNet
+from tqdm.auto import tqdm
 
 """## Hyperparameters"""
 
 import argparse
+
 parser = argparse.ArgumentParser()
 
 # Data
@@ -58,667 +59,705 @@ parser.add_argument('--out-dir', type=str)
 #### Transforms
 """
 
+
 class ViewsTransform:
-  def __init__(self, views):
-    self.views = views
+    def __init__(self, views):
+        self.views = views
 
-    # Sub-class must define the transform
-    self.transform = None 
+        # Sub-class must define the transform
+        self.transform = None
 
-  def __call__(self, x):
-    ret = []
-    for _ in range(self.views):
-      ret.append(self.transform(x))
-    return ret
+    def __call__(self, x):
+        ret = []
+        for _ in range(self.views):
+            ret.append(self.transform(x))
+        return ret
+
 
 class AugTransform(ViewsTransform):
-  def __init__(self, views, imsize):
-    super().__init__(views)
-    self.transform = transforms.Compose([
-        transforms.RandomResizedCrop(size=imsize, scale=(0.2, 1.)),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomApply([
-            transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
-        ], p=0.8),
-        transforms.RandomGrayscale(p=0.2),
-        transforms.ToTensor(),
-        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-    ])
+    def __init__(self, views, imsize):
+        super().__init__(views)
+        self.transform = transforms.Compose([
+            transforms.RandomResizedCrop(size=imsize, scale=(0.2, 1.)),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomApply([
+                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
+            ], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+        ])
+
 
 class BaseTransform(ViewsTransform):
-  def __init__(self, views):
-    super().__init__(views)
-    self.transform = transforms.Compose([
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-    ])
+    def __init__(self, views):
+        super().__init__(views)
+        self.transform = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+        ])
+
 
 """#### Datasets and dataloaders"""
 
-class ImgLabelTensorDataset(data.TensorDataset):
-  def __init__(self, tensors, pil_transform, label_transform=None):
-    super().__init__(*tensors)
-    assert len(self.tensors) == 2
-    self.targets = self.tensors[1].tolist()
-    self.img_transform = transforms.Compose([transforms.ToPILImage(),
-                                             pil_transform])
-    self.label_transform = label_transform
 
-  def __getitem__(self, index):
-    img = self.img_transform(self.tensors[0][index])
-    label = self.tensors[1][index]
-    if self.label_transform is not None:
-      label = self.label_transform(label)
-    return (img, label)
+class ImgLabelTensorDataset(data.TensorDataset):
+    def __init__(self, tensors, pil_transform, label_transform=None):
+        super().__init__(*tensors)
+        assert len(self.tensors) == 2
+        self.targets = self.tensors[1].tolist()
+        self.img_transform = transforms.Compose([transforms.ToPILImage(),
+                                                 pil_transform])
+        self.label_transform = label_transform
+
+    def __getitem__(self, index):
+        img = self.img_transform(self.tensors[0][index])
+        label = self.tensors[1][index]
+        if self.label_transform is not None:
+            label = self.label_transform(label)
+        return (img, label)
+
 
 def make_data_loader(dataset, batchsize, sampling, drop_last=False):
-  if sampling == 'cb' or sampling == 'cr':
-    targets = dataset.targets
-    class_sample_count = np.unique(targets, return_counts=True)[1]
+    if sampling == 'cb' or sampling == 'cr':
+        targets = dataset.targets
+        class_sample_count = np.unique(targets, return_counts=True)[1]
 
-    if sampling == 'cb':
-      weight = 1 / class_sample_count
+        if sampling == 'cb':
+            weight = 1 / class_sample_count
+        else:
+            assert sampling == 'cr'
+            weight = 1 / (class_sample_count ** 2)
+        samples_weight = weight[targets]
+        samples_weight = torch.from_numpy(samples_weight)
+        sampler = data.WeightedRandomSampler(samples_weight, len(samples_weight))
+        data_loader = data.DataLoader(dataset, batch_size=batchsize,
+                                      sampler=sampler, num_workers=4,
+                                      pin_memory=True, drop_last=drop_last)
     else:
-      assert sampling == 'cr'
-      weight = 1 / (class_sample_count ** 2)
-    samples_weight = weight[targets]
-    samples_weight = torch.from_numpy(samples_weight)
-    sampler = data.WeightedRandomSampler(samples_weight, len(samples_weight))
-    data_loader = data.DataLoader(dataset, batch_size=batchsize, 
-                                  sampler=sampler, num_workers=4, 
-                                  pin_memory=True, drop_last=drop_last)
-  else:
-    assert sampling == 'ib'
-    data_loader = data.DataLoader(dataset, shuffle=True, 
-                                  batch_size=batchsize, num_workers=4,
-                                  pin_memory=True, drop_last=drop_last)
+        assert sampling == 'ib'
+        data_loader = data.DataLoader(dataset, shuffle=True,
+                                      batch_size=batchsize, num_workers=4,
+                                      pin_memory=True, drop_last=drop_last)
 
-  return data_loader
+    return data_loader
+
 
 def mi_to_dataset(mi_data, pil_transform, label_transform=None):
-  imgs, classes = [], []
-  for c, class_imgs in enumerate(mi_data):
-    class_imgs = class_imgs.transpose(0, 3, 1, 2) / 255
-    for img in class_imgs:
-      imgs.append(img)
-      classes.append(c)
-  imgs = np.array(imgs, dtype=np.float32)
-  classes = np.array(classes, dtype=np.long)
-  imgs = torch.tensor(imgs)
-  classes = torch.tensor(classes)
-  return ImgLabelTensorDataset((imgs, classes), pil_transform, label_transform)
+    imgs, classes = [], []
+    for c, class_imgs in enumerate(mi_data):
+        class_imgs = class_imgs.transpose(0, 3, 1, 2) / 255
+        for img in class_imgs:
+            imgs.append(img)
+            classes.append(c)
+    imgs = np.array(imgs, dtype=np.float32)
+    classes = np.array(classes, dtype=np.long)
+    imgs = torch.tensor(imgs)
+    classes = torch.tensor(classes)
+    return ImgLabelTensorDataset((imgs, classes), pil_transform, label_transform)
 
-def load_mini_imagenet_lt(args, train_transform, test_transform):  
-  mi_train = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/custom-lt/train.pkl", 'rb'))
-  mi_test = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/custom-lt/test.pkl", 'rb'))
 
-  train_dataset = mi_to_dataset(mi_train, train_transform)
-  test_dataset = mi_to_dataset(mi_test, test_transform)
-  return train_dataset, test_dataset
+def load_mini_imagenet_lt(args, train_transform, test_transform):
+    mi_train = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/custom-lt/train.pkl", 'rb'))
+    mi_test = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/custom-lt/test.pkl", 'rb'))
+
+    train_dataset = mi_to_dataset(mi_train, train_transform)
+    test_dataset = mi_to_dataset(mi_test, test_transform)
+    return train_dataset, test_dataset
+
 
 """#### Load data"""
 
+
 def load_data(args):
-  if args.contrast:
-    train_views = 2
-    assert not args.fix_feats
-  else:
-    train_views = 1 
+    if args.contrast:
+        train_views = 2
+        assert not args.fix_feats
+    else:
+        train_views = 1
 
-  imsize_dict = {
-      'mi-lt': 84,
-      'cifar10': 32,
-      'cifar100': 32
-  }
-  imsize = imsize_dict[args.data]
-  train_transform = AugTransform(train_views, imsize)
-  test_transform = BaseTransform(views=1)
-  if args.data == 'mi-lt':
-    train_dataset, test_dataset = load_mini_imagenet_lt(args, train_transform, 
-                                                        test_transform)
-  elif args.data == 'cifar10':
-    train_dataset = datasets.CIFAR10('./', train=True, 
-                                     transform=train_transform, download=True)
-    test_dataset = datasets.CIFAR10('./', train=False, 
-                                    transform=test_transform, download=True)
-  elif args.data == 'cifar100':
-    train_dataset = datasets.CIFAR100('./', train=True, 
-                                      transform=train_transform, download=True)
-    test_dataset = datasets.CIFAR100('./', train=False, 
-                                     transform=test_transform, download=True)
-  else:
-    raise Exception(f'Unknown data {args.data}')
+    imsize_dict = {
+        'mi-lt': 84,
+        'cifar10': 32,
+        'cifar100': 32
+    }
+    imsize = imsize_dict[args.data]
+    train_transform = AugTransform(train_views, imsize)
+    test_transform = BaseTransform(views=1)
+    if args.data == 'mi-lt':
+        train_dataset, test_dataset = load_mini_imagenet_lt(args, train_transform,
+                                                            test_transform)
+    elif args.data == 'cifar10':
+        train_dataset = datasets.CIFAR10('./', train=True,
+                                         transform=train_transform, download=True)
+        test_dataset = datasets.CIFAR10('./', train=False,
+                                        transform=test_transform, download=True)
+    elif args.data == 'cifar100':
+        train_dataset = datasets.CIFAR100('./', train=True,
+                                          transform=train_transform, download=True)
+        test_dataset = datasets.CIFAR100('./', train=False,
+                                         transform=test_transform, download=True)
+    else:
+        raise Exception(f'Unknown data {args.data}')
 
-  
-  train_loader = make_data_loader(train_dataset, args.batchsize, 
-                                  args.sampling, drop_last=True)
-  test_loader = make_data_loader(test_dataset, args.batchsize, 
-                                  sampling='ib')
+    train_loader = make_data_loader(train_dataset, args.batchsize,
+                                    args.sampling, drop_last=True)
+    test_loader = make_data_loader(test_dataset, args.batchsize,
+                                   sampling='ib')
 
-  return train_loader, test_loader
+    return train_loader, test_loader
+
 
 """## Models"""
 
+
 def count_num_params(model):
-  return sum(p.numel() for p in model.parameters())
+    return sum(p.numel() for p in model.parameters())
+
 
 """#### Encoder"""
 
+
 class EncoderResnet(ResNet):
-  def __init__(self, arch):
-    if arch == 'resnet18':
-      super().__init__(BasicBlock, [2, 2, 2, 2])
-    else:
-      assert arch == 'resnet50'
-      super().__init__(Bottleneck, [3, 4, 6, 3])
-    del self.fc
+    def __init__(self, arch):
+        if arch == 'resnet18':
+            super().__init__(BasicBlock, [2, 2, 2, 2])
+        else:
+            assert arch == 'resnet50'
+            super().__init__(Bottleneck, [3, 4, 6, 3])
+        del self.fc
 
-  def forward(self, x):
-    x = self.conv1(x)
-    x = self.bn1(x)
-    x = self.relu(x)
-    x = self.maxpool(x)
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
 
-    x = self.layer1(x)
-    x = self.layer2(x)
-    x = self.layer3(x)
-    x = self.layer4(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
 
-    x = self.avgpool(x)
-    x = torch.flatten(x, 1)
-    x = F.normalize(x)
-    return x
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = F.normalize(x)
+        return x
+
 
 """#### Projection"""
 
-class Projection(nn.Module):
-  def __init__(self, dim_in, dim_out):
-    super().__init__()
-    self.main = nn.Sequential(
-        nn.Linear(dim_in, dim_in),
-        nn.BatchNorm1d(dim_in),
-        nn.ReLU(),
-        nn.Linear(dim_in, dim_out)
-    )
 
-  def forward(self, x):
-    x = self.main(x)
-    x = F.normalize(x)
-    return x
+class Projection(nn.Module):
+    def __init__(self, dim_in, dim_out):
+        super().__init__()
+        self.main = nn.Sequential(
+            nn.Linear(dim_in, dim_in),
+            nn.BatchNorm1d(dim_in),
+            nn.ReLU(),
+            nn.Linear(dim_in, dim_out)
+        )
+
+    def forward(self, x):
+        x = self.main(x)
+        x = F.normalize(x)
+        return x
+
 
 """#### Long tail model"""
 
+
 class LongTailModel(nn.Module):
-  def __init__(self, arch, nclass, wn):
-    super().__init__()
-    self.nclass, self.wn = nclass, wn
-    self.encoder = EncoderResnet(arch)
-    self.projection = Projection(512, 128)
-    self.reset_classifier()
-  
-  def feats(self, img_views):
-    feat_views = [self.encoder(imgs) for imgs in img_views]
-    return feat_views
+    def __init__(self, arch, nclass, wn):
+        super().__init__()
+        self.nclass, self.wn = nclass, wn
+        self.encoder = EncoderResnet(arch)
+        self.projection = Projection(512, 128)
+        self.reset_classifier()
 
-  def project(self, feat_views):
-    project_views = [self.projection(feats) for feats in feat_views]
-    return project_views
+    def feats(self, img_views):
+        feat_views = [self.encoder(imgs) for imgs in img_views]
+        return feat_views
 
-  def reset_classifier(self):
-    if self.wn:
-      self.fc = weight_norm(nn.Linear(512, self.nclass, bias=False))
-    else:
-      self.fc = nn.Linear(512, self.nclass)
+    def project(self, feat_views):
+        project_views = [self.projection(feats) for feats in feat_views]
+        return project_views
+
+    def reset_classifier(self):
+        if self.wn:
+            self.fc = weight_norm(nn.Linear(512, self.nclass, bias=False))
+        else:
+            self.fc = nn.Linear(512, self.nclass)
+
 
 """#### Model utilities"""
 
+
 def make_model(args):
-  model = LongTailModel(args.model, nclass=100, wn=False)
-  
-  if args.fix_feats:
-    model.encoder.requires_grad_(False)
-    print(f"Fixed encoder features")
+    model = LongTailModel(args.model, nclass=100, wn=False)
 
-  # Model summary
-  print(f'Model {model.__class__.__name__}: {count_num_params(model)} parameters')
+    if args.fix_feats:
+        model.encoder.requires_grad_(False)
+        print(f"Fixed encoder features")
 
-  return model
+    # Model summary
+    print(f'Model {model.__class__.__name__}: {count_num_params(model)} parameters')
+
+    return model
+
 
 def optional_load_wts(args, model, model_path):
-  if os.path.exists(model_path) and not args.new:
-    model.load_state_dict(torch.load(model_path))
-    print(f"loaded weights from {model_path}")
-  else:
-    print("new weights")
+    if os.path.exists(model_path) and not args.new:
+        model.load_state_dict(torch.load(model_path))
+        print(f"loaded weights from {model_path}")
+    else:
+        print("new weights")
+
 
 """## Train
 
 #### Constrastive loss
 """
 
+
 class ConLoss(nn.Module):
-  """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
-  It also supports the unsupervised contrastive loss in SimCLR"""
-  def __init__(self, temperature, contrast_mode='one'):
-    super().__init__()
-    self.temperature = temperature
-    self.contrast_mode = contrast_mode
+    """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
+    It also supports the unsupervised contrastive loss in SimCLR"""
 
-  def forward(self, features, labels):
-    """Compute loss for model. If `labels` is None,
-    it degenerates to SimCLR unsupervised loss:
-    https://arxiv.org/pdf/2002.05709.pdf
-    Args:
-        features: hidden vector of shape [bsz, n_views, ...].
-        labels: ground truth of shape [bsz]
-    Returns:
-        A loss scalar.
-    """
-    device = (torch.device('cuda')
-              if features.is_cuda
-              else torch.device('cpu'))
+    def __init__(self, temperature, contrast_mode='one'):
+        super().__init__()
+        self.temperature = temperature
+        self.contrast_mode = contrast_mode
 
-    if len(features.shape) < 3:
-        raise ValueError('`features` needs to be [bsz, n_views, ...],'
-                          'at least 3 dimensions are required')
-    if len(features.shape) > 3:
-        features = features.view(features.shape[0], features.shape[1], -1)
-    batch_size = features.shape[0]
+    def forward(self, features, labels):
+        """Compute loss for model. If `labels` is None,
+        it degenerates to SimCLR unsupervised loss:
+        https://arxiv.org/pdf/2002.05709.pdf
+        Args:
+            features: hidden vector of shape [bsz, n_views, ...].
+            labels: ground truth of shape [bsz]
+        Returns:
+            A loss scalar.
+        """
+        device = (torch.device('cuda')
+                  if features.is_cuda
+                  else torch.device('cpu'))
 
-    # Contrast count is also the number of views
-    contrast_count = features.shape[1]
-    # Contrast feature [bsz * n_views, ...]
-    contrast_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
-    if self.contrast_mode == 'one':
-        anchor_feature = features[:, 0]
-        anchor_count = 1
-    elif self.contrast_mode == 'all':
-        anchor_feature = contrast_feature
-        anchor_count = contrast_count
-    else:
-        raise ValueError('Unknown mode: {}'.format(self.contrast_mode))
+        if len(features.shape) < 3:
+            raise ValueError('`features` needs to be [bsz, n_views, ...],'
+                             'at least 3 dimensions are required')
+        if len(features.shape) > 3:
+            features = features.view(features.shape[0], features.shape[1], -1)
+        batch_size = features.shape[0]
 
-    # Contrast targets (instance and class based)
-    eye = torch.eye(batch_size, dtype=torch.float32, device=device)
-    inst_mask = eye
-    labels = labels.contiguous().view(-1, 1)
-    if labels.shape[0] != batch_size:
-        raise ValueError('Num of labels does not match num of features')
-    class_mask = torch.eq(labels, labels.T).float().to(device) - eye
-    assert inst_mask.shape == class_mask.shape
+        # Contrast count is also the number of views
+        contrast_count = features.shape[1]
+        # Contrast feature [bsz * n_views, ...]
+        contrast_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
+        if self.contrast_mode == 'one':
+            anchor_feature = features[:, 0]
+            anchor_count = 1
+        elif self.contrast_mode == 'all':
+            anchor_feature = contrast_feature
+            anchor_count = contrast_count
+        else:
+            raise ValueError('Unknown mode: {}'.format(self.contrast_mode))
 
-    # tile masks [bsz * anchor_count, bsz * contrast_count]
-    inst_mask = inst_mask.repeat(anchor_count, contrast_count)
-    class_mask = class_mask.repeat(anchor_count, contrast_count)
+        # Contrast targets (instance and class based)
+        eye = torch.eye(batch_size, dtype=torch.float32, device=device)
+        inst_mask = eye
+        labels = labels.contiguous().view(-1, 1)
+        if labels.shape[0] != batch_size:
+            raise ValueError('Num of labels does not match num of features')
+        class_mask = torch.eq(labels, labels.T).float().to(device) - eye
+        assert inst_mask.shape == class_mask.shape
 
-    # mask-out self-contrast cases
-    logits_mask = torch.scatter(
-        torch.ones_like(inst_mask),
-        1,
-        torch.arange(batch_size * anchor_count).view(-1, 1).to(device),
-        0
-    )
-    neg_inst_mask = (1 - inst_mask) * logits_mask
-    inst_mask *= logits_mask
-    class_mask *= logits_mask
+        # tile masks [bsz * anchor_count, bsz * contrast_count]
+        inst_mask = inst_mask.repeat(anchor_count, contrast_count)
+        class_mask = class_mask.repeat(anchor_count, contrast_count)
 
-    # compute logits
-    anchor_dot_contrast = torch.div(
-        torch.matmul(anchor_feature, contrast_feature.T),
-        self.temperature)
-    # for numerical stability
-    logits_max, _ = torch.max(anchor_dot_contrast, dim=1, keepdim=True)
-    logits = anchor_dot_contrast - logits_max.detach()
+        # mask-out self-contrast cases
+        logits_mask = torch.scatter(
+            torch.ones_like(inst_mask),
+            1,
+            torch.arange(batch_size * anchor_count).view(-1, 1).to(device),
+            0
+        )
+        neg_inst_mask = (1 - inst_mask) * logits_mask
+        inst_mask *= logits_mask
+        class_mask *= logits_mask
 
-    # compute log_prob (a.k.a cross entropy) for each positive pair against all negative pairs and itself
-    exp_logits = torch.exp(logits)
-    sum_exp_logits = torch.sum(exp_logits * logits_mask, dim=1, keepdim=True)
+        # compute logits
+        anchor_dot_contrast = torch.div(
+            torch.matmul(anchor_feature, contrast_feature.T),
+            self.temperature)
+        # for numerical stability
+        logits_max, _ = torch.max(anchor_dot_contrast, dim=1, keepdim=True)
+        logits = anchor_dot_contrast - logits_max.detach()
 
-    neg_inst_sum = torch.sum(exp_logits * neg_inst_mask, dim=1, keepdim=True)
+        # compute log_prob (a.k.a cross entropy) for each positive pair against all negative pairs and itself
+        exp_logits = torch.exp(logits)
+        sum_exp_logits = torch.sum(exp_logits * logits_mask, dim=1, keepdim=True)
 
-    # Instance cross entropy
-    inst_log_prob = logits - torch.log(sum_exp_logits)
-    inst_log_prob = (inst_mask * inst_log_prob).sum(1) / inst_mask.sum(1)
+        neg_inst_sum = torch.sum(exp_logits * neg_inst_mask, dim=1, keepdim=True)
 
-    # Class partial cross entropy
-    class_log_prob = logits - torch.log(neg_inst_sum)
-    class_log_prob = (class_mask * class_log_prob).sum(1) / (class_mask.sum(1) + 1)
+        # Instance cross entropy
+        inst_log_prob = logits - torch.log(sum_exp_logits)
+        inst_log_prob = (inst_mask * inst_log_prob).sum(1) / inst_mask.sum(1)
 
-    # loss
-    loss = -(inst_log_prob + class_log_prob).mean()
+        # Class partial cross entropy
+        class_log_prob = logits - torch.log(neg_inst_sum)
+        class_log_prob = (class_mask * class_log_prob).sum(1) / (class_mask.sum(1) + 1)
 
-    return loss
+        # loss
+        loss = -(inst_log_prob + class_log_prob).mean()
+
+        return loss
+
 
 """#### Loop"""
 
+
 def train_loop(args, data_loader, model, opt=None):
-  all_losses, all_label, all_pred = [], [], []
-  pbar = tqdm(data_loader, 'train' if opt is not None else 'test', leave=False)
-  training = opt is not None
-  con_loss_fn = ConLoss(args.temp)
-  model.cuda()
-  for img_views, labels in pbar:
-    # Set to GPU
-    img_views = [imgs.cuda() for imgs in img_views]
-    labels = labels.cuda()
+    all_losses, all_label, all_pred = [], [], []
+    pbar = tqdm(data_loader, 'train' if opt is not None else 'test', leave=False)
+    training = opt is not None
+    con_loss_fn = ConLoss(args.temp)
+    model.cuda()
+    for img_views, labels in pbar:
+        # Set to GPU
+        img_views = [imgs.cuda() for imgs in img_views]
+        labels = labels.cuda()
 
-    # Train/test setup
-    if training:
-      model.train()
-      opt.zero_grad()
-      torch.set_grad_enabled(True)
-    else:
-      model.eval()
-      torch.set_grad_enabled(False)
+        # Train/test setup
+        if training:
+            model.train()
+            opt.zero_grad()
+            torch.set_grad_enabled(True)
+        else:
+            model.eval()
+            torch.set_grad_enabled(False)
 
-    # Features
-    feat_views = model.feats(img_views)
-    feats = feat_views[0]
+        # Features
+        feat_views = model.feats(img_views)
+        feats = feat_views[0]
 
-    # Contrastive representation?
-    con_loss = 0
-    if args.contrast and training:
-      assert not args.fix_feats and len(feat_views) > 1
-      # Projected features
-      project_views = model.project(feat_views)
-      project_views_t = torch.cat([p.unsqueeze(1) for p in project_views], dim=1)
-      con_loss = con_loss_fn(project_views_t, labels)
+        # Contrastive representation?
+        con_loss = 0
+        if args.contrast and training:
+            assert not args.fix_feats and len(feat_views) > 1
+            # Projected features
+            project_views = model.project(feat_views)
+            project_views_t = torch.cat([p.unsqueeze(1) for p in project_views], dim=1)
+            con_loss = con_loss_fn(project_views_t, labels)
 
-      # Detach features so optimizing classifier doesn't affect it
-      feats = feats.detach()
-      
-    # Cross entropy
-    out = model.fc(feats)
-    ce_loss = F.cross_entropy(out, labels)
+            # Detach features so optimizing classifier doesn't affect it
+            feats = feats.detach()
 
-    # Total loss
-    loss = con_loss + ce_loss
+        # Cross entropy
+        out = model.fc(feats)
+        ce_loss = F.cross_entropy(out, labels)
 
-    # Prediction
-    pred = torch.argmax(out, dim=1)
+        # Total loss
+        loss = con_loss + ce_loss
 
-    # Backprop?
-    if training:
-      loss.backward()
-      opt.step()
+        # Prediction
+        pred = torch.argmax(out, dim=1)
 
-    # Record
-    all_losses.append(loss.item())
-    all_label.extend(labels.cpu().tolist())
-    all_pred.extend(pred.cpu().tolist())
-    
-  return all_losses, all_label, all_pred
+        # Backprop?
+        if training:
+            loss.backward()
+            opt.step()
+
+        # Record
+        all_losses.append(loss.item())
+        all_label.extend(labels.cpu().tolist())
+        all_pred.extend(pred.cpu().tolist())
+
+    return all_losses, all_label, all_pred
+
 
 """#### Flow"""
 
+
 def train(args, model, train_loader, test_loader, model_path):
-  # Optimizer
-  opt = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, 
-                  weight_decay=1e-4)
-  # Scheduler
-  if args.steplr is not None:
-    assert not args.cosine
-    scheduler = optim.lr_scheduler.StepLR(opt, args.steplr, gamma=0.1)
-  elif args.cosine:
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(opt, args.epochs)
-  else:
-    scheduler = None
+    # Optimizer
+    opt = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9,
+                    weight_decay=1e-4)
+    # Scheduler
+    if args.steplr is not None:
+        assert not args.cosine
+        scheduler = optim.lr_scheduler.StepLR(opt, args.steplr, gamma=0.1)
+    elif args.cosine:
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(opt, args.epochs)
+    else:
+        scheduler = None
 
-  # Setup
-  metrics = Metrics()
-  pbar = tqdm(range(args.epochs), 'epochs')
-  for _ in pbar:
-    # Train
-    try:
-      train_metrics = train_loop(args, train_loader, model, opt)
-      test_metrics = train_loop(args, test_loader, model)
-    except KeyboardInterrupt:
-      break
+    # Setup
+    metrics = Metrics()
+    pbar = tqdm(range(args.epochs), 'epochs')
+    for _ in pbar:
+        # Train
+        try:
+            train_metrics = train_loop(args, train_loader, model, opt)
+            test_metrics = train_loop(args, test_loader, model)
+        except KeyboardInterrupt:
+            break
 
-    # Record metrics
-    metrics.epoch_append_data('train', *train_metrics)
-    metrics.epoch_append_data('test', *test_metrics)
-    
-    # Progress bar update
-    pbar.set_postfix_str(metrics.epoch_str())
+        # Record metrics
+        metrics.epoch_append_data('train', *train_metrics)
+        metrics.epoch_append_data('test', *test_metrics)
 
-    # Save model weights
-    torch.save(model.state_dict(), model_path)
+        # Progress bar update
+        pbar.set_postfix_str(metrics.epoch_str())
 
-    # Learning rate scheduler
-    if scheduler is not None:
-      scheduler.step()
+        # Save model weights
+        torch.save(model.state_dict(), model_path)
 
-  return metrics
+        # Learning rate scheduler
+        if scheduler is not None:
+            scheduler.step()
+
+    return metrics
+
 
 """## Metrics"""
 
+
 class Metrics:
-  def __init__(self):
-    self.losses = {'train': [], 'test': []}
-    self.label = {'train': [], 'test': []}
-    self.pred = {'train': [], 'test': []}
-  
-  def epoch_append_data(self, subset, loss, label, pred):
-    self.losses[subset].append(loss)
-    self.label[subset].append(label)
-    self.pred[subset].append(pred)
+    def __init__(self):
+        self.losses = {'train': [], 'test': []}
+        self.label = {'train': [], 'test': []}
+        self.pred = {'train': [], 'test': []}
 
-  def epoch_loss(self, subset, reduce_steps):
-    losses = np.array(self.losses[subset])
-    assert losses.ndim == 2
-    n_epochs = len(losses)
-    if reduce_steps:
-      losses = np.mean(losses, axis=1)
-    else:
-      losses = losses.flatten()
+    def epoch_append_data(self, subset, loss, label, pred):
+        self.losses[subset].append(loss)
+        self.label[subset].append(label)
+        self.pred[subset].append(pred)
 
-    return losses, n_epochs
-  
-  def epoch_acc(self, subset):
-    label = np.array(self.label[subset])
-    pred = np.array(self.pred[subset])
-    acc = np.mean(label == pred, axis=1)
-    n_epochs = len(acc)
-    return acc, n_epochs
+    def epoch_loss(self, subset, reduce_steps):
+        losses = np.array(self.losses[subset])
+        assert losses.ndim == 2
+        n_epochs = len(losses)
+        if reduce_steps:
+            losses = np.mean(losses, axis=1)
+        else:
+            losses = losses.flatten()
 
-  def last_epoch_acc(self, subset):
-    """
-    Returns instance-balanced accuracy and individual class accuracy
-    """
-    label = np.array(self.label[subset][-1])
-    pred = np.array(self.pred[subset][-1])
-    correct = label == pred
-    class_acc = []
-    for c in np.unique(label):
-      class_acc.append(np.mean(correct[label == c]))
-    return np.mean(correct), np.array(class_acc)
+        return losses, n_epochs
 
-  def epoch_str(self):
-    all_loss = []
-    train_accs = self.last_epoch_acc('train')
-    test_accs = self.last_epoch_acc('test')
-    for subset in ['train', 'test']:
-      all_loss.append(np.mean(self.losses[subset][-1]))
+    def epoch_acc(self, subset):
+        label = np.array(self.label[subset])
+        pred = np.array(self.pred[subset])
+        acc = np.mean(label == pred, axis=1)
+        n_epochs = len(acc)
+        return acc, n_epochs
 
-    epoch_str = '(train/test): ' \
-                f'({train_accs[0]:.3}/{train_accs[1].mean():.3})/({test_accs[0]:.3}/{test_accs[1].mean():.3}) inst/class acc, ' \
-                f'{all_loss[0]:.3}/{all_loss[1]:.3} loss'
-    return epoch_str
+    def last_epoch_acc(self, subset):
+        """
+        Returns instance-balanced accuracy and individual class accuracy
+        """
+        label = np.array(self.label[subset][-1])
+        pred = np.array(self.pred[subset][-1])
+        correct = label == pred
+        class_acc = []
+        for c in np.unique(label):
+            class_acc.append(np.mean(correct[label == c]))
+        return np.mean(correct), np.array(class_acc)
 
-  def todict(self):
-    return self.__dict__.copy()
+    def epoch_str(self):
+        all_loss = []
+        train_accs = self.last_epoch_acc('train')
+        test_accs = self.last_epoch_acc('test')
+        for subset in ['train', 'test']:
+            all_loss.append(np.mean(self.losses[subset][-1]))
+
+        epoch_str = '(train/test): ' \
+                    f'({train_accs[0]:.3}/{train_accs[1].mean():.3})/({test_accs[0]:.3}/{test_accs[1].mean():.3}) inst/class acc, ' \
+                    f'{all_loss[0]:.3}/{all_loss[1]:.3} loss'
+        return epoch_str
+
+    def todict(self):
+        return self.__dict__.copy()
+
 
 def plot_samples(train_samples):
-  grid_img = make_grid(train_samples, nrow=8, normalize=True)
-  grid_img = np.transpose(grid_img.numpy(), (1,2,0))
-  plt.figure(figsize=(20, 4))
-  plt.title('image samples')
-  plt.imshow(grid_img, interpolation='nearest')
-  plt.show()
+    grid_img = make_grid(train_samples, nrow=8, normalize=True)
+    grid_img = np.transpose(grid_img.numpy(), (1, 2, 0))
+    plt.figure(figsize=(20, 4))
+    plt.title('image samples')
+    plt.imshow(grid_img, interpolation='nearest')
+    plt.show()
+
 
 def plot_metrics(metrics, out_dir):
-  # Loss over epochs
-  plt.figure(figsize=(20, 5))
-  plt.title('loss')
-  plt.xlabel('epochs')
-  for subset, reduce_steps in [('train', False), ('test', True)]:
-    loss_data, n_epochs = metrics.epoch_loss(subset, reduce_steps)
-    if reduce_steps:
-      loss_data = np.insert(loss_data, 0, loss_data[0])
-    x = np.linspace(0, n_epochs, num=len(loss_data))
-    plt.plot(x, loss_data, label=f'{subset} loss')
-  plt.legend()
-  plt.savefig(f'{out_dir}/loss.jpg')
+    # Loss over epochs
+    plt.figure(figsize=(20, 5))
+    plt.title('loss')
+    plt.xlabel('epochs')
+    for subset, reduce_steps in [('train', False), ('test', True)]:
+        loss_data, n_epochs = metrics.epoch_loss(subset, reduce_steps)
+        if reduce_steps:
+            loss_data = np.insert(loss_data, 0, loss_data[0])
+        x = np.linspace(0, n_epochs, num=len(loss_data))
+        plt.plot(x, loss_data, label=f'{subset} loss')
+    plt.legend()
+    plt.savefig(f'{out_dir}/loss.jpg')
 
-  # Accuracy (instance-balanced) over epochs
-  plt.figure(figsize=(20, 5))
-  plt.title('accuracy')
-  plt.xlabel('epochs')
-  for subset in ['train', 'test']:
-    acc_data, n_epochs = metrics.epoch_acc(subset)
-    acc_data = np.insert(acc_data, 0, acc_data[0])
-    x = np.linspace(0, n_epochs, num=len(acc_data))
-    plt.plot(x, acc_data, label=f'{subset} acc')
-  plt.legend()
-  plt.savefig(f'{out_dir}/epoch_acc.jpg')
+    # Accuracy (instance-balanced) over epochs
+    plt.figure(figsize=(20, 5))
+    plt.title('accuracy')
+    plt.xlabel('epochs')
+    for subset in ['train', 'test']:
+        acc_data, n_epochs = metrics.epoch_acc(subset)
+        acc_data = np.insert(acc_data, 0, acc_data[0])
+        x = np.linspace(0, n_epochs, num=len(acc_data))
+        plt.plot(x, acc_data, label=f'{subset} acc')
+    plt.legend()
+    plt.savefig(f'{out_dir}/epoch_acc.jpg')
 
-  # Final class and instance based accuracies
-  width = 0.2
-  plt.figure(figsize=(20, 5))
-  plt.xlabel('classes'), plt.title('class accuracy')
-  for subset in ['train', 'test']:
-    inst_acc, class_acc = metrics.last_epoch_acc(subset)
-    classes = np.arange(len(class_acc))
-    plt.bar(classes - width/2, class_acc, width, 
-            label=f'{subset} - {inst_acc:.3}/{class_acc.mean():.3} insta/class acc')
-  plt.legend()
-  plt.savefig(f'{out_dir}/final_acc.jpg')
+    # Final class and instance based accuracies
+    width = 0.2
+    plt.figure(figsize=(20, 5))
+    plt.xlabel('classes'), plt.title('class accuracy')
+    for subset in ['train', 'test']:
+        inst_acc, class_acc = metrics.last_epoch_acc(subset)
+        classes = np.arange(len(class_acc))
+        plt.bar(classes - width / 2, class_acc, width,
+                label=f'{subset} - {inst_acc:.3}/{class_acc.mean():.3} insta/class acc')
+    plt.legend()
+    plt.savefig(f'{out_dir}/final_acc.jpg')
 
-  plt.show()
+    plt.show()
+
 
 def plot_similarity_hist(model, data_loader, outpath):
-  """
-  Assumes the model was trained with contrastive learning, 
-  which means that the data_loader should have more than 1 view
-  """
-  print('plotting similarities of features')
-  inst_sims, class_sims, neg_sims = [], [], []
-  model.eval(), model.cuda()
-  feat_dim = None
-  with torch.no_grad():
-    for img_views, labels in data_loader:
-      img_views = [imgs.cuda() for imgs in img_views]
-      labels = labels.cuda()
+    """
+    Assumes the model was trained with contrastive learning, 
+    which means that the data_loader should have more than 1 view
+    """
+    print('plotting similarities of features')
+    inst_sims, class_sims, neg_sims = [], [], []
+    model.eval(), model.cuda()
+    feat_dim = None
+    with torch.no_grad():
+        for img_views, labels in data_loader:
+            img_views = [imgs.cuda() for imgs in img_views]
+            labels = labels.cuda()
 
-      # Features
-      feat_views = model.feats(img_views)
-      project_views = model.project(feat_views)
+            # Features
+            feat_views = model.feats(img_views)
+            project_views = model.project(feat_views)
 
-      # All similarities
-      all_sims = torch.matmul(project_views[0], project_views[1].T)
+            # All similarities
+            all_sims = torch.matmul(project_views[0], project_views[1].T)
 
-      # Masks to seperate types of similarities
-      labels = labels.contiguous().view(-1, 1)
-      eye = torch.eye(len(labels), dtype=torch.float32, device='cuda')
-      mask = torch.eq(labels, labels.T).float()
-      neg_mask = 1 - mask
-      class_mask = mask - eye
+            # Masks to seperate types of similarities
+            labels = labels.contiguous().view(-1, 1)
+            eye = torch.eye(len(labels), dtype=torch.float32, device='cuda')
+            mask = torch.eq(labels, labels.T).float()
+            neg_mask = 1 - mask
+            class_mask = mask - eye
 
-      # Add similarities to respective groups
-      inst_sims.extend(torch.diagonal(all_sims).cpu().tolist())
-      class_sims.extend(torch.masked_select(all_sims, class_mask.bool()).cpu().tolist())
-      neg_sims.extend(torch.masked_select(all_sims, neg_mask.bool()).cpu().tolist())
+            # Add similarities to respective groups
+            inst_sims.extend(torch.diagonal(all_sims).cpu().tolist())
+            class_sims.extend(torch.masked_select(all_sims, class_mask.bool()).cpu().tolist())
+            neg_sims.extend(torch.masked_select(all_sims, neg_mask.bool()).cpu().tolist())
 
-  # Plot similarities based on type
-  plt.figure(figsize=(6, 6))
-  plt.title(f'similarities of features')
-  sim_data = [(inst_sims, 'inst'), (class_sims, 'class'), (neg_sims, 'neg')]
-  for sims, label in sim_data:
-    plt.hist(sims, density=True, label=label, alpha=0.3)
-  plt.legend()
+    # Plot similarities based on type
+    plt.figure(figsize=(6, 6))
+    plt.title(f'similarities of features')
+    sim_data = [(inst_sims, 'inst'), (class_sims, 'class'), (neg_sims, 'neg')]
+    for sims, label in sim_data:
+        plt.hist(sims, density=True, label=label, alpha=0.3)
+    plt.legend()
 
-  # Save and show
-  plt.savefig(outpath)
-  plt.show()
+    # Save and show
+    plt.savefig(outpath)
+    plt.show()
+
 
 from sklearn import manifold
 
+
 def plot_tsne(model, data_loader, outpath):
-  print('plotting t-SNE visualization of features...')
-  X, y = [], []
-  model.eval(), model.cuda()
-  feat_dim = None
-  with torch.no_grad():
-    for img_views, labels in data_loader:
-      img_views = [imgs.cuda() for imgs in img_views]
-      feat_views = model.feats(img_views)
-      feats = feat_views[0]
-      feat_dim = feats.shape[1]
-      X.extend(feats.cpu().tolist())
-      y.extend(labels.tolist())
-  X, y = np.array(X), np.array(y)
+    print('plotting t-SNE visualization of features...')
+    X, y = [], []
+    model.eval(), model.cuda()
+    feat_dim = None
+    with torch.no_grad():
+        for img_views, labels in data_loader:
+            img_views = [imgs.cuda() for imgs in img_views]
+            feat_views = model.feats(img_views)
+            feats = feat_views[0]
+            feat_dim = feats.shape[1]
+            X.extend(feats.cpu().tolist())
+            y.extend(labels.tolist())
+    X, y = np.array(X), np.array(y)
 
-  tsne = manifold.TSNE()
-  X_embed = tsne.fit_transform(X)
+    tsne = manifold.TSNE()
+    X_embed = tsne.fit_transform(X)
 
-  unique_y = np.unique(y)
-  plt.figure(figsize=(6, 6))
-  plt.title(f't-SNE, feature dimension: {feat_dim}')
-  for target in unique_y:
-    X_target = X_embed[y == target]
-    assert X_target.shape[1] == 2
-    plt.scatter(X_target[:, 0], X_target[:, 1], label=f'{target}', alpha=0.2)
-  if len(unique_y) <= 10:
-    plt.legend()
+    unique_y = np.unique(y)
+    plt.figure(figsize=(6, 6))
+    plt.title(f't-SNE, feature dimension: {feat_dim}')
+    for target in unique_y:
+        X_target = X_embed[y == target]
+        assert X_target.shape[1] == 2
+        plt.scatter(X_target[:, 0], X_target[:, 1], label=f'{target}', alpha=0.2)
+    if len(unique_y) <= 10:
+        plt.legend()
 
-  # Save and show
-  plt.savefig(outpath)
-  plt.show()
+    # Save and show
+    plt.savefig(outpath)
+    plt.show()
+
 
 """## Main"""
 
+
 def main(args):
-  # Folder to save all work
-  if not os.path.exists(args.out_dir):
-    os.mkdir(args.out_dir)
+    # Folder to save all work
+    if not os.path.exists(args.out_dir):
+        os.mkdir(args.out_dir)
 
-  # Data
-  train_loader, test_loader = load_data(args)
+    # Data
+    train_loader, test_loader = load_data(args)
 
-  # Display sample of images from train loader
-  train_samples, _ = next(iter(train_loader))
-  plot_samples(train_samples[0][:8])
+    # Display sample of images from train loader
+    train_samples, _ = next(iter(train_loader))
+    plot_samples(train_samples[0][:8])
 
-  # Model
-  model = make_model(args)
+    # Model
+    model = make_model(args)
 
-  # Optionally load weights
-  model_path = f'{args.out_dir}/model.pt'
-  optional_load_wts(args, model, model_path)
+    # Optionally load weights
+    model_path = f'{args.out_dir}/model.pt'
+    optional_load_wts(args, model, model_path)
 
-  # Classifier reset train?
-  if args.crt:
-    model.reset_classifier()
-    print('Reset classifier')
+    # Classifier reset train?
+    if args.crt:
+        model.reset_classifier()
+        print('Reset classifier')
 
-  # Train
-  metrics = train(args, model, train_loader, test_loader, model_path)
+    # Train
+    metrics = train(args, model, train_loader, test_loader, model_path)
 
-  # Plot training metrics
-  if args.epochs > 0:
-    plot_metrics(metrics, args.out_dir)
+    # Plot training metrics
+    if args.epochs > 0:
+        plot_metrics(metrics, args.out_dir)
 
-  # Plot metrics on features
-  if args.contrast:
-    plot_similarity_hist(model, train_loader, f'{args.out_dir}/sims.jpg')
-  if args.tsne:
-    plot_tsne(model, test_loader, f'{args.out_dir}/tsne.jpg')
+    # Plot metrics on features
+    if args.contrast:
+        plot_similarity_hist(model, train_loader, f'{args.out_dir}/sims.jpg')
+    if args.tsne:
+        plot_tsne(model, test_loader, f'{args.out_dir}/tsne.jpg')
 
-  print(f'models and plots saved to {args.out_dir}')
+    print(f'models and plots saved to {args.out_dir}')
+
 
 from google.colab import drive
+
 drive.mount('/gdrive')
 
 args = '--data=mi-lt --sampling=ib ' \
@@ -732,4 +771,3 @@ main(args)
 
 # Commented out IPython magic to ensure Python compatibility.
 # %debug
-
