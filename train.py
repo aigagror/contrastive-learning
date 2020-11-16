@@ -1,7 +1,7 @@
 import torch
 from torch import nn, optim
 from torch.nn import functional as F
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 from metrics import Metrics
 
