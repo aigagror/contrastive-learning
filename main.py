@@ -11,8 +11,8 @@ parser = argparse.ArgumentParser()
 # Data
 parser.add_argument('--data', type=str)
 parser.add_argument('--sampling', choices=['ib', 'cb', 'cr'], default='ib')
-parser.add_argument('--mi-li-train', default="/gdrive/My Drive/datasets/miniimagenet/custom-lt/train.pkl")
-parser.add_argument('--mi-li-test', default="/gdrive/My Drive/datasets/miniimagenet/custom-lt/test.pkl")
+parser.add_argument('--mi-lt-train', default="/gdrive/My Drive/datasets/miniimagenet/custom-lt/train.pkl")
+parser.add_argument('--mi-lt-test', default="/gdrive/My Drive/datasets/miniimagenet/custom-lt/test.pkl")
 
 # Model
 parser.add_argument('--model', type=str)
