@@ -68,7 +68,7 @@ def run(args):
   if args.contrast:
     plots.plot_similarity_hist(model, train_loader, f'{args.outdir}/sims.jpg')
 
-  print(f'models and plots saved to {args.outdir}')
+  print(f'work saved to {args.outdir}')
 
 if __name__ == '__main__':
   args = parser.parse_args()
