@@ -78,7 +78,7 @@ def plot_metrics(metrics, outdir):
     plt.title('loss')
     plt.xlabel('epochs')
     for subset, reduce_steps in [('train', False), ('test', True)]:
-        loss_data, n_epochs = plots.epoch_loss(subset, reduce_steps)
+        loss_data, n_epochs = metrics.epoch_loss(subset, reduce_steps)
         if reduce_steps:
             loss_data = np.insert(loss_data, 0, loss_data[0])
         x = np.linspace(0, n_epochs, num=len(loss_data))
@@ -91,7 +91,7 @@ def plot_metrics(metrics, outdir):
     plt.title('accuracy')
     plt.xlabel('epochs')
     for subset in ['train', 'test']:
-        acc_data, n_epochs = plots.epoch_acc(subset)
+        acc_data, n_epochs = metrics.epoch_acc(subset)
         acc_data = np.insert(acc_data, 0, acc_data[0])
         x = np.linspace(0, n_epochs, num=len(acc_data))
         plt.plot(x, acc_data, label=f'{subset} acc')
@@ -103,7 +103,7 @@ def plot_metrics(metrics, outdir):
     plt.figure(figsize=(20, 5))
     plt.xlabel('classes'), plt.title('class accuracy')
     for subset in ['train', 'test']:
-        inst_acc, class_acc = plots.last_epoch_acc(subset)
+        inst_acc, class_acc = metrics.last_epoch_acc(subset)
         classes = np.arange(len(class_acc))
         plt.bar(classes - width / 2, class_acc, width,
                 label=f'{subset} - {inst_acc:.3}/{class_acc.mean():.3} insta/class acc')

@@ -121,7 +121,7 @@ class ConLoss(nn.Module):
 
 def train_loop(args, data_loader, model, opt=None):
     all_losses, all_label, all_pred = [], [], []
-    pbar = tqdm(data_loader, 'train' if opt is not None else 'test', leave=False)
+    pbar = tqdm(data_loader, '\ttrain' if opt is not None else '\ttest', leave=False)
     training = opt is not None
     con_loss_fn = ConLoss(args.pce, args.temp)
     model.cuda()
@@ -195,8 +195,8 @@ def train(args, model, train_loader, test_loader):
 
     # Setup
     metrics = plots.Metrics()
-    pbar = tqdm(range(args.epochs), 'epochs')
-    for _ in pbar:
+    print('training')
+    for e in range(args.epochs):
         # Train
         try:
             train_metrics = train_loop(args, train_loader, model, opt)
@@ -209,7 +209,7 @@ def train(args, model, train_loader, test_loader):
         metrics.epoch_append_data('test', *test_metrics)
 
         # Progress bar update
-        pbar.set_postfix_str(metrics.epoch_str())
+        print(f'epoch {e} - {metrics.epoch_str()}', flush=True)
 
         # Save model weights
         torch.save(model.state_dict(), f'{args.outdir}/model.pt')
