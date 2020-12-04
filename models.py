@@ -100,8 +100,8 @@ def make_model(args):
 
 
 def optional_load_wts(args, model, model_path):
-    if os.path.exists(model_path) and not args.new:
+    if os.path.exists(model_path) and args.load:
         model.load_state_dict(torch.load(model_path))
-        print(f"loaded weights from {model_path}")
+        print(f"loaded saved weights from {model_path}")
     else:
         print("new weights")
