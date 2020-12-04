@@ -211,8 +211,8 @@ def train(args, model, train_loader, test_loader):
         pbar.set_postfix_str(plots.epoch_str())
 
         # Save model weights
-        torch.save(model.state_dict(), f'{args.out_dir}/model.pt')
-        torch.save(model.encoder.state_dict(), f'{args.out_dir}/encoder.pt')
+        torch.save(model.state_dict(), f'{args.outdir}/model.pt')
+        torch.save(model.encoder.state_dict(), f'{args.outdir}/encoder.pt')
 
         # Learning rate scheduler
         if scheduler is not None:

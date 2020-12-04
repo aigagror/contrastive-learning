@@ -28,7 +28,7 @@ parser.add_argument('--pce', action='store_true')
 parser.add_argument('--temp', type=float, default=0.1)
 
 # Save
-parser.add_argument('--out-dir', type=str)
+parser.add_argument('--outdir', type=str, default='./out')
 
 
 import data
@@ -38,8 +38,8 @@ import train
 
 def run(args):
   # Folder to save all work
-  if not os.path.exists(args.out_dir):
-    os.mkdir(args.out_dir)
+  if not os.path.exists(args.outdir):
+    os.mkdir(args.outdir)
 
   # Data
   train_loader, test_loader = data.load_data(args)
@@ -52,7 +52,7 @@ def run(args):
   model = models.make_model(args)
 
   # Optionally load weights
-  models.optional_load_wts(args, model, f'{args.out_dir}/model.pt')
+  models.optional_load_wts(args, model, f'{args.outdir}/model.pt')
 
   # Classifier reset train?
   if args.crt:
@@ -64,16 +64,16 @@ def run(args):
 
   # Plot training metrics
   if args.epochs > 0:
-    plots.plot_metrics(metrics, args.out_dir)
+    plots.plot_metrics(metrics, args.outdir)
 
   # Plot metrics on features
   if args.tsne:
-    plots.plot_tsne_similarity_types(model, train_loader, f'{args.out_dir}/tsne_sim_types.jpg')
-    plots.plot_tsne(model, test_loader, f'{args.out_dir}/tsne.jpg')
+    plots.plot_tsne_similarity_types(model, train_loader, f'{args.outdir}/tsne_sim_types.jpg')
+    plots.plot_tsne(model, test_loader, f'{args.outdir}/tsne.jpg')
   if args.contrast:
-    plots.plot_similarity_hist(model, train_loader, f'{args.out_dir}/sims.jpg')
+    plots.plot_similarity_hist(model, train_loader, f'{args.outdir}/sims.jpg')
 
-  print(f'models and plots saved to {args.out_dir}')
+  print(f'models and plots saved to {args.outdir}')
 
 if __name__ == '__main__':
   args = parser.parse_args()

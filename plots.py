@@ -72,7 +72,7 @@ def plot_samples(train_samples):
     plt.show()
 
 
-def plot_metrics(metrics, out_dir):
+def plot_metrics(metrics, outdir):
     # Loss over epochs
     plt.figure(figsize=(20, 5))
     plt.title('loss')
@@ -84,7 +84,7 @@ def plot_metrics(metrics, out_dir):
         x = np.linspace(0, n_epochs, num=len(loss_data))
         plt.plot(x, loss_data, label=f'{subset} loss')
     plt.legend()
-    plt.savefig(f'{out_dir}/loss.jpg')
+    plt.savefig(f'{outdir}/loss.jpg')
 
     # Accuracy (instance-balanced) over epochs
     plt.figure(figsize=(20, 5))
@@ -96,7 +96,7 @@ def plot_metrics(metrics, out_dir):
         x = np.linspace(0, n_epochs, num=len(acc_data))
         plt.plot(x, acc_data, label=f'{subset} acc')
     plt.legend()
-    plt.savefig(f'{out_dir}/epoch_acc.jpg')
+    plt.savefig(f'{outdir}/epoch_acc.jpg')
 
     # Final class and instance based accuracies
     width = 0.2
@@ -108,7 +108,7 @@ def plot_metrics(metrics, out_dir):
         plt.bar(classes - width / 2, class_acc, width,
                 label=f'{subset} - {inst_acc:.3}/{class_acc.mean():.3} insta/class acc')
     plt.legend()
-    plt.savefig(f'{out_dir}/final_acc.jpg')
+    plt.savefig(f'{outdir}/final_acc.jpg')
 
     plt.show()
 
