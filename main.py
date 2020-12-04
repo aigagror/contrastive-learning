@@ -1,22 +1,15 @@
 import argparse
 import os
-
-from data import load_data
-from metrics import plot_samples, plot_metrics, plot_similarity_hist, plot_tsne
-from models import make_model, optional_load_wts
-from train import train
-
 parser = argparse.ArgumentParser()
 
 # Data
 parser.add_argument('--data', type=str)
-parser.add_argument('--sampling', choices=['ib', 'cb', 'cr'], default='ib')
-parser.add_argument('--mi-lt-train', default="/gdrive/My Drive/datasets/miniimagenet/custom-lt/train.pkl")
-parser.add_argument('--mi-lt-test', default="/gdrive/My Drive/datasets/miniimagenet/custom-lt/test.pkl")
+parser.add_argument('--nviews', type=int)
+parser.add_argument('--sampling', choices=['ib', 'cb', 'cr'])
 
 # Model
 parser.add_argument('--model', type=str)
-parser.add_argument('--new', action='store_true')
+parser.add_argument('--load', action='store_true')
 parser.add_argument('--fix-feats', action='store_true')
 parser.add_argument('--crt', action='store_true')
 
@@ -31,53 +24,58 @@ parser.add_argument('--tsne', action='store_true')
 
 # Contrastive learning
 parser.add_argument('--contrast', action='store_true')
+parser.add_argument('--pce', action='store_true')
 parser.add_argument('--temp', type=float, default=0.1)
 
 # Save
 parser.add_argument('--out-dir', type=str)
 
 
-def main(args):
-    # Folder to save all work
-    if not os.path.exists(args.out_dir):
-        os.mkdir(args.out_dir)
+import data
+import plots
+import models
+import train
 
-    # Data
-    train_loader, test_loader = load_data(args)
+def run(args):
+  # Folder to save all work
+  if not os.path.exists(args.out_dir):
+    os.mkdir(args.out_dir)
 
-    # Display sample of images from train loader
-    train_samples, _ = next(iter(train_loader))
-    plot_samples(train_samples[0][:8])
+  # Data
+  train_loader, test_loader = data.load_data(args)
 
-    # Model
-    model = make_model(args)
+  # Display sample of images from train loader
+  train_samples, _ = next(iter(train_loader))
+  plots.plot_samples(train_samples[0][:8])
 
-    # Optionally load weights
-    model_path = f'{args.out_dir}/model.pt'
-    optional_load_wts(args, model, model_path)
+  # Model
+  model = models.make_model(args)
 
-    # Classifier reset train?
-    if args.crt:
-        model.reset_classifier()
-        print('Reset classifier')
+  # Optionally load weights
+  models.optional_load_wts(args, model, f'{args.out_dir}/model.pt')
 
-    # Train
-    metrics = train(args, model, train_loader, test_loader, model_path)
+  # Classifier reset train?
+  if args.crt:
+    model.reset_classifier()
+    print('Reset classifier')
 
-    # Plot training metrics
-    if args.epochs > 0:
-        plot_metrics(metrics, args.out_dir)
+  # Train
+  metrics = train.train(args, model, train_loader, test_loader)
 
-    # Plot metrics on features
-    if args.contrast:
-        plot_similarity_hist(model, train_loader, f'{args.out_dir}/sims.jpg')
-    if args.tsne:
-        plot_tsne(model, test_loader, f'{args.out_dir}/tsne.jpg')
+  # Plot training metrics
+  if args.epochs > 0:
+    plots.plot_metrics(metrics, args.out_dir)
 
-    print(f'models and plots saved to {args.out_dir}')
+  # Plot metrics on features
+  if args.tsne:
+    plots.plot_tsne_similarity_types(model, train_loader, f'{args.out_dir}/tsne_sim_types.jpg')
+    plots.plot_tsne(model, test_loader, f'{args.out_dir}/tsne.jpg')
+  if args.contrast:
+    plots.plot_similarity_hist(model, train_loader, f'{args.out_dir}/sims.jpg')
 
+  print(f'models and plots saved to {args.out_dir}')
 
 if __name__ == '__main__':
-    args = parser.parse_args()
-    print(args)
-    main(args)
+  args = parser.parse_args()
+  print(args)
+  run(args)

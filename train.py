@@ -1,17 +1,19 @@
 import torch
 from torch import nn, optim
 from torch.nn import functional as F
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-from metrics import Metrics
+## Train
 
+#### Constrastive loss
 
 class ConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
     It also supports the unsupervised contrastive loss in SimCLR"""
 
-    def __init__(self, temperature, contrast_mode='one'):
+    def __init__(self, pce, temperature, contrast_mode='one'):
         super().__init__()
+        self.pce = pce
         self.temperature = temperature
         self.contrast_mode = contrast_mode
 
@@ -50,17 +52,22 @@ class ConLoss(nn.Module):
             raise ValueError('Unknown mode: {}'.format(self.contrast_mode))
 
         # Contrast targets (instance and class based)
+        # tile masks [bsz * anchor_count, bsz * contrast_count]
         eye = torch.eye(batch_size, dtype=torch.float32, device=device)
-        inst_mask = eye
+
+        # Instance mask
+        inst_mask = eye.repeat(anchor_count, contrast_count)
+
+        # Class mask
         labels = labels.contiguous().view(-1, 1)
         if labels.shape[0] != batch_size:
             raise ValueError('Num of labels does not match num of features')
-        class_mask = torch.eq(labels, labels.T).float().to(device) - eye
-        assert inst_mask.shape == class_mask.shape
-
-        # tile masks [bsz * anchor_count, bsz * contrast_count]
-        inst_mask = inst_mask.repeat(anchor_count, contrast_count)
+        class_mask = torch.eq(labels, labels.T).float().to(device)
         class_mask = class_mask.repeat(anchor_count, contrast_count)
+
+        # Positive and negative mask
+        pos_mask = torch.maximum(inst_mask, class_mask)
+        neg_mask = 1 - pos_mask
 
         # mask-out self-contrast cases
         logits_mask = torch.scatter(
@@ -69,14 +76,16 @@ class ConLoss(nn.Module):
             torch.arange(batch_size * anchor_count).view(-1, 1).to(device),
             0
         )
-        neg_inst_mask = (1 - inst_mask) * logits_mask
         inst_mask *= logits_mask
         class_mask *= logits_mask
+        pos_mask *= logits_mask
+        neg_mask *= logits_mask
 
         # compute logits
         anchor_dot_contrast = torch.div(
             torch.matmul(anchor_feature, contrast_feature.T),
             self.temperature)
+
         # for numerical stability
         logits_max, _ = torch.max(anchor_dot_contrast, dim=1, keepdim=True)
         logits = anchor_dot_contrast - logits_max.detach()
@@ -84,16 +93,22 @@ class ConLoss(nn.Module):
         # compute log_prob (a.k.a cross entropy) for each positive pair against all negative pairs and itself
         exp_logits = torch.exp(logits)
         sum_exp_logits = torch.sum(exp_logits * logits_mask, dim=1, keepdim=True)
+        neg_sum_exp_logits = torch.sum(exp_logits * neg_mask, dim=1, keepdim=True)
 
-        neg_inst_sum = torch.sum(exp_logits * neg_inst_mask, dim=1, keepdim=True)
+        # Cross entropies
+        log_probs = logits - torch.log(sum_exp_logits)
+        partial_log_prob = logits - torch.log(neg_sum_exp_logits + exp_logits)
 
-        # Instance cross entropy
-        inst_log_prob = logits - torch.log(sum_exp_logits)
-        inst_log_prob = (inst_mask * inst_log_prob).sum(1) / inst_mask.sum(1)
-
-        # Class partial cross entropy
-        class_log_prob = logits - torch.log(neg_inst_sum)
-        class_log_prob = (class_mask * class_log_prob).sum(1) / (class_mask.sum(1) + 1)
+        if self.pce:
+            # Instance cross entropy
+            inst_log_prob = (inst_mask * partial_log_prob).sum(1) / inst_mask.sum(1)
+            # Class partial cross entropy
+            class_log_prob = (class_mask * partial_log_prob).sum(1) / (class_mask.sum(1) + 1)
+        else:
+            # Instance cross entropy
+            inst_log_prob = (inst_mask * log_probs).sum(1) / inst_mask.sum(1)
+            # Class cross entropy
+            class_log_prob = (class_mask * log_probs).sum(1) / (class_mask.sum(1) + 1)
 
         # loss
         loss = -(inst_log_prob + class_log_prob).mean()
@@ -101,11 +116,13 @@ class ConLoss(nn.Module):
         return loss
 
 
+#### Loop
+
 def train_loop(args, data_loader, model, opt=None):
     all_losses, all_label, all_pred = [], [], []
     pbar = tqdm(data_loader, 'train' if opt is not None else 'test', leave=False)
     training = opt is not None
-    con_loss_fn = ConLoss(args.temp)
+    con_loss_fn = ConLoss(args.pce, args.temp)
     model.cuda()
     for img_views, labels in pbar:
         # Set to GPU
@@ -160,7 +177,9 @@ def train_loop(args, data_loader, model, opt=None):
     return all_losses, all_label, all_pred
 
 
-def train(args, model, train_loader, test_loader, model_path):
+#### Flow
+
+def train(args, model, train_loader, test_loader):
     # Optimizer
     opt = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9,
                     weight_decay=1e-4)
@@ -185,14 +204,15 @@ def train(args, model, train_loader, test_loader, model_path):
             break
 
         # Record metrics
-        metrics.epoch_append_data('train', *train_metrics)
-        metrics.epoch_append_data('test', *test_metrics)
+        plots.epoch_append_data('train', *train_metrics)
+        plots.epoch_append_data('test', *test_metrics)
 
         # Progress bar update
-        pbar.set_postfix_str(metrics.epoch_str())
+        pbar.set_postfix_str(plots.epoch_str())
 
         # Save model weights
-        torch.save(model.state_dict(), model_path)
+        torch.save(model.state_dict(), f'{args.out_dir}/model.pt')
+        torch.save(model.encoder.state_dict(), f'{args.out_dir}/encoder.pt')
 
         # Learning rate scheduler
         if scheduler is not None:

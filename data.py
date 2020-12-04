@@ -6,6 +6,10 @@ from torch.utils import data
 from torchvision import transforms, datasets
 
 
+## Data
+
+#### Transforms
+
 class ViewsTransform:
     def __init__(self, views):
         self.views = views
@@ -45,6 +49,8 @@ class BaseTransform(ViewsTransform):
         ])
 
 
+#### Datasets and dataloaders
+
 class ImgLabelTensorDataset(data.TensorDataset):
     def __init__(self, tensors, pil_transform, label_transform=None):
         super().__init__(*tensors)
@@ -60,6 +66,37 @@ class ImgLabelTensorDataset(data.TensorDataset):
         if self.label_transform is not None:
             label = self.label_transform(label)
         return (img, label)
+
+
+def load_mi_class_imgs():
+    train_pkl = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/train.pkl", "rb"))
+    val_pkl = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/val.pkl", "rb"))
+    test_pkl = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/test.pkl", "rb"))
+
+    imgs_train = train_pkl['image_data'].reshape(64, 600, 84, 84, 3)
+    imgs_val = val_pkl['image_data'].reshape(16, 600, 84, 84, 3)
+    imgs_test = test_pkl['image_data'].reshape(20, 600, 84, 84, 3)
+
+    class_imgs = np.concatenate([imgs_train, imgs_val, imgs_test])
+    class_imgs = class_imgs.astype(np.float32)
+    class_imgs = class_imgs.transpose(0, 1, 4, 2, 3) / 255
+    return class_imgs
+
+
+def mi_to_dataset(mi_path, pil_transform, label_transform=None):
+    all_class_imgs = load_mi_class_imgs()
+    mi_data = pickle.load(open(mi_path, 'rb'))
+    imgs, classes = [], []
+    for c, class_idcs in enumerate(mi_data):
+        imgs.append(all_class_imgs[c, class_idcs])
+        classes.append(np.full(class_idcs.shape, c))
+
+    imgs = np.concatenate(imgs)
+    classes = np.concatenate(classes).astype(np.long)
+
+    imgs = torch.tensor(imgs)
+    classes = torch.tensor(classes)
+    return ImgLabelTensorDataset((imgs, classes), pil_transform, label_transform)
 
 
 def make_data_loader(dataset, batchsize, sampling, drop_last=False):
@@ -87,53 +124,40 @@ def make_data_loader(dataset, batchsize, sampling, drop_last=False):
     return data_loader
 
 
-def mi_to_dataset(mi_data, pil_transform, label_transform=None):
-    imgs, classes = [], []
-    for c, class_imgs in enumerate(mi_data):
-        class_imgs = class_imgs.transpose(0, 3, 1, 2) / 255
-        for img in class_imgs:
-            imgs.append(img)
-            classes.append(c)
-    imgs = np.array(imgs, dtype=np.float32)
-    classes = np.array(classes, dtype=np.long)
-    imgs = torch.tensor(imgs)
-    classes = torch.tensor(classes)
-    return ImgLabelTensorDataset((imgs, classes), pil_transform, label_transform)
-
-
-def load_mini_imagenet_lt(args, train_transform, test_transform):
-    mi_train = pickle.load(open(args.mi_lt_train, 'rb'))
-    mi_test = pickle.load(open(args.mi_lt_test, 'rb'))
-
-    train_dataset = mi_to_dataset(mi_train, train_transform)
-    test_dataset = mi_to_dataset(mi_test, test_transform)
-    return train_dataset, test_dataset
-
+#### Load data
 
 def load_data(args):
-    if args.contrast:
-        train_views = 2
-        assert not args.fix_feats
-    else:
-        train_views = 1
-
     imsize_dict = {
+        'mi-bal': 84,
         'mi-lt': 84,
         'cifar10': 32,
         'cifar100': 32
     }
     imsize = imsize_dict[args.data]
-    train_transform = AugTransform(train_views, imsize)
+    train_transform = AugTransform(args.nviews, imsize)
     test_transform = BaseTransform(views=1)
-    if args.data == 'mi-lt':
-        train_dataset, test_dataset = load_mini_imagenet_lt(args, train_transform,
-                                                            test_transform)
+    if args.data.startswith('mi'):
+        # Mini Imagenet
+        if args.data.endswith('-lt'):
+            # Long tail version
+            train_path = "/gdrive/My Drive/datasets/miniimagenet/custom-lt/train.pkl"
+            test_path = "/gdrive/My Drive/datasets/miniimagenet/custom-lt/test.pkl"
+        else:
+            assert args.data.endswith('mi-bal')
+            # Regular balanced version
+            train_path = "/gdrive/My Drive/datasets/miniimagenet/custom-balanced/train.pkl"
+            test_path = "/gdrive/My Drive/datasets/miniimagenet/custom-balanced/test.pkl"
+
+        train_dataset = mi_to_dataset(train_path, train_transform)
+        test_dataset = mi_to_dataset(test_path, test_transform)
     elif args.data == 'cifar10':
+        # CIFAR 10
         train_dataset = datasets.CIFAR10('./', train=True,
                                          transform=train_transform, download=True)
         test_dataset = datasets.CIFAR10('./', train=False,
                                         transform=test_transform, download=True)
     elif args.data == 'cifar100':
+        # CIFAR 100
         train_dataset = datasets.CIFAR100('./', train=True,
                                           transform=train_transform, download=True)
         test_dataset = datasets.CIFAR100('./', train=False,
@@ -141,6 +165,7 @@ def load_data(args):
     else:
         raise Exception(f'Unknown data {args.data}')
 
+    # Data loader
     train_loader = make_data_loader(train_dataset, args.batchsize,
                                     args.sampling, drop_last=True)
     test_loader = make_data_loader(test_dataset, args.batchsize,

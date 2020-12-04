@@ -4,13 +4,16 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.nn.utils import weight_norm
-from torchvision.models import ResNet
-from torchvision.models.resnet import BasicBlock
+from torchvision.models.resnet import ResNet, BasicBlock, Bottleneck
 
+
+## Models
 
 def count_num_params(model):
     return sum(p.numel() for p in model.parameters())
 
+
+#### Encoder
 
 class EncoderResnet(ResNet):
     def __init__(self, arch):
@@ -38,6 +41,8 @@ class EncoderResnet(ResNet):
         return x
 
 
+#### Projection
+
 class Projection(nn.Module):
     def __init__(self, dim_in, dim_out):
         super().__init__()
@@ -54,7 +59,9 @@ class Projection(nn.Module):
         return x
 
 
-class LongTailModel(nn.Module):
+#### Contrast model
+
+class ContrastModel(nn.Module):
     def __init__(self, arch, nclass, wn):
         super().__init__()
         self.nclass, self.wn = nclass, wn
@@ -77,8 +84,10 @@ class LongTailModel(nn.Module):
             self.fc = nn.Linear(512, self.nclass)
 
 
+#### Model utilities
+
 def make_model(args):
-    model = LongTailModel(args.model, nclass=100, wn=False)
+    model = ContrastModel(args.model, nclass=100, wn=False)
 
     if args.fix_feats:
         model.encoder.requires_grad_(False)
