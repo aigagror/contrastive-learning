@@ -69,7 +69,6 @@ def plot_samples(train_samples):
     plt.figure(figsize=(20, 4))
     plt.title('image samples')
     plt.imshow(grid_img, interpolation='nearest')
-    plt.show()
 
 
 def plot_metrics(metrics, outdir):
@@ -109,8 +108,6 @@ def plot_metrics(metrics, outdir):
                 label=f'{subset} - {inst_acc:.3}/{class_acc.mean():.3} insta/class acc')
     plt.legend()
     plt.savefig(f'{outdir}/final_acc.jpg')
-
-    plt.show()
 
 
 def plot_similarity_hist(model, data_loader, outpath):
@@ -156,7 +153,6 @@ def plot_similarity_hist(model, data_loader, outpath):
 
     # Save and show
     plt.savefig(outpath)
-    plt.show()
 
 
 from sklearn import manifold
@@ -212,7 +208,6 @@ def plot_tsne_similarity_types(model, data_loader, outpath):
 
     # Save and show
     plt.savefig(outpath)
-    plt.show()
 
 
 def plot_tsne(model, data_loader, outpath):
@@ -245,4 +240,3 @@ def plot_tsne(model, data_loader, outpath):
 
     # Save and show
     plt.savefig(outpath)
-    plt.show()
