@@ -118,7 +118,6 @@ def plot_similarity_hist(model, data_loader, outpath):
     print('plotting similarities of features')
     inst_sims, class_sims, neg_sims = [], [], []
     model.eval(), model.cuda()
-    feat_dim = None
     with torch.no_grad():
         for img_views, labels in data_loader:
             img_views = [imgs.cuda() for imgs in img_views]
