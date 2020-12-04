@@ -3,7 +3,6 @@ import os
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.nn.utils import weight_norm
 from torchvision.models.resnet import ResNet, BasicBlock, Bottleneck
 
 
@@ -76,12 +75,6 @@ class ContrastModel(nn.Module):
     def project(self, feat_views):
         project_views = [self.projection(feats) for feats in feat_views]
         return project_views
-
-    def reset_classifier(self):
-        if self.wn:
-            self.fc = weight_norm(nn.Linear(512, self.nclass, bias=False))
-        else:
-            self.fc = nn.Linear(512, self.nclass)
 
 
 #### Model utilities

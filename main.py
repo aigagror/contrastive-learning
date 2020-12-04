@@ -54,11 +54,6 @@ def run(args):
   # Optionally load weights
   models.optional_load_wts(args, model, f'{args.outdir}/model.pt')
 
-  # Classifier reset train?
-  if args.crt:
-    model.reset_classifier()
-    print('Reset classifier')
-
   # Train
   metrics = train.train(args, model, train_loader, test_loader)
 

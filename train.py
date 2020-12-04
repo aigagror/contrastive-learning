@@ -121,7 +121,7 @@ class ConLoss(nn.Module):
 
 def train_loop(args, data_loader, model, opt=None):
     all_losses, all_label, all_pred = [], [], []
-    pbar = tqdm(data_loader, '\ttrain' if opt is not None else '\ttest', leave=False)
+    pbar = tqdm(data_loader, '\ttrain' if opt is not None else '\ttest')
     training = opt is not None
     con_loss_fn = ConLoss(args.pce, args.temp)
     model.cuda()
