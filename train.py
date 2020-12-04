@@ -2,6 +2,7 @@ import torch
 from torch import nn, optim
 from torch.nn import functional as F
 from tqdm.auto import tqdm
+import plots
 
 ## Train
 
@@ -193,7 +194,7 @@ def train(args, model, train_loader, test_loader):
         scheduler = None
 
     # Setup
-    metrics = Metrics()
+    metrics = plots.Metrics()
     pbar = tqdm(range(args.epochs), 'epochs')
     for _ in pbar:
         # Train
