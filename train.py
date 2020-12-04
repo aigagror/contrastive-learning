@@ -205,11 +205,11 @@ def train(args, model, train_loader, test_loader):
             break
 
         # Record metrics
-        plots.epoch_append_data('train', *train_metrics)
-        plots.epoch_append_data('test', *test_metrics)
+        metrics.epoch_append_data('train', *train_metrics)
+        metrics.epoch_append_data('test', *test_metrics)
 
         # Progress bar update
-        pbar.set_postfix_str(plots.epoch_str())
+        pbar.set_postfix_str(metrics.epoch_str())
 
         # Save model weights
         torch.save(model.state_dict(), f'{args.outdir}/model.pt')
