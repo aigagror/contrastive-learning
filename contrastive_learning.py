@@ -267,12 +267,14 @@ def epoch_test(args, model, strategy, ds_test):
     accs.append(float(acc))
   return accs
 
-import time
+from timeit import default_timer
+from datetime import timedelta
 
 def train(args, model, strategy, ds_train, ds_test):
   all_train_accs, all_train_losses = [], []
   test_accs = []
 
+  start = default_timer()
   try:
     for epoch in range(args.epochs):
       # Train
@@ -283,7 +285,7 @@ def train(args, model, strategy, ds_train, ds_test):
 
       # Test
       test_accs = epoch_test(args, model, strategy, ds_test)
-      t = time.strftime('%m/%d %H:%M:%S', time.localtime())
+      t = timedelta(seconds=int(default_timer() - start))
       print(f'{t}, epoch {epoch}, {np.mean(train_losses):.3} loss, ' \
             f'{np.mean(train_accs):.3} acc, {np.mean(test_accs):.3} test acc')
   except KeyboardInterrupt:
