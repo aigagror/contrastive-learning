@@ -34,7 +34,7 @@ parser.add_argument('--out', type=str, default='./out/')
 
 """## Data"""
 
-from tensorflow.data import AUTOTUNE
+AUTOTUNE = -1
 
 class Augment(layers.Layer):
   def __init__(self, imsize, rand_crop, rand_flip, rand_jitter, rand_gray):
