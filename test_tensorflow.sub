@@ -3,7 +3,7 @@
 
 # Must set the universe to Docker
 universe = docker
-docker_image = tensorflow/tensorflow:1.14.0-gpu-py3
+docker_image = tensorflow/tensorflow:latest-gpu-py3
 
 # set the log, error and output files 
 log = tensorflow_gpu.log.txt
@@ -15,7 +15,7 @@ executable = test_tensorflow.sh
 arguments = $(Process)
 
 # take our python script to the compute node
-transfer_input_files = test_tensorflow.py
+transfer_input_files = contrastive_learning.py
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
