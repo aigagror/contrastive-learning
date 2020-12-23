@@ -267,6 +267,8 @@ def epoch_test(args, model, strategy, ds_test):
     accs.append(float(acc))
   return accs
 
+import time
+
 def train(args, model, strategy, ds_train, ds_test):
   all_train_accs, all_train_losses = [], []
   test_accs = []
@@ -281,12 +283,13 @@ def train(args, model, strategy, ds_train, ds_test):
 
       # Test
       test_accs = epoch_test(args, model, strategy, ds_test)
-      print(f'epoch {epoch} - {np.mean(train_losses):.3} loss, ' \
+      t = time.strftime('%m/%d %H:%M:%S', time.localtime())
+      print(f'{t}, epoch {epoch}, {np.mean(train_losses):.3} loss, ' \
             f'{np.mean(train_accs):.3} acc, {np.mean(test_accs):.3} test acc')
   except KeyboardInterrupt:
     print('keyboard interrupt caught. ending training early')
 
-  return all_train_accs
+  return test_accs, all_train_accs, all_train_losses
 
 """## Plot"""
 
@@ -337,20 +340,16 @@ def plot_tsne(args, model, ds_test):
   f.savefig(os.path.join(args.out, 'tsne.jpg'))
   plt.show()
 
-def plot_metrics(args, accs, losses):
-  nsteps = len(accs)
-  assert len(losses) == nsteps
-  x = np.linspace(0, args.epochs, nsteps)
-  f, ax = plt.subplots(1, 2)
+def plot_metrics(args, metrics):
+  f, ax = plt.subplots(1, len(metrics))
   f.set_size_inches(15, 5)
 
-  ax[0].set_title('accuracy')
-  ax[0].set_xlabel('epochs')
-  ax[0].plot(x, accs)
-
-  ax[1].set_title('losses')
-  ax[1].plot(x, losses)
-  ax[1].set_xlabel('epochs')
+  names = ['test accs', 'train accs', 'train losses']
+  for i, (y, name) in enumerate(zip(metrics, names)):
+    x = np.linspace(0, args.epochs, len(y))
+    ax[i].set_title(name)
+    ax[i].set_xlabel('epochs')
+    ax[i].plot(x, y)
   
   f.savefig(os.path.join(args.out, 'metrics.jpg'))
   plt.show()
@@ -380,16 +379,16 @@ def run(args):
     model.optimizer = mixed_precision.LossScaleOptimizer(opt)
     
   # Train
-  accs, losses = train(args, model, strategy, ds_train, ds_test)
+  metrics = train(args, model, strategy, ds_train, ds_test)
 
   # Plot
   if args.plot:
     import matplotlib.pyplot as plt
     plot_img_samples(args, ds_train, ds_test)
-    plot_metrics(args, accs, losses)
+    plot_metrics(args, metrics)
     plot_tsne(args, model, ds_test)
 
-args = '--bsz=1024 --epochs=1 --method=supcon --lr=2e-3'
+args = '--bsz=1024 --epochs=10 --method=supcon --lr=1e-3 '
 args = parser.parse_args(args.split())
 print(args)
 

@@ -18,7 +18,7 @@ arguments = $(Process)
 transfer_input_files = contrastive_learning.py
 
 should_transfer_files = YES
-when_to_transfer_output = ON_EXIT
+when_to_transfer_output = ON_EXIT_OR_EVICT
 
 # We require a machine with a modern version of the CUDA driver
 Requirements = (Target.CUDADriverVersion >= 10.1)
