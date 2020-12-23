@@ -363,9 +363,10 @@ def run(args):
   plot_metrics(args, accs, losses)
   plot_tsne(model, ds_test)
 
-args = '--bsz=1024 --epochs=350 --method=supcon --lr=1e-3'
-args = parser.parse_args(args.split())
-print(args)
+if __name__ == '__main__:
+    args = '--bsz=1024 --epochs=350 --method=supcon --lr=1e-3'
+    args = parser.parse_args(args.split())
+    print(args)
 
-run(args)
+    run(args)
 
