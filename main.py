@@ -84,8 +84,8 @@ class Augment(layers.Layer):
     return image
 
 def load_datasets(args, strategy):
-  ds_train = tfds.ImageFolder('/data/common/ILSVRC2012/ILSVRC2012_img_train/').as_dataset(shuffle_files=True)
-  ds_test = tfds.ImageFolder('/data/common/ILSVRC2012/ILSVRC2012_img_val/').as_dataset(shuffle_files=True)
+  ds_train = tfds.folder_dataset.ImageFolder('/data/common/ILSVRC2012/ILSVRC2012_img_train/').as_dataset(shuffle_files=True)
+  ds_test = tfds.folder_dataset.ImageFolder('/data/common/ILSVRC2012/ILSVRC2012_img_val/').as_dataset(shuffle_files=True)
   
   augment = Augment(imsize=32, rand_crop=False, rand_flip=True, 
                     rand_jitter=False, rand_gray=True)
