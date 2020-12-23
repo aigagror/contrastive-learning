@@ -15,7 +15,6 @@ from tensorflow.keras import applications, layers, losses, metrics, mixed_precis
 
 import os
 import numpy as np
-from tqdm.auto import tqdm
 
 import argparse
 
@@ -243,8 +242,7 @@ class ContrastModel(keras.Model):
 
 def epoch_train(args, model, strategy, ds_train):
   accs, losses = [], []
-  pbar = tqdm(ds_train, 'train', leave=False, mininterval=2)
-  for imgs1, labels in pbar:
+  for imgs1, labels in ds_train:
     # Train step
     loss, acc = strategy.run(model.train_step, 
                              args=(args.method, args.bsz, imgs1, labels))
@@ -254,21 +252,18 @@ def epoch_train(args, model, strategy, ds_train):
     # Record
     losses.append(float(loss))
     accs.append(float(acc))
-    pbar.set_postfix_str(f'{losses[-1]:.3} loss, {accs[-1]:.3} acc', 
-                         refresh=False)
+    
   return accs, losses
 
 def epoch_test(args, model, strategy, ds_test):
   accs = []
-  pbar = tqdm(ds_test, 'test', leave=False, mininterval=2)
-  for imgs1, labels in pbar:
+  for imgs1, labels in ds_test:
     # Train step
     acc = strategy.run(model.test_step, args=(args.bsz, imgs1, labels))
     acc = strategy.reduce('SUM', acc, axis=None)
 
     # Record
     accs.append(float(acc))
-    pbar.set_postfix_str(f'{accs[-1]:.3} acc', refresh=False)
   return accs
 
 def train(args, model, strategy, ds_train, ds_test):
@@ -276,8 +271,7 @@ def train(args, model, strategy, ds_train, ds_test):
   test_accs = []
 
   try:
-    pbar = tqdm(range(args.epochs), 'epochs')
-    for epoch in pbar:
+    for epoch in range(args.epochs):
       # Train
       train_accs, train_losses = epoch_train(args, model, strategy, ds_train)
       model.save_weights(os.path.join(args.out, 'model'))
@@ -286,9 +280,8 @@ def train(args, model, strategy, ds_train, ds_test):
 
       # Test
       test_accs = epoch_test(args, model, strategy, ds_test)
-      pbar.set_postfix_str(f'{np.mean(train_losses):.3} loss, ' \
-                           f'{np.mean(train_accs):.3} acc, ' \
-                           f'{np.mean(test_accs):.3} test acc')
+      print(f'epoch {epoch} - {np.mean(train_losses):.3} loss, ' \
+            f'{np.mean(train_accs):.3} acc, {np.mean(test_accs):.3} test acc')
   except KeyboardInterrupt:
     print('keyboard interrupt caught. ending training early')
 
@@ -395,7 +388,7 @@ def run(args):
   plot_metrics(args, accs, losses)
   plot_tsne(args, model, ds_test)
 
-args = '--bsz=1024 --epochs=350 --method=supcon --lr=2e-3 --out=./ '
+args = '--bsz=1024 --epochs=350 --method=supcon --lr=2e-3'
 args = parser.parse_args(args.split())
 print(args)
 
