@@ -11,8 +11,7 @@ Original file is located at
 
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import applications, layers, losses, metrics, mixed_precision
-import tensorflow_datasets as tfds
+from tensorflow.keras import applications, layers, losses, metrics, mixed_precision, datasets
 
 import os
 import numpy as np
@@ -83,9 +82,9 @@ class Augment(layers.Layer):
     return image
 
 def load_datasets(args, strategy):
-  (ds_train, ds_test), ds_info = tfds.load('cifar10', split=['train', 'test'],
-                                        as_supervised=True, shuffle_files=True,  
-                                        with_info=True)
+  (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
+  ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
+  ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten()))
   
   augment = Augment(imsize=32, rand_crop=True, rand_flip=True, 
                     rand_jitter=True, rand_gray=True)
@@ -96,14 +95,14 @@ def load_datasets(args, strategy):
       ds_train
       .cache()
       .map(train_map, num_parallel_calls=AUTOTUNE)
-      .shuffle(ds_info.splits['train'].num_examples)
+      .shuffle(len(ds_train))
       .batch(args.bsz, drop_remainder=True)
       .prefetch(AUTOTUNE)
   )
   ds_test = (
       ds_test
       .cache()
-      .shuffle(ds_info.splits['test'].num_examples)
+      .shuffle(len(ds_test))
       .batch(args.bsz)
       .prefetch(AUTOTUNE)
   )
@@ -244,7 +243,7 @@ class ContrastModel(keras.Model):
 
 def epoch_train(args, model, strategy, ds_train):
   accs, losses = [], []
-  pbar = tqdm(ds_train, 'train', leave=False, mininterval=1)
+  pbar = tqdm(ds_train, 'train', leave=False, mininterval=2)
   for imgs1, labels in pbar:
     # Train step
     loss, acc = strategy.run(model.train_step, 
@@ -261,7 +260,7 @@ def epoch_train(args, model, strategy, ds_train):
 
 def epoch_test(args, model, strategy, ds_test):
   accs = []
-  pbar = tqdm(ds_test, 'test', leave=False, mininterval=1)
+  pbar = tqdm(ds_test, 'test', leave=False, mininterval=2)
   for imgs1, labels in pbar:
     # Train step
     acc = strategy.run(model.test_step, args=(args.bsz, imgs1, labels))
@@ -312,9 +311,8 @@ def plot_img_samples(args, ds_train, ds_test):
   f.savefig(os.path.join(args.out, 'img-samples.jpg'))
   plt.show()
 
-from sklearn import manifold
-
 def plot_tsne(args, model, ds_test):
+  from sklearn import manifold
   all_feats, all_proj, all_labels = [], [], []
   for imgs, labels in ds_test:
     imgs = tf.image.convert_image_dtype(imgs, tf.float32)
@@ -402,7 +400,3 @@ args = parser.parse_args(args.split())
 print(args)
 
 run(args)
-
-# Commented out IPython magic to ensure Python compatibility.
-# %debug
-
