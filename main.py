@@ -352,7 +352,7 @@ def run(args):
   with strategy.scope():
     model = ContrastModel(args)
     opt = keras.optimizers.SGD(args.lr, momentum=0.9)
-    model.optimizer = mixed_precision.LossScaleOptimizer(opt)
+    model.optimizer = mixed_precision.LossScaleOptimizer(opt, loss_scale='dynamic')
   if args.load:
     model.load_weights(os.path.join(args.out, 'model'))
 
