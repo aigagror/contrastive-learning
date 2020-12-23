@@ -25,6 +25,7 @@ parser.add_argument('--bsz', type=int)
 
 parser.add_argument('--lr', type=float)
 parser.add_argument('--load', action='store_true')
+parser.add_argument('--plot', action='store_true')
 
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
@@ -289,8 +290,6 @@ def train(args, model, strategy, ds_train, ds_test):
 
 """## Plot"""
 
-import matplotlib.pyplot as plt
-
 def plot_img_samples(args, ds_train, ds_test):
   f, ax = plt.subplots(2, 8)
   f.set_size_inches(20, 6)
@@ -373,8 +372,6 @@ def run(args):
 
   # Data
   ds_train, ds_test = load_datasets(args, strategy)
-  if len(gpus) <= 1:
-    plot_img_samples(args, ds_train, ds_test)
 
   # Model and optimizer
   with strategy.scope():
@@ -386,10 +383,13 @@ def run(args):
   accs, losses = train(args, model, strategy, ds_train, ds_test)
 
   # Plot
-  plot_metrics(args, accs, losses)
-  plot_tsne(args, model, ds_test)
+  if args.plot:
+    import matplotlib.pyplot as plt
+    plot_img_samples(args, ds_train, ds_test)
+    plot_metrics(args, accs, losses)
+    plot_tsne(args, model, ds_test)
 
-args = '--bsz=1024 --epochs=350 --method=supcon --lr=2e-3'
+args = '--bsz=1024 --epochs=350 --method=supcon --lr=2e-3 --out=./ --load '
 args = parser.parse_args(args.split())
 print(args)
 
