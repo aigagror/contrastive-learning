@@ -335,7 +335,7 @@ def plot_metrics(args, accs, losses):
 def run(args):
   # Mixed precision
   policy = mixed_precision.Policy('mixed_float16')  
-  mixed_precision.set_global_policy(policy)
+  mixed_precision.set_policy(policy)
 
   # Strategy
   gpus = tf.config.list_physical_devices('GPU')
