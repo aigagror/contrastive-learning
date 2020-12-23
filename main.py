@@ -363,7 +363,7 @@ def run(args):
   plot_metrics(args, accs, losses)
   plot_tsne(args, model, ds_test)
 
-if __name__ == '__main__:
+if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
 
