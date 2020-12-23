@@ -84,9 +84,8 @@ class Augment(layers.Layer):
     return image
 
 def load_datasets(args, strategy):
-  (ds_train, ds_test), ds_info = tfds.load('cifar10', split=['train', 'test'],
-                                        as_supervised=True, shuffle_files=True,  
-                                        with_info=True)
+  ds_train = tfds.ImageFolder('/data/common/ILSVRC2012/ILSVRC2012_img_train/').as_dataset(shuffle_files=True)
+  ds_test = tfds.ImageFolder('/data/common/ILSVRC2012/ILSVRC2012_img_val/').as_dataset(shuffle_files=True)
   
   augment = Augment(imsize=32, rand_crop=False, rand_flip=True, 
                     rand_jitter=False, rand_gray=True)
@@ -95,16 +94,14 @@ def load_datasets(args, strategy):
 
   ds_train = (
       ds_train
-      .cache()
       .map(train_map, num_parallel_calls=AUTOTUNE)
-      .shuffle(ds_info.splits['train'].num_examples)
+      .shuffle(1024)
       .batch(args.bsz, drop_remainder=True)
       .prefetch(AUTOTUNE)
   )
   ds_test = (
       ds_test
-      .cache()
-      .shuffle(ds_info.splits['test'].num_examples)
+      .shuffle(1024)
       .batch(args.bsz)
       .prefetch(AUTOTUNE)
   )
