@@ -287,7 +287,8 @@ def train(args, model, strategy, ds_train, ds_test):
       test_accs = epoch_test(args, model, strategy, ds_test)
       t = timedelta(seconds=int(default_timer() - start))
       print(f'{t}, epoch {epoch}, {np.mean(train_losses):.3} loss, ' \
-            f'{np.mean(train_accs):.3} acc, {np.mean(test_accs):.3} test acc')
+            f'{np.mean(train_accs):.3} acc, {np.mean(test_accs):.3} test acc',
+            flush=True)
   except KeyboardInterrupt:
     print('keyboard interrupt caught. ending training early')
 
