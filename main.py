@@ -11,7 +11,8 @@ Original file is located at
 
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import applications, layers, losses, metrics, mixed_precision
+from tensorflow.keras import applications, layers, losses, metrics
+import tensorflow.keras.mixed_precision.experimental as mixed_precision
 import tensorflow_datasets as tfds
 
 import os
