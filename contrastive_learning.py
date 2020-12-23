@@ -373,7 +373,8 @@ def run(args):
 
   # Data
   ds_train, ds_test = load_datasets(args, strategy)
-  plot_img_samples(args,ds_train, ds_test)
+  if len(gpus) <= 1:
+    plot_img_samples(args, ds_train, ds_test)
 
   # Model and optimizer
   with strategy.scope():
