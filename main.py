@@ -364,8 +364,7 @@ def run(args):
   plot_tsne(model, ds_test)
 
 if __name__ == '__main__:
-    args = '--bsz=1024 --epochs=350 --method=supcon --lr=1e-3'
-    args = parser.parse_args(args.split())
+    args = parser.parse_args()
     print(args)
 
     run(args)
