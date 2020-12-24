@@ -51,7 +51,7 @@ def run(args):
 
     # Train
     metrics = training.train(args, model, strategy, ds_train, ds_test)
-    print(f'finished training. achieved {np.mean(metrics[0][-1])} test accuracy')
+    print(f'finished training. achieved {np.mean(metrics[0][-1]):.3} test accuracy')
 
     # Plot
     plots.plot_metrics(args, metrics)
