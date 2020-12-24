@@ -29,7 +29,7 @@ parser.add_argument('--load', action='store_true')
 
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
-parser.add_argument('--out', type=str, default='./out/')
+parser.add_argument('--out', type=str, default='./')
 
 """## Data"""
 
