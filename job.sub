@@ -1,0 +1,32 @@
+# docker
+universe = docker
+docker_image = aigagror/tensorflow
+
+# set the log, error and output files 
+log = out/log.txt
+error = out/err.txt
+output = out/out.txt
+
+# set the executable to run
+executable = run.sh
+arguments = $(Process)
+
+# we require a machine with a modern version of the CUDA driver
+requirements = (Target.CUDADriverVersion >= 10.1)
+
+# we must request 1 CPU in addition to 1 GPU
+request_cpus = 5
+request_gpus = 2
+
+# select some memory and disk space
+request_memory = 3GB
+request_disk = 5GB
+
+# ppt in to using CHTC GPU Lab resources
++WantGPULab = true
+# Specify short job type to run more GPUs in parallel
+# Can also request "medium" or "long"
++GPUJobLength = "short"
+
+# tell HTCondor to run 1 instances of our job:
+queue 1
