@@ -26,6 +26,7 @@ parser.add_argument('--bsz', type=int)
 
 parser.add_argument('--lr', type=float)
 parser.add_argument('--load', action='store_true')
+parser.add_argument('--tsne', action='store_true')
 
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
@@ -381,7 +382,8 @@ def run(args):
 
   # Plot
   plot_metrics(args, metrics)
-  plot_tsne(args, model, ds_test)
+  if args.tsne:
+    plot_tsne(args, model, ds_test)
 
 args = '--bsz=1024 --epochs=10 --method=supcon --lr=1e-3'
 args = parser.parse_args(args.split())
