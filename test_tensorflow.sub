@@ -24,8 +24,8 @@ when_to_transfer_output = ON_EXIT_OR_EVICT
 Requirements = (Target.CUDADriverVersion >= 10.1)
 
 # We must request 1 CPU in addition to 1 GPU
-request_cpus = 1
-request_gpus = 1
+request_cpus = 5
+request_gpus = 2
 
 # select some memory and disk space
 request_memory = 3GB
