@@ -3,7 +3,7 @@ universe = docker
 docker_image = aigagror/tensorflow
 
 should_transfer_files = YES
-transfer_input_files = *.py
+transfer_input_files = ./
 
 # set the log, error and output files 
 log = log.txt
