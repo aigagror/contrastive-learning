@@ -15,6 +15,7 @@ from tensorflow.keras import applications, layers, losses, metrics, mixed_precis
 
 import os
 import numpy as np
+from tqdm.auto import tqdm
 
 import argparse
 
@@ -25,7 +26,6 @@ parser.add_argument('--bsz', type=int)
 
 parser.add_argument('--lr', type=float)
 parser.add_argument('--load', action='store_true')
-parser.add_argument('--plot', action='store_true')
 
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
@@ -53,7 +53,7 @@ class Augment(layers.Layer):
 
     # Crop
     if self.rand_crop:
-      rand_scale = tf.random.uniform([], 1, 1.5)
+      rand_scale = tf.random.uniform([], 1, 5)
       rand_size = tf.round(rand_scale * self.imsize)
       image = tf.image.resize(image, [rand_size, rand_size])
       image = tf.image.random_crop(image, [self.imsize, self.imsize, 3])
@@ -183,6 +183,7 @@ class ContrastModel(keras.Model):
     x, _ = tf.linalg.normalize(x, axis=-1)
     return x
   
+  @tf.function
   def call(self, img):
     print('traced model call')
     feats = self.feats(img)
@@ -267,16 +268,13 @@ def epoch_test(args, model, strategy, ds_test):
     accs.append(float(acc))
   return accs
 
-from timeit import default_timer
-from datetime import timedelta
-
 def train(args, model, strategy, ds_train, ds_test):
   all_train_accs, all_train_losses = [], []
   test_accs = []
 
-  start = default_timer()
   try:
-    for epoch in range(args.epochs):
+    pbar = tqdm(range(args.epochs), 'epochs', mininterval=2)
+    for epoch in pbar:
       # Train
       train_accs, train_losses = epoch_train(args, model, strategy, ds_train)
       model.save_weights(os.path.join(args.out, 'model'))
@@ -285,16 +283,17 @@ def train(args, model, strategy, ds_train, ds_test):
 
       # Test
       test_accs = epoch_test(args, model, strategy, ds_test)
-      t = timedelta(seconds=int(default_timer() - start))
-      print(f'{t}, epoch {epoch}, {np.mean(train_losses):.3} loss, ' \
-            f'{np.mean(train_accs):.3} acc, {np.mean(test_accs):.3} test acc',
-            flush=True)
+      pbar.set_postfix_str(f'{np.mean(train_losses):.3} loss, ' \
+                           f'{np.mean(train_accs):.3} acc, ' \
+                           f'{np.mean(test_accs):.3} test acc', refresh=False)
   except KeyboardInterrupt:
     print('keyboard interrupt caught. ending training early')
 
   return test_accs, all_train_accs, all_train_losses
 
 """## Plot"""
+
+import matplotlib.pyplot as plt
 
 def plot_img_samples(args, ds_train, ds_test):
   f, ax = plt.subplots(2, 8)
@@ -311,6 +310,7 @@ def plot_img_samples(args, ds_train, ds_test):
 
 def plot_tsne(args, model, ds_test):
   from sklearn import manifold
+  
   all_feats, all_proj, all_labels = [], [], []
   for imgs, labels in ds_test:
     imgs = tf.image.convert_image_dtype(imgs, tf.float32)
@@ -385,13 +385,11 @@ def run(args):
   metrics = train(args, model, strategy, ds_train, ds_test)
 
   # Plot
-  if args.plot:
-    import matplotlib.pyplot as plt
-    plot_img_samples(args, ds_train, ds_test)
-    plot_metrics(args, metrics)
-    plot_tsne(args, model, ds_test)
+  plot_img_samples(args, ds_train, ds_test)
+  plot_metrics(args, metrics)
+  plot_tsne(args, model, ds_test)
 
-args = '--bsz=1024 --epochs=10 --method=supcon --lr=1e-3 '
+args = '--bsz=1024 --epochs=10 --method=supcon --lr=1e-3'
 args = parser.parse_args(args.split())
 print(args)
 
