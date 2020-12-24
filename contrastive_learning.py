@@ -261,8 +261,7 @@ def epoch_test(args, model, strategy, ds_test):
   return accs
 
 def train(args, model, strategy, ds_train, ds_test):
-  all_train_accs, all_train_losses = [], []
-  test_accs = []
+  all_test_accs, all_train_accs, all_train_losses = [], [], []
 
   try:
     pbar = tqdm(range(args.epochs), 'epochs', mininterval=2)
@@ -275,13 +274,14 @@ def train(args, model, strategy, ds_train, ds_test):
 
       # Test
       test_accs = epoch_test(args, model, strategy, ds_test)
+      all_test_accs.append(test_accs)
       pbar.set_postfix_str(f'{np.mean(train_losses):.3} loss, ' \
                            f'{np.mean(train_accs):.3} acc, ' \
                            f'{np.mean(test_accs):.3} test acc', refresh=False)
   except KeyboardInterrupt:
     print('keyboard interrupt caught. ending training early')
 
-  return test_accs, all_train_accs, all_train_losses
+  return all_test_accs, all_train_accs, all_train_losses
 
 """## Plot"""
 
