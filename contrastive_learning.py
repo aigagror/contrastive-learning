@@ -278,8 +278,8 @@ def train(args, model, strategy, ds_train, ds_test):
       # Train
       train_accs, train_losses = epoch_train(args, model, strategy, ds_train)
       model.save_weights(os.path.join(args.out, 'model'))
-      all_train_accs.extend(train_accs)
-      all_train_losses.extend(train_losses)
+      all_train_accs.append(train_accs)
+      all_train_losses.append(train_losses)
 
       # Test
       test_accs = epoch_test(args, model, strategy, ds_test)
@@ -349,10 +349,11 @@ def plot_metrics(args, metrics):
 
   names = ['test accs', 'train accs', 'train losses']
   for i, (y, name) in enumerate(zip(metrics, names)):
-    x = np.linspace(0, args.epochs, len(y))
+    y = np.array(y)
+    x = np.linspace(0, len(y), y.size)
     ax[i].set_title(name)
     ax[i].set_xlabel('epochs')
-    ax[i].plot(x, y)
+    ax[i].plot(x, y.flatten())
   
   f.savefig(os.path.join(args.out, 'metrics.jpg'))
   plt.show()
@@ -374,6 +375,8 @@ def run(args):
 
   # Data
   ds_train, ds_test = load_datasets(args, strategy)
+  if len(gpus) <= 1:
+    plot_img_samples(args, ds_train, ds_test)
 
   # Model and optimizer
   with strategy.scope():
@@ -385,11 +388,10 @@ def run(args):
   metrics = train(args, model, strategy, ds_train, ds_test)
 
   # Plot
-  plot_img_samples(args, ds_train, ds_test)
   plot_metrics(args, metrics)
   plot_tsne(args, model, ds_test)
 
-args = '--bsz=1024 --epochs=10 --method=supcon --lr=1e-3'
+args = '--bsz=1024 --epochs=4 --method=supcon --lr=1e-3'
 args = parser.parse_args(args.split())
 print(args)
 
