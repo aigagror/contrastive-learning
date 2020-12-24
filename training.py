@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 
 def epoch_train(args, model, strategy, ds_train):
     accs, losses = [], []
-    for imgs1, labels in tqdm(ds_train, 'train', leave=False, mininterval=2):
+    for imgs1, labels in ds_train:
         # Train step
         loss, acc = strategy.run(model.train_step,
                                  args=(args.method, args.bsz, imgs1, labels))
@@ -22,7 +22,7 @@ def epoch_train(args, model, strategy, ds_train):
 
 def epoch_test(args, model, strategy, ds_test):
     accs = []
-    for imgs1, labels in tqdm(ds_test, 'test', leave=False, mininterval=2):
+    for imgs1, labels in ds_test:
         # Train step
         acc = strategy.run(model.test_step, args=(args.bsz, imgs1, labels))
         acc = strategy.reduce('SUM', acc, axis=None)
