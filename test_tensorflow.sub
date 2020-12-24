@@ -3,7 +3,7 @@
 
 # Must set the universe to Docker
 universe = docker
-docker_image = tensorflow/tensorflow:latest-gpu
+docker_image = aigagror/tensorflow
 
 # set the log, error and output files 
 log = tensorflow_gpu.log.txt
