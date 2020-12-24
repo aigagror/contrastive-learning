@@ -3,8 +3,8 @@ universe = docker
 docker_image = aigagror/tensorflow
 
 should_transfer_files = YES
-transfer_input_files = *.py,out/*
-transfer_output_files = out/*
+transfer_input_files = ./
+transfer_output_files = out
 when_to_transfer_output = ON_EXIT_OR_EVICT
 
 # set the log, error and output files 
