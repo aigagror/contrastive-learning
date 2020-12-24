@@ -16,7 +16,6 @@ def plot_img_samples(args, ds_train, ds_test):
 
     f.tight_layout()
     f.savefig(os.path.join(args.out, 'img-samples.jpg'))
-    plt.show()
 
 
 def plot_tsne(args, model, ds_test):
@@ -52,7 +51,6 @@ def plot_tsne(args, model, ds_test):
         ax[1].scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}')
 
     f.savefig(os.path.join(args.out, 'tsne.jpg'))
-    plt.show()
 
 
 def plot_metrics(args, metrics):
@@ -68,4 +66,3 @@ def plot_metrics(args, metrics):
         ax[i].plot(x, y.flatten())
 
     f.savefig(os.path.join(args.out, 'metrics.jpg'))
-    plt.show()

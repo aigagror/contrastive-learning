@@ -37,7 +37,7 @@ def train(args, model, strategy, ds_train, ds_test):
 
     try:
         pbar = tqdm(range(args.epochs), 'epochs', mininterval=2)
-        for epoch in pbar:
+        for _ in pbar:
             # Train
             train_accs, train_losses = epoch_train(args, model, strategy, ds_train)
             model.save_weights(os.path.join(args.out, 'model'))
