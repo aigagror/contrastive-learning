@@ -6,9 +6,9 @@ should_transfer_files = YES
 transfer_input_files = main.py,data.py,losses.py,models.py,plots.py
 
 # set the log, error and output files 
-log = out/log.txt
-error = out/err.txt
-output = out/out.txt
+log = log.txt
+error = err.txt
+output = out.txt
 
 # set the executable to run
 executable = run.sh
