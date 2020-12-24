@@ -46,14 +46,12 @@ class Augment(layers.Layer):
 
   @tf.function
   def call(self, image):
-    print('traced image augmentation')
-
     # Convert to float
     image = tf.image.convert_image_dtype(image, tf.float32)
 
     # Crop
     if self.rand_crop:
-      rand_scale = tf.random.uniform([], 1, 5)
+      rand_scale = tf.random.uniform([], 1, 2)
       rand_size = tf.round(rand_scale * self.imsize)
       image = tf.image.resize(image, [rand_size, rand_size])
       image = tf.image.random_crop(image, [self.imsize, self.imsize, 3])
@@ -133,7 +131,6 @@ def supcon_loss(labels, feats1, feats2, partial):
                                  'similarities not less than or equal to 1')
 
   if partial:
-    print('traced supcon loss - partial cross entropy')
     # Partial cross entropy
     pos_mask = tf.maximum(inst_mask, class_mask)
     neg_mask = 1 - pos_mask
@@ -148,7 +145,6 @@ def supcon_loss(labels, feats1, feats2, partial):
 
     loss = -class_log_prob
   else:
-    print('traced supcon loss - cross entropy')
     # Cross entropy
     loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10, 
                                            from_logits=True)    
@@ -183,9 +179,7 @@ class ContrastModel(keras.Model):
     x, _ = tf.linalg.normalize(x, axis=-1)
     return x
   
-  @tf.function
   def call(self, img):
-    print('traced model call')
     feats = self.feats(img)
     proj = self.project(feats)
     return self.classifier(feats), proj
@@ -194,7 +188,6 @@ class ContrastModel(keras.Model):
   def train_step(self, method, bsz, imgs1, labels):
     with tf.GradientTape() as tape:
       if method.startswith('supcon'):
-        print('traced model train step - supcon')
         partial = method.endswith('pce')
 
         # Features
@@ -207,7 +200,6 @@ class ContrastModel(keras.Model):
 
         pred_logits = self.classifier(tf.stop_gradient(feats1))
       elif method == 'ce':
-        print('traced model train step - cross entropy')
         con_loss = 0
         pred_logits, _ = self(imgs1)
       else:
@@ -218,6 +210,7 @@ class ContrastModel(keras.Model):
                                                           from_logits=True)
       class_loss = tf.nn.compute_average_loss(class_loss, global_batch_size=bsz)
       loss = con_loss + class_loss
+      tf.debugging.assert_all_finite(loss, 'loss not finite')
       scaled_loss = self.optimizer.get_scaled_loss(loss)
 
     # Gradient descent
@@ -232,7 +225,6 @@ class ContrastModel(keras.Model):
 
   @tf.function
   def test_step(self, bsz, imgs1, labels):
-    print('traced model test step')
     imgs1 = tf.image.convert_image_dtype(imgs1, tf.float32)
     pred_logits, _ = self(imgs1)
 
@@ -244,7 +236,7 @@ class ContrastModel(keras.Model):
 
 def epoch_train(args, model, strategy, ds_train):
   accs, losses = [], []
-  for imgs1, labels in ds_train:
+  for imgs1, labels in tqdm(ds_train, 'train', leave=False, mininterval=2):
     # Train step
     loss, acc = strategy.run(model.train_step, 
                              args=(args.method, args.bsz, imgs1, labels))
@@ -259,7 +251,7 @@ def epoch_train(args, model, strategy, ds_train):
 
 def epoch_test(args, model, strategy, ds_test):
   accs = []
-  for imgs1, labels in ds_test:
+  for imgs1, labels in tqdm(ds_test, 'test', leave=False, mininterval=2):
     # Train step
     acc = strategy.run(model.test_step, args=(args.bsz, imgs1, labels))
     acc = strategy.reduce('SUM', acc, axis=None)
@@ -391,8 +383,12 @@ def run(args):
   plot_metrics(args, metrics)
   plot_tsne(args, model, ds_test)
 
-args = '--bsz=1024 --epochs=4 --method=supcon --lr=1e-3'
+args = '--bsz=1024 --epochs=10 --method=supcon --lr=1e-3'
 args = parser.parse_args(args.split())
 print(args)
 
 run(args)
+
+# Commented out IPython magic to ensure Python compatibility.
+# %debug
+
