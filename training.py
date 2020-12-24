@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 
 
 def epoch_train(args, model, strategy, ds_train):
