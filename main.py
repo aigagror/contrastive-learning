@@ -21,7 +21,7 @@ parser.add_argument('--tsne', action='store_true')
 
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
-parser.add_argument('--out', type=str, default='./')
+parser.add_argument('--out', type=str, default='out/')
 
 
 def run(args):
