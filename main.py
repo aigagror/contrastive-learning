@@ -1,76 +1,66 @@
 import argparse
-import os
-parser = argparse.ArgumentParser()
 
-# Data
-parser.add_argument('--data', type=str)
-parser.add_argument('--nviews', type=int)
-parser.add_argument('--sampling', choices=['ib', 'cb', 'cr'])
-
-# Model
-parser.add_argument('--model', type=str)
-parser.add_argument('--load', action='store_true')
-parser.add_argument('--fix-feats', action='store_true')
-parser.add_argument('--crt', action='store_true')
-
-# Train
-parser.add_argument('--epochs', type=int)
-parser.add_argument('--lr', type=float)
-parser.add_argument('--steplr', type=int, default=None)
-parser.add_argument('--cosine', action='store_true')
-parser.add_argument('--batchsize', type=int)
-
-parser.add_argument('--tsne', action='store_true')
-
-# Contrastive learning
-parser.add_argument('--contrast', action='store_true')
-parser.add_argument('--pce', action='store_true')
-parser.add_argument('--temp', type=float, default=0.1)
-
-# Save
-parser.add_argument('--outdir', type=str, default='./out')
-
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import mixed_precision
 
 import data
-import plots
 import models
-import train
+import plots
+import training
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--epochs', type=int)
+parser.add_argument('--bsz', type=int)
+
+parser.add_argument('--lr', type=float)
+parser.add_argument('--load', action='store_true')
+parser.add_argument('--tsne', action='store_true')
+
+parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
+
+parser.add_argument('--out', type=str, default='out/')
+
 
 def run(args):
-  # Folder to save all work
-  if not os.path.exists(args.outdir):
-    os.mkdir(args.outdir)
+    # Mixed precision
+    policy = mixed_precision.Policy('mixed_float16')
+    mixed_precision.set_global_policy(policy)
 
-  # Data
-  train_loader, test_loader = data.load_data(args)
+    # Strategy
+    gpus = tf.config.list_physical_devices('GPU')
+    print(f'{len(gpus)} gpus')
+    if len(gpus) > 1:
+        strategy = tf.distribute.MirroredStrategy()
+    else:
+        strategy = tf.distribute.get_strategy()
+    print(f'using {strategy.__class__.__name__} strategy')
 
-  # Display sample of images from train loader
-  train_samples, _ = next(iter(train_loader))
-  plots.plot_samples(train_samples[0][:8])
+    # Data
+    ds_train, ds_test = data.load_datasets(args, strategy)
+    if len(gpus) <= 1:
+        plots.plot_img_samples(args, ds_train, ds_test)
 
-  # Model
-  model = models.make_model(args)
+    # Model and optimizer
+    with strategy.scope():
+        model = models.ContrastModel(args)
+        opt = keras.optimizers.SGD(args.lr, momentum=0.9)
+        model.optimizer = mixed_precision.LossScaleOptimizer(opt)
 
-  # Optionally load weights
-  models.optional_load_wts(args, model, f'{args.outdir}/model.pt')
+    # Train
+    metrics = training.train(args, model, strategy, ds_train, ds_test)
+    print(f'finished training. achieved {np.mean(metrics[0][-1]):.3} test accuracy')
 
-  # Train
-  metrics = train.train(args, model, train_loader, test_loader)
+    # Plot
+    plots.plot_metrics(args, metrics)
+    if args.tsne:
+        plots.plot_tsne(args, model, ds_test)
 
-  # Plot training metrics
-  if args.epochs > 0:
-    plots.plot_metrics(metrics, args.outdir)
-
-  # Plot metrics on features
-  if args.tsne:
-    plots.plot_tsne_similarity_types(model, train_loader, f'{args.outdir}/tsne_sim_types.jpg')
-    plots.plot_tsne(model, test_loader, f'{args.outdir}/tsne.jpg')
-  if args.contrast:
-    plots.plot_similarity_hist(model, train_loader, f'{args.outdir}/sims.jpg')
-
-  print(f'work saved to {args.outdir}')
 
 if __name__ == '__main__':
   args = parser.parse_args()
   print(args)
+
   run(args)

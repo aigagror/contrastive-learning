@@ -1,241 +1,71 @@
-import matplotlib.pyplot as plt
+import os
+
 import numpy as np
-import torch
-from torchvision.utils import make_grid
+import tensorflow as tf
+from matplotlib import pyplot as plt
 
 
-## Metrics
+def plot_img_samples(args, ds_train, ds_test):
+    f, ax = plt.subplots(2, 8)
+    f.set_size_inches(20, 6)
+    for i, ds in enumerate([ds_train, ds_test]):
+        imgs = next(iter(ds))[0]
+        for j in range(8):
+            ax[i, j].set_title('train' if i == 0 else 'test')
+            ax[i, j].imshow(imgs[j])
 
-class Metrics:
-    def __init__(self):
-        self.losses = {'train': [], 'test': []}
-        self.label = {'train': [], 'test': []}
-        self.pred = {'train': [], 'test': []}
-
-    def epoch_append_data(self, subset, loss, label, pred):
-        self.losses[subset].append(loss)
-        self.label[subset].append(label)
-        self.pred[subset].append(pred)
-
-    def epoch_loss(self, subset, reduce_steps):
-        losses = np.array(self.losses[subset])
-        assert losses.ndim == 2
-        n_epochs = len(losses)
-        if reduce_steps:
-            losses = np.mean(losses, axis=1)
-        else:
-            losses = losses.flatten()
-
-        return losses, n_epochs
-
-    def epoch_acc(self, subset):
-        label = np.array(self.label[subset])
-        pred = np.array(self.pred[subset])
-        acc = np.mean(label == pred, axis=1)
-        n_epochs = len(acc)
-        return acc, n_epochs
-
-    def last_epoch_acc(self, subset):
-        """
-        Returns instance-balanced accuracy and individual class accuracy
-        """
-        label = np.array(self.label[subset][-1])
-        pred = np.array(self.pred[subset][-1])
-        correct = label == pred
-        class_acc = []
-        for c in np.unique(label):
-            class_acc.append(np.mean(correct[label == c]))
-        return np.mean(correct), np.array(class_acc)
-
-    def epoch_str(self):
-        all_loss = []
-        train_accs = self.last_epoch_acc('train')
-        test_accs = self.last_epoch_acc('test')
-        for subset in ['train', 'test']:
-            all_loss.append(np.mean(self.losses[subset][-1]))
-
-        epoch_str = '(train/test): ' \
-                    f'({train_accs[0]:.3}/{train_accs[1].mean():.3})/({test_accs[0]:.3}/{test_accs[1].mean():.3}) inst/class acc, ' \
-                    f'{all_loss[0]:.3}/{all_loss[1]:.3} loss'
-        return epoch_str
-
-    def todict(self):
-        return self.__dict__.copy()
+    f.tight_layout()
+    f.savefig(os.path.join(args.out, 'img-samples.jpg'))
+    plt.show()
 
 
-def plot_samples(train_samples):
-    grid_img = make_grid(train_samples, nrow=8, normalize=True)
-    grid_img = np.transpose(grid_img.numpy(), (1, 2, 0))
-    plt.figure(figsize=(20, 4))
-    plt.title('image samples')
-    plt.imshow(grid_img, interpolation='nearest')
+def plot_tsne(args, model, ds_test):
+    from sklearn import manifold
+
+    all_feats, all_proj, all_labels = [], [], []
+    for imgs, labels in ds_test:
+        imgs = tf.image.convert_image_dtype(imgs, tf.float32)
+        feats = model.feats(imgs)
+        proj = model.project(feats)
+
+        all_feats.append(feats.numpy())
+        all_proj.append(proj.numpy())
+        all_labels.append(labels.numpy())
+
+    all_feats = np.concatenate(all_feats)
+    all_proj = np.concatenate(all_proj)
+    all_labels = np.concatenate(all_labels)
+
+    feats_embed = manifold.TSNE().fit_transform(all_feats)
+    proj_embed = manifold.TSNE().fit_transform(all_proj)
+
+    classes = np.unique(all_labels)
+    f, ax = plt.subplots(1, 2)
+    f.set_size_inches(13, 5)
+    ax[0].set_title('feats')
+    ax[1].set_title('projected features')
+    for c in classes:
+        class_feats_embed = feats_embed[all_labels == c]
+        class_proj_embed = proj_embed[all_labels == c]
+
+        ax[0].scatter(class_feats_embed[:, 0], class_feats_embed[:, 1], label=f'{c}')
+        ax[1].scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}')
+
+    f.savefig(os.path.join(args.out, 'tsne.jpg'))
+    plt.show()
 
 
-def plot_metrics(metrics, outdir):
-    # Loss over epochs
-    plt.figure(figsize=(20, 5))
-    plt.title('loss')
-    plt.xlabel('epochs')
-    for subset, reduce_steps in [('train', False), ('test', True)]:
-        loss_data, n_epochs = metrics.epoch_loss(subset, reduce_steps)
-        if reduce_steps:
-            loss_data = np.insert(loss_data, 0, loss_data[0])
-        x = np.linspace(0, n_epochs, num=len(loss_data))
-        plt.plot(x, loss_data, label=f'{subset} loss')
-    plt.legend()
-    plt.savefig(f'{outdir}/loss.jpg')
+def plot_metrics(args, metrics):
+    f, ax = plt.subplots(1, len(metrics))
+    f.set_size_inches(15, 5)
 
-    # Accuracy (instance-balanced) over epochs
-    plt.figure(figsize=(20, 5))
-    plt.title('accuracy')
-    plt.xlabel('epochs')
-    for subset in ['train', 'test']:
-        acc_data, n_epochs = metrics.epoch_acc(subset)
-        acc_data = np.insert(acc_data, 0, acc_data[0])
-        x = np.linspace(0, n_epochs, num=len(acc_data))
-        plt.plot(x, acc_data, label=f'{subset} acc')
-    plt.legend()
-    plt.savefig(f'{outdir}/epoch_acc.jpg')
+    names = ['test accs', 'train accs', 'train losses']
+    for i, (y, name) in enumerate(zip(metrics, names)):
+        y = np.array(y)
+        x = np.linspace(0, len(y), y.size)
+        ax[i].set_title(name)
+        ax[i].set_xlabel('epochs')
+        ax[i].plot(x, y.flatten())
 
-    # Final class and instance based accuracies
-    width = 0.2
-    plt.figure(figsize=(20, 5))
-    plt.xlabel('classes'), plt.title('class accuracy')
-    for subset in ['train', 'test']:
-        inst_acc, class_acc = metrics.last_epoch_acc(subset)
-        classes = np.arange(len(class_acc))
-        plt.bar(classes - width / 2, class_acc, width,
-                label=f'{subset} - {inst_acc:.3}/{class_acc.mean():.3} insta/class acc')
-    plt.legend()
-    plt.savefig(f'{outdir}/final_acc.jpg')
-
-
-def plot_similarity_hist(model, data_loader, outpath):
-    """
-    Assumes the model was trained with contrastive learning,
-    which means that the data_loader should have more than 1 view
-    """
-    print('plotting similarities of features')
-    inst_sims, class_sims, neg_sims = [], [], []
-    model.eval(), model.cuda()
-    with torch.no_grad():
-        for img_views, labels in data_loader:
-            img_views = [imgs.cuda() for imgs in img_views]
-            labels = labels.cuda()
-
-            # Features
-            feat_views = model.feats(img_views)
-            project_views = model.project(feat_views)
-
-            # All similarities
-            all_sims = torch.matmul(project_views[0], project_views[1].T)
-
-            # Masks to seperate types of similarities
-            labels = labels.contiguous().view(-1, 1)
-            eye = torch.eye(len(labels), dtype=torch.float32, device='cuda')
-            mask = torch.eq(labels, labels.T).float()
-            neg_mask = 1 - mask
-            class_mask = mask - eye
-
-            # Add similarities to respective groups
-            inst_sims.extend(torch.diagonal(all_sims).cpu().tolist())
-            class_sims.extend(torch.masked_select(all_sims, class_mask.bool()).cpu().tolist())
-            neg_sims.extend(torch.masked_select(all_sims, neg_mask.bool()).cpu().tolist())
-
-    # Plot similarities based on type
-    plt.figure(figsize=(6, 6))
-    plt.title(f'similarities of features')
-    sim_data = [(inst_sims, 'inst'), (class_sims, 'class'), (neg_sims, 'neg')]
-    for sims, label in sim_data:
-        plt.hist(sims, density=True, label=label, alpha=0.3)
-    plt.legend()
-
-    # Save and show
-    plt.savefig(outpath)
-
-
-from sklearn import manifold
-
-
-def plot_tsne_similarity_types(model, data_loader, outpath):
-    print('plotting t-SNE visualization of features by similarity type')
-    model.eval(), model.cuda()
-
-    aug_feats, class_feats, neg_feats = [], [], []
-    with torch.no_grad():
-        img_views, labels = next(iter(data_loader))
-        nviews = len(img_views)
-        bsz = len(labels)
-        img_views = [imgs.cuda() for imgs in img_views]
-        feat_views = model.feats(img_views)
-        feat_views = [feats.cpu().numpy() for feats in feat_views]
-
-        root_feat = feat_views[0][0]
-        root_class = labels[0]
-
-        # Class and negative similarities
-        for i in range(1, nviews):
-            # Instance similarities (augmented)
-            aug_feats.append(feat_views[i][0])
-            for j in range(bsz):
-                if labels[j] == root_class:
-                    # Class similarities
-                    class_feats.append(feat_views[i][j])
-                else:
-                    # Negative similarities
-                    neg_feats.append(feat_views[i][j])
-
-    neg_feats = neg_feats[:bsz]
-
-    X = np.concatenate([[root_feat], aug_feats, class_feats, neg_feats])
-    y = np.concatenate([['root'], ['inst'] * len(aug_feats),
-                        ['class'] * len(class_feats),
-                        ['neg'] * len(neg_feats)])
-    tsne = manifold.TSNE()
-    X_embed = tsne.fit_transform(X)
-
-    unique_y = np.unique(y)
-    plt.figure(figsize=(12, 12))
-    feat_dim = feat_views[0].shape[1]
-    plt.title(f't-SNE, feature dimension: {feat_dim}')
-    for target in unique_y:
-        X_target = X_embed[y == target]
-        assert X_target.shape[1] == 2
-        plt.scatter(X_target[:, 0], X_target[:, 1], label=f'{target}', marker='.')
-    if len(unique_y) <= 10:
-        plt.legend()
-
-    # Save and show
-    plt.savefig(outpath)
-
-
-def plot_tsne(model, data_loader, outpath):
-    print('plotting t-SNE visualization of features')
-    X, y = [], []
-    model.eval(), model.cuda()
-    feat_dim = None
-    with torch.no_grad():
-        for img_views, labels in data_loader:
-            img_views = [imgs.cuda() for imgs in img_views]
-            feat_views = model.feats(img_views)
-            feats = feat_views[0]
-            feat_dim = feats.shape[1]
-            X.extend(feats.cpu().tolist())
-            y.extend(labels.tolist())
-    X, y = np.array(X), np.array(y)
-
-    tsne = manifold.TSNE()
-    X_embed = tsne.fit_transform(X)
-
-    unique_y = np.unique(y)
-    plt.figure(figsize=(6, 6))
-    plt.title(f't-SNE, feature dimension: {feat_dim}')
-    for target in unique_y:
-        X_target = X_embed[y == target]
-        assert X_target.shape[1] == 2
-        plt.scatter(X_target[:, 0], X_target[:, 1], label=f'{target}', alpha=0.2)
-    if len(unique_y) <= 10:
-        plt.legend()
-
-    # Save and show
-    plt.savefig(outpath)
+    f.savefig(os.path.join(args.out, 'metrics.jpg'))
+    plt.show()

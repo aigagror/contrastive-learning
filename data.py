@@ -1,174 +1,80 @@
-import pickle
-
-import numpy as np
-import torch
-from torch.utils import data
-from torchvision import transforms, datasets
+import tensorflow as tf
+from tensorflow.keras import layers, datasets
+from tensorflow.python.data import AUTOTUNE
 
 
-## Data
+class Augment(layers.Layer):
+  def __init__(self, imsize, rand_crop, rand_flip, rand_jitter, rand_gray):
+    super().__init__(name='image-augmentation')
+    self.imsize = imsize
+    self.rand_crop = rand_crop
+    self.rand_flip = rand_flip
+    self.rand_jitter = rand_jitter
+    self.rand_gray = rand_gray
 
-#### Transforms
+  @tf.function
+  def call(self, image):
+    # Convert to float
+    image = tf.image.convert_image_dtype(image, tf.float32)
 
-class ViewsTransform:
-    def __init__(self, views):
-        self.views = views
-
-        # Sub-class must define the transform
-        self.transform = None
-
-    def __call__(self, x):
-        ret = []
-        for _ in range(self.views):
-            ret.append(self.transform(x))
-        return ret
-
-
-class AugTransform(ViewsTransform):
-    def __init__(self, views, imsize):
-        super().__init__(views)
-        self.transform = transforms.Compose([
-            transforms.RandomResizedCrop(size=imsize, scale=(0.2, 1.)),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomApply([
-                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
-            ], p=0.8),
-            transforms.RandomGrayscale(p=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        ])
-
-
-class BaseTransform(ViewsTransform):
-    def __init__(self, views):
-        super().__init__(views)
-        self.transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-        ])
-
-
-#### Datasets and dataloaders
-
-class ImgLabelTensorDataset(data.TensorDataset):
-    def __init__(self, tensors, pil_transform, label_transform=None):
-        super().__init__(*tensors)
-        assert len(self.tensors) == 2
-        self.targets = self.tensors[1].tolist()
-        self.img_transform = transforms.Compose([transforms.ToPILImage(),
-                                                 pil_transform])
-        self.label_transform = label_transform
-
-    def __getitem__(self, index):
-        img = self.img_transform(self.tensors[0][index])
-        label = self.tensors[1][index]
-        if self.label_transform is not None:
-            label = self.label_transform(label)
-        return (img, label)
-
-
-def load_mi_class_imgs():
-    train_pkl = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/train.pkl", "rb"))
-    val_pkl = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/val.pkl", "rb"))
-    test_pkl = pickle.load(open("/gdrive/My Drive/datasets/miniimagenet/test.pkl", "rb"))
-
-    imgs_train = train_pkl['image_data'].reshape(64, 600, 84, 84, 3)
-    imgs_val = val_pkl['image_data'].reshape(16, 600, 84, 84, 3)
-    imgs_test = test_pkl['image_data'].reshape(20, 600, 84, 84, 3)
-
-    class_imgs = np.concatenate([imgs_train, imgs_val, imgs_test])
-    class_imgs = class_imgs.astype(np.float32)
-    class_imgs = class_imgs.transpose(0, 1, 4, 2, 3) / 255
-    return class_imgs
-
-
-def mi_to_dataset(mi_path, pil_transform, label_transform=None):
-    all_class_imgs = load_mi_class_imgs()
-    mi_data = pickle.load(open(mi_path, 'rb'))
-    imgs, classes = [], []
-    for c, class_idcs in enumerate(mi_data):
-        imgs.append(all_class_imgs[c, class_idcs])
-        classes.append(np.full(class_idcs.shape, c))
-
-    imgs = np.concatenate(imgs)
-    classes = np.concatenate(classes).astype(np.long)
-
-    imgs = torch.tensor(imgs)
-    classes = torch.tensor(classes)
-    return ImgLabelTensorDataset((imgs, classes), pil_transform, label_transform)
-
-
-def make_data_loader(dataset, batchsize, sampling, drop_last=False):
-    if sampling == 'cb' or sampling == 'cr':
-        targets = dataset.targets
-        class_sample_count = np.unique(targets, return_counts=True)[1]
-
-        if sampling == 'cb':
-            weight = 1 / class_sample_count
-        else:
-            assert sampling == 'cr'
-            weight = 1 / (class_sample_count ** 2)
-        samples_weight = weight[targets]
-        samples_weight = torch.from_numpy(samples_weight)
-        sampler = data.WeightedRandomSampler(samples_weight, len(samples_weight))
-        data_loader = data.DataLoader(dataset, batch_size=batchsize,
-                                      sampler=sampler, num_workers=4,
-                                      pin_memory=True, drop_last=drop_last)
+    # Crop
+    if self.rand_crop:
+      rand_scale = tf.random.uniform([], 1, 2)
+      rand_size = tf.round(rand_scale * self.imsize)
+      image = tf.image.resize(image, [rand_size, rand_size])
+      image = tf.image.random_crop(image, [self.imsize, self.imsize, 3])
     else:
-        assert sampling == 'ib'
-        data_loader = data.DataLoader(dataset, shuffle=True,
-                                      batch_size=batchsize, num_workers=4,
-                                      pin_memory=True, drop_last=drop_last)
+      image = tf.image.resize(image, [self.imsize, self.imsize])
 
-    return data_loader
+    # Random flip
+    if self.rand_flip:
+      image = tf.image.random_flip_left_right(image)
+
+    # Color Jitter
+    if self.rand_jitter and tf.random.uniform([]) < 0.8:
+      image = tf.image.random_brightness(image, 0.4)
+      image = tf.image.random_contrast(image, 0.6, 1.4)
+      image = tf.image.random_saturation(image, 0.6, 1.4)
+      image = tf.image.random_hue(image, 0.1)
+
+    # Gray scale
+    if self.rand_gray and tf.random.uniform([]) < 0.2:
+      image = tf.image.rgb_to_grayscale(image)
+      image = tf.tile(image, [1, 1, 3])
+
+    # Clip
+    image = tf.clip_by_value(image, 0, 1)
+
+    return image
 
 
-#### Load data
+def load_datasets(args, strategy):
+  (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
+  ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
+  ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten()))
 
-def load_data(args):
-    imsize_dict = {
-        'mi-bal': 84,
-        'mi-lt': 84,
-        'cifar10': 32,
-        'cifar100': 32
-    }
-    imsize = imsize_dict[args.data]
-    train_transform = AugTransform(args.nviews, imsize)
-    test_transform = BaseTransform(views=1)
-    if args.data.startswith('mi'):
-        # Mini Imagenet
-        if args.data.endswith('-lt'):
-            # Long tail version
-            train_path = "/gdrive/My Drive/datasets/miniimagenet/custom-lt/train.pkl"
-            test_path = "/gdrive/My Drive/datasets/miniimagenet/custom-lt/test.pkl"
-        else:
-            assert args.data.endswith('mi-bal')
-            # Regular balanced version
-            train_path = "/gdrive/My Drive/datasets/miniimagenet/custom-balanced/train.pkl"
-            test_path = "/gdrive/My Drive/datasets/miniimagenet/custom-balanced/test.pkl"
+  augment = Augment(imsize=32, rand_crop=True, rand_flip=True,
+                    rand_jitter=True, rand_gray=True)
+  def train_map(imgs, labels):
+    return augment(imgs), labels
 
-        train_dataset = mi_to_dataset(train_path, train_transform)
-        test_dataset = mi_to_dataset(test_path, test_transform)
-    elif args.data == 'cifar10':
-        # CIFAR 10
-        train_dataset = datasets.CIFAR10('./', train=True,
-                                         transform=train_transform, download=True)
-        test_dataset = datasets.CIFAR10('./', train=False,
-                                        transform=test_transform, download=True)
-    elif args.data == 'cifar100':
-        # CIFAR 100
-        train_dataset = datasets.CIFAR100('./', train=True,
-                                          transform=train_transform, download=True)
-        test_dataset = datasets.CIFAR100('./', train=False,
-                                         transform=test_transform, download=True)
-    else:
-        raise Exception(f'Unknown data {args.data}')
+  ds_train = (
+      ds_train
+      .cache()
+      .map(train_map, num_parallel_calls=AUTOTUNE)
+      .shuffle(len(ds_train))
+      .batch(args.bsz, drop_remainder=True)
+      .prefetch(AUTOTUNE)
+  )
+  ds_test = (
+      ds_test
+      .cache()
+      .shuffle(len(ds_test))
+      .batch(args.bsz)
+      .prefetch(AUTOTUNE)
+  )
 
-    # Data loader
-    train_loader = make_data_loader(train_dataset, args.batchsize,
-                                    args.sampling, drop_last=True)
-    test_loader = make_data_loader(test_dataset, args.batchsize,
-                                   sampling='ib')
+  ds_train = strategy.experimental_distribute_dataset(ds_train)
+  ds_test = strategy.experimental_distribute_dataset(ds_test)
 
-    return train_loader, test_loader
+  return ds_train, ds_test
