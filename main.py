@@ -1,3 +1,6 @@
+import os
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 import argparse
 
 import tensorflow as tf
@@ -42,10 +45,6 @@ def get_strategy():
 
 
 def run(args):
-    # Set log info
-    tf.get_logger().setLevel('WARNING')
-    tf.autograph.set_verbosity(2)
-
     # Mixed precision
     policy = mixed_precision.Policy('mixed_float16')
     mixed_precision.set_global_policy(policy)
