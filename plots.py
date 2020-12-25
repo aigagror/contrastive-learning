@@ -105,7 +105,7 @@ def plot_metrics(args, train_df, test_df):
 
     for i, metric in enumerate(all_metrics):
         ax[i].set_title(metric)
-        for df, split in [(train_df, 'train', test_df, 'test')]:
+        for df, split in [(train_df, 'train'), (test_df, 'test')]:
             nsteps, nepochs = len(df), df['epochs'].max()
             x = np.linspace(0, nepochs, nsteps)
             ax[i].plot(x, df[metric], label=split)
