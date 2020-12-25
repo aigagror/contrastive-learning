@@ -49,7 +49,7 @@ def train(args, model, strategy, ds_train, ds_test):
             test_df.to_csv(test_path, mode='a', header=False, index=False)
 
             # Progress bar
-            pbar.set_postfix_str(f'train - {dict(train_df.mean())}, test - {dict(test_df.mean())}', refresh=False)
+            pbar.set_postfix_str(f'train - {train_df.mean()}, test - {test_df.mean()}', refresh=False)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
