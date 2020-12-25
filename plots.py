@@ -4,6 +4,51 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
+def plot_hist_sims(args, model, ds_test):
+    neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
+    proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
+    for imgs1, imgs2, labels in ds_test:
+        # Features and similarities
+        feats1, feats2 = model.feats(imgs1), model.feats(imgs2)
+        proj1, proj2 = model.project(feats1), model.project(feats2)
+        sims = tf.matmul(feats1, tf.transpose(feats2))
+        proj_sims = tf.matmul(proj1, tf.transpose(proj2))
+
+        # Masks
+        bsz = len(labels)
+        labels = tf.expand_dims(labels, 1)
+        inst_mask = tf.eye(bsz, dtype=tf.bool)
+        class_mask = (labels == tf.transpose(labels))
+        pos_mask = inst_mask | class_mask
+        neg_mask = ~pos_mask
+
+        # Similarity types
+        neg_sims = np.append(neg_sims, tf.boolean_mask(sims, neg_mask).numpy())
+        class_sims = np.append(class_sims, tf.boolean_mask(sims, class_mask).numpy())
+        inst_sims = np.append(inst_sims, tf.boolean_mask(sims, inst_mask).numpy())
+
+        # Projected similarity types
+        proj_neg_sims = np.append(proj_neg_sims, tf.boolean_mask(proj_sims, neg_mask).numpy())
+        proj_class_sims = np.append(proj_class_sims, tf.boolean_mask(proj_sims, class_mask).numpy())
+        proj_inst_sims = np.append(proj_inst_sims, tf.boolean_mask(proj_sims, inst_mask).numpy())
+
+    # Plot
+    f, ax = plt.subplots(1, 2)
+    f.set_size_inches(13, 5)
+    ax[0].set_title('similarity types')
+    ax[0].hist(neg_sims, label='neg', density=True)
+    ax[0].hist(class_sims, label='class', density=True)
+    ax[0].hist(inst_sims, label='inst', density=True)
+
+    ax[1].set_title('projected similarity types')
+    ax[1].hist(proj_neg_sims, label='neg', density=True)
+    ax[1].hist(proj_class_sims, label='class', density=True)
+    ax[1].hist(proj_inst_sims, label='inst', density=True)
+
+    f.savefig(os.path.join(args.out, 'similarity-types.jpg'))
+
+
+
 
 def plot_img_samples(args, ds_train, ds_test):
     f, ax = plt.subplots(2, 8)

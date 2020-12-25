@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers, datasets
 from tensorflow.python.data import AUTOTUNE
+import tensorflow_datasets as tfds
 
 
 class Augment(layers.Layer):
@@ -49,19 +50,25 @@ class Augment(layers.Layer):
 
 
 def load_datasets(args, strategy):
-    (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
-    ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
-    ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten()))
+    if args.data == 'cifar10':
+        imsize = 32
+        (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
+        ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
+        ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten()))
+    elif args.data =='imagenet':
+        imsize = 224
+        ds_train = tfds.folder_dataset.ImageFolder(args.imagenet_train).as_dataset(shuffle_files=True)
+        ds_test = tfds.folder_dataset.ImageFolder(args.imagenet_val).as_dataset(shuffle_files=True)
+    else:
+        raise Exception(f'unknown data {args.data}')
 
-    augment = Augment(imsize=32, rand_crop=True, rand_flip=True,
-                      rand_jitter=True, rand_gray=True)
+    augment = Augment(imsize, rand_crop=True, rand_flip=True, rand_jitter=True, rand_gray=True)
 
     def train_map(imgs, labels):
         return augment(imgs), labels
 
     ds_train = (
         ds_train
-            .cache()
             .map(train_map, num_parallel_calls=AUTOTUNE)
             .shuffle(len(ds_train))
             .batch(args.bsz, drop_remainder=True)
@@ -69,7 +76,6 @@ def load_datasets(args, strategy):
     )
     ds_test = (
         ds_test
-            .cache()
             .shuffle(len(ds_test))
             .batch(args.bsz)
             .prefetch(AUTOTUNE)

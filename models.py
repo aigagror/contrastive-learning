@@ -24,7 +24,7 @@ class ContrastModel(keras.Model):
 
     def feats(self, img):
         x = applications.resnet_v2.preprocess_input(img)
-        x = self.cnn(img)
+        x = self.cnn(x)
         x = self.avg_pool(x)
         x, _ = tf.linalg.normalize(x, axis=-1)
         return x

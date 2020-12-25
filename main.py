@@ -12,16 +12,25 @@ import training
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--epochs', type=int)
-parser.add_argument('--bsz', type=int)
+# Data
+parser.add_argument('--data', choices=['cifar10', 'imagenet'])
+parser.add_argument('--imagenet-train', type=str)
+parser.add_argument('--imagenet-val', type=str)
 
-parser.add_argument('--lr', type=float)
-parser.add_argument('--load', action='store_true')
-parser.add_argument('--tsne', action='store_true')
-
+# Method
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
+# Training
+parser.add_argument('--epochs', type=int)
+parser.add_argument('--bsz', type=int)
+parser.add_argument('--lr', type=float)
+
+# Other
+parser.add_argument('--load', action='store_true')
+parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
+
+
 
 
 def run(args):
@@ -55,6 +64,7 @@ def run(args):
 
     # Plot
     plots.plot_metrics(args, metrics)
+    plots.plot_hist_sims(args, model, ds_test)
     if args.tsne:
         plots.plot_tsne(args, model, ds_test)
 

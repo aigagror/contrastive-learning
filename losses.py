@@ -6,10 +6,11 @@ from tensorflow.keras import losses
 def supcon_loss(labels, feats1, feats2, partial):
     bsz = len(labels)
     labels = tf.expand_dims(labels, 1)
+    dtype = feats1.dtype
 
     # Masks
-    inst_mask = tf.eye(bsz, dtype=tf.float16)
-    class_mask = tf.cast(labels == tf.transpose(labels), tf.float16)
+    inst_mask = tf.eye(bsz, dtype=dtype)
+    class_mask = tf.cast(labels == tf.transpose(labels), dtype)
     class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
 
     # Similarities
