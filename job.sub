@@ -17,7 +17,7 @@ executable = run.sh
 arguments = $(Process)
 
 # we require a machine with a modern version of the CUDA driver
-requirements = (Target.CUDADriverVersion >= 10.1)
+requirements = (Target.CUDADriverVersion >= 10.1) && machine=="vision-01.cs.illinois.edu"
 
 # we must request 1 CPU in addition to 1 GPU
 request_cpus = 13
@@ -31,7 +31,7 @@ request_disk = 5GB
 +WantGPULab = true
 # Specify short job type to run more GPUs in parallel
 # Can also request "medium" or "long"
-+GPUJobLength = "short"
+# +GPUJobLength = "short"
 
 # tell HTCondor to run 1 instances of our job:
 queue 1
