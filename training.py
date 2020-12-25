@@ -4,6 +4,16 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
+def make_status_str(train_df, test_df):
+    train_status = dict(train_df.mean())
+    test_status = dict(test_df.mean())
+    ret = 'train: '
+    for k, v in train_status.items():
+        ret += f'{v:.3} {k}, '
+    ret += 'test: '
+    for k, v in test_status.items():
+        ret += f'{v:.3} {k}, '
+    return ret
 
 def epoch_train(args, model, strategy, ds, optimize):
     all_accs, all_ce_losses, all_con_losses = [], [], []
@@ -53,9 +63,7 @@ def train(args, model, strategy, ds_train, ds_test):
             test_df.to_csv(test_path, mode='a', header=False, index=False)
 
             # Progress bar
-            pbar.set_postfix_str(f"\nTrain\n{train_df.groupby('epoch').mean()[-1:]}\n"
-                                 f"\nTest\n{test_df.groupby('epoch').mean()[-1:]}",
-                                 refresh=False)
+            pbar.set_postfix_str(make_status_str(train_df, test_df), refresh=False)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
