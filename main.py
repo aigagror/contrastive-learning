@@ -42,6 +42,9 @@ def get_strategy():
 
 
 def run(args):
+    # Set log info
+    tf.get_logger().setLevel('INFO')
+
     # Mixed precision
     policy = mixed_precision.Policy('mixed_float16')
     mixed_precision.set_global_policy(policy)
