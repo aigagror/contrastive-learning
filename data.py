@@ -68,6 +68,7 @@ def load_datasets(args, strategy):
         return augment(imgs), augment(imgs), labels
 
     def dual_views(imgs, labels):
+        imgs = tf.image.convert_image_dtype(imgs, tf.float32)
         return imgs, imgs, labels
 
     ds_train = (
