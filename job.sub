@@ -20,7 +20,7 @@ arguments = $(Process)
 requirements = (Target.CUDADriverVersion >= 10.1)
 
 # we must request 1 CPU in addition to 1 GPU
-request_cpus = 17
+request_cpus = 13
 request_gpus = 3
 
 # select some memory and disk space
