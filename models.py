@@ -40,17 +40,17 @@ class ContrastModel(keras.Model):
         return self.classifier(feats), proj
 
     @tf.function
-    def train_step(self, method, bsz, imgs1, labels):
-        with tf.GradientTape() as tape:
+    def train_step(self, method, bsz, imgs1, imgs2, labels, optimize):
+        with tf.GradientTape(watch_accessed_variables=optimize) as tape:
             if method.startswith('supcon'):
                 partial = method.endswith('pce')
 
                 # Features
-                feats1 = self.feats(imgs1)
-                proj1 = self.project(feats1)
+                feats1, feats2 = self.feats(imgs1), self.feats(imgs2)
+                proj1, proj2 = self.project(feats1), self.project(feats2)
 
                 # Contrast
-                con_loss = supcon_loss(labels, proj1, tf.stop_gradient(proj1), partial)
+                con_loss = supcon_loss(labels, proj1, tf.stop_gradient(proj2), partial)
                 con_loss = tf.nn.compute_average_loss(con_loss, global_batch_size=bsz)
 
                 pred_logits = self.classifier(tf.stop_gradient(feats1))
@@ -61,27 +61,19 @@ class ContrastModel(keras.Model):
                 raise Exception(f'unknown train method {method}')
 
             # Classifer cross entropy
-            class_loss = losses.sparse_categorical_crossentropy(labels, pred_logits,
-                                                                from_logits=True)
-            class_loss = tf.nn.compute_average_loss(class_loss, global_batch_size=bsz)
-            loss = con_loss + class_loss
+            ce_loss = losses.sparse_categorical_crossentropy(labels, pred_logits,
+                                                             from_logits=True)
+            ce_loss = tf.nn.compute_average_loss(ce_loss, global_batch_size=bsz)
+            loss = con_loss + ce_loss
             scaled_loss = self.optimizer.get_scaled_loss(loss)
 
         # Gradient descent
-        scaled_gradients = tape.gradient(scaled_loss, self.trainable_variables)
-        gradients = self.optimizer.get_unscaled_gradients(scaled_gradients)
-        self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
+        if optimize:
+            scaled_gradients = tape.gradient(scaled_loss, self.trainable_variables)
+            gradients = self.optimizer.get_unscaled_gradients(scaled_gradients)
+            self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
-        return loss, acc
-
-    @tf.function
-    def test_step(self, bsz, imgs1, labels):
-        imgs1 = tf.image.convert_image_dtype(imgs1, tf.float32)
-        pred_logits, _ = self(imgs1)
-
-        acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
-        acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
-        return acc
+        return acc, con_loss, ce_loss

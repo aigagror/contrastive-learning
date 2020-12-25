@@ -1,56 +1,55 @@
 import os
 
-import numpy as np
+import pandas as pd
 from tqdm.auto import tqdm
 
 
-def epoch_train(args, model, strategy, ds_train):
-    accs, losses = [], []
-    for imgs1, labels in ds_train:
+def epoch_train(args, model, strategy, ds, optimize):
+    all_accs, all_ce_losses, all_con_losses = [], [], []
+    for imgs1, imgs2, labels in ds:
         # Train step
-        loss, acc = strategy.run(model.train_step,
-                                 args=(args.method, args.bsz, imgs1, labels))
-        loss = strategy.reduce('SUM', loss, axis=None)
+        step_args = (args.method, args.bsz, imgs1, imgs2, labels, optimize)
+        acc, ce_loss, con_loss = strategy.run(model.train_step, args=step_args)
         acc = strategy.reduce('SUM', acc, axis=None)
+        ce_loss = strategy.reduce('SUM', ce_loss, axis=None)
+        con_loss = strategy.reduce('SUM', con_loss, axis=None)
 
         # Record
-        losses.append(float(loss))
-        accs.append(float(acc))
+        all_accs.append(float(acc))
+        all_ce_losses.append(float(ce_loss))
+        all_con_losses.append(float(con_loss))
 
-    return accs, losses
-
-
-def epoch_test(args, model, strategy, ds_test):
-    accs = []
-    for imgs1, labels in ds_test:
-        # Train step
-        acc = strategy.run(model.test_step, args=(args.bsz, imgs1, labels))
-        acc = strategy.reduce('SUM', acc, axis=None)
-
-        # Record
-        accs.append(float(acc))
-    return accs
+    return all_accs, all_ce_losses, all_con_losses
 
 
 def train(args, model, strategy, ds_train, ds_test):
-    all_test_accs, all_train_accs, all_train_losses = [], [], []
+    columns = ['epoch', 'acc', 'ce-loss', 'con-loss']
+    train_path = os.path.join(args.out, 'train.csv')
+    test_path = os.path.join(args.out, 'test.csv')
+    if not args.load:
+        # Reset metrics
+        pd.DataFrame(columns=columns).to_csv(train_path)
+        pd.DataFrame(columns=columns).to_csv(test_path)
 
     try:
-        pbar = tqdm(range(args.epochs), 'epochs', mininterval=2)
-        for _ in pbar:
+        pbar = tqdm(range(1, args.epochs + 1), 'epochs', mininterval=2)
+        for epoch in pbar:
             # Train
-            train_accs, train_losses = epoch_train(args, model, strategy, ds_train)
+            train_metrics = epoch_train(args, model, strategy, ds_train, optimize=True)
+            train_df = pd.DataFrame(dict(zip(columns, (epoch,) + train_metrics)))
+            train_df.to_csv(train_path, mode='a', header=False)
+
+            # Save weights
             model.save_weights(os.path.join(args.out, 'model'))
-            all_train_accs.append(train_accs)
-            all_train_losses.append(train_losses)
 
             # Test
-            test_accs = epoch_test(args, model, strategy, ds_test)
-            all_test_accs.append(test_accs)
-            pbar.set_postfix_str(f'{np.mean(train_losses):.3} loss, ' \
-                                 f'{np.mean(train_accs):.3} acc, ' \
-                                 f'{np.mean(test_accs):.3} test acc', refresh=False)
+            test_metrics = epoch_train(args, model, strategy, ds_test, optimize=False)
+            test_df = pd.DataFrame(dict(zip(columns, (epoch,) + test_metrics)))
+            test_df.to_csv(test_path, mode='a', header=False)
+
+            # Progress bar
+            pbar.set_postfix_str(f'train - {dict(train_df.mean())}, test - {dict(test_df.mean())}', refresh=False)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
-    return all_test_accs, all_train_accs, all_train_losses
+    return pd.read_csv(train_path), pd.read_csv(test_path)

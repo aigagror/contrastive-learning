@@ -1,6 +1,5 @@
 import argparse
 
-import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import mixed_precision
@@ -31,6 +30,15 @@ parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
 
 
+def get_strategy():
+    gpus = tf.config.list_physical_devices('GPU')
+    print(f'{len(gpus)} gpus')
+    if len(gpus) > 1:
+        strategy = tf.distribute.MirroredStrategy()
+    else:
+        strategy = tf.distribute.get_strategy()
+    print(f'using {strategy.__class__.__name__} strategy')
+    return strategy
 
 
 def run(args):
@@ -39,17 +47,11 @@ def run(args):
     mixed_precision.set_global_policy(policy)
 
     # Strategy
-    gpus = tf.config.list_physical_devices('GPU')
-    print(f'{len(gpus)} gpus')
-    if len(gpus) > 1:
-        strategy = tf.distribute.MirroredStrategy()
-    else:
-        strategy = tf.distribute.get_strategy()
-    print(f'using {strategy.__class__.__name__} strategy')
+    strategy = get_strategy()
 
     # Data
     ds_train, ds_test = data.load_datasets(args, strategy)
-    if len(gpus) <= 1:
+    if not isinstance(strategy, tf.distribute.MirroredStrategy):
         plots.plot_img_samples(args, ds_train, ds_test)
 
     # Model and optimizer
@@ -59,11 +61,10 @@ def run(args):
         model.optimizer = mixed_precision.LossScaleOptimizer(opt)
 
     # Train
-    metrics = training.train(args, model, strategy, ds_train, ds_test)
-    print(f'finished training. achieved {np.mean(metrics[0][-1]):.3} test accuracy')
+    train_df, test_df = training.train(args, model, strategy, ds_train, ds_test)
 
     # Plot
-    plots.plot_metrics(args, metrics)
+    plots.plot_metrics(args, train_df, test_df)
     plots.plot_hist_sims(args, model, ds_test)
     if args.tsne:
         plots.plot_tsne(args, model, ds_test)

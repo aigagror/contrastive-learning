@@ -98,16 +98,16 @@ def plot_tsne(args, model, ds_test):
     f.savefig(os.path.join(args.out, 'tsne.jpg'))
 
 
-def plot_metrics(args, metrics):
-    f, ax = plt.subplots(1, len(metrics))
-    f.set_size_inches(15, 5)
+def plot_metrics(args, train_df, test_df):
+    all_metrics = ['acc', 'ce-loss', 'con-loss']
+    f, ax = plt.subplots(1, 3)
+    f.set_size_inches(20, 5)
 
-    names = ['test accs', 'train accs', 'train losses']
-    for i, (y, name) in enumerate(zip(metrics, names)):
-        y = np.array(y)
-        x = np.linspace(0, len(y), y.size)
-        ax[i].set_title(name)
-        ax[i].set_xlabel('epochs')
-        ax[i].plot(x, y.flatten())
+    for i, metric in enumerate(all_metrics):
+        ax[i].set_title(metric)
+        for df, split in [(train_df, 'train', test_df, 'test')]:
+            nsteps, nepochs = len(df), df['epochs'].max()
+            x = np.linspace(0, nepochs, nsteps)
+            ax[i].plot(x, df[metric], label=split)
 
     f.savefig(os.path.join(args.out, 'metrics.jpg'))
