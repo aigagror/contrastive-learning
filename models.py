@@ -23,8 +23,7 @@ class ContrastModel(keras.Model):
             print(f'starting with new model weights')
 
     def feats(self, img):
-        x = tf.image.convert_image_dtype(img, tf.uint8)
-        x = applications.resnet_v2.preprocess_input(x)
+        x = img * 2 - 1
         x = self.cnn(x)
         x = self.avg_pool(x)
         x, _ = tf.linalg.normalize(x, axis=-1)
