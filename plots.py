@@ -111,5 +111,6 @@ def plot_metrics(args, train_df, test_df):
             nsteps, nepochs = len(df), df['epoch'].max()
             x = np.linspace(0, nepochs, nsteps)
             ax[i].plot(x, df[metric], label=split)
+            ax[i].legend()
 
     f.savefig(os.path.join(args.out, 'metrics.jpg'))
