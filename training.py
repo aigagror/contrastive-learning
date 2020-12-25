@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
@@ -31,9 +32,12 @@ def train(args, model, strategy, ds_train, ds_test):
         # Reset metrics
         pd.DataFrame(columns=columns).to_csv(train_path, index=False)
         pd.DataFrame(columns=columns).to_csv(test_path, index=False)
+        start_epoch = 1
+    else:
+        start_epoch = pd.read_csv(train_path)['epoch'].max() + 1
 
     try:
-        pbar = tqdm(range(1, args.epochs + 1), 'epochs', mininterval=2)
+        pbar = tqdm(start_epoch + np.arange(args.epochs), 'epochs', mininterval=2)
         for epoch in pbar:
             # Train
             train_metrics = epoch_train(args, model, strategy, ds_train, optimize=True)
