@@ -28,8 +28,8 @@ def train(args, model, strategy, ds_train, ds_test):
     test_path = os.path.join(args.out, 'test.csv')
     if not args.load:
         # Reset metrics
-        pd.DataFrame(columns=columns).to_csv(train_path)
-        pd.DataFrame(columns=columns).to_csv(test_path)
+        pd.DataFrame(columns=columns).to_csv(train_path, index=False)
+        pd.DataFrame(columns=columns).to_csv(test_path, index=False)
 
     try:
         pbar = tqdm(range(1, args.epochs + 1), 'epochs', mininterval=2)
