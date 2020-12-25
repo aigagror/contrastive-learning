@@ -89,11 +89,13 @@ def plot_hist_sims(args, model, ds_test):
     ax[0].hist(neg_sims, label='neg', density=True)
     ax[0].hist(class_sims, label='class', density=True)
     ax[0].hist(inst_sims, label='inst', density=True)
+    ax[0].legend()
 
     ax[1].set_title('projected similarity types')
     ax[1].hist(proj_neg_sims, label='neg', density=True)
     ax[1].hist(proj_class_sims, label='class', density=True)
     ax[1].hist(proj_inst_sims, label='inst', density=True)
+    ax[1].legend()
 
     f.savefig(os.path.join(args.out, 'similarity-types.jpg'))
 
