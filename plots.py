@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
+
 def plot_tsne(args, model, ds_test):
     from sklearn import manifold
 
@@ -37,8 +38,6 @@ def plot_tsne(args, model, ds_test):
         ax[1].scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}')
 
     f.savefig(os.path.join(args.out, 'tsne.jpg'))
-
-
 
 
 def plot_img_samples(args, ds_train, ds_test):

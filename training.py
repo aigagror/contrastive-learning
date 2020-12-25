@@ -5,8 +5,8 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 def make_status_str(train_df, test_df):
-    train_status = dict(train_df.mean())
-    test_status = dict(test_df.mean())
+    train_status = dict(train_df.drop(columns='epoch').mean())
+    test_status = dict(test_df.drop(columns='epoch').mean())
     ret = 'train: '
     for k, v in train_status.items():
         ret += f'{v:.3} {k}, '
