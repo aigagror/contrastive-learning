@@ -47,7 +47,7 @@ def train(args, model, strategy, ds_train, ds_test):
         start_epoch = pd.read_csv(train_path)['epoch'].max() + 1
 
     try:
-        pbar = tqdm(start_epoch + np.arange(args.epochs), 'epochs', mininterval=2)
+        pbar = tqdm(start_epoch + np.arange(args.epochs), 'epochs')
         for epoch in pbar:
             # Train
             train_metrics = epoch_train(args, model, strategy, ds_train, optimize=True)
