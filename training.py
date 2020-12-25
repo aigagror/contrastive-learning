@@ -37,7 +37,7 @@ def train(args, model, strategy, ds_train, ds_test):
             # Train
             train_metrics = epoch_train(args, model, strategy, ds_train, optimize=True)
             train_df = pd.DataFrame(dict(zip(columns, (epoch,) + train_metrics)))
-            train_df.to_csv(train_path, mode='a', header=False)
+            train_df.to_csv(train_path, mode='a', header=False, index=False)
 
             # Save weights
             model.save_weights(os.path.join(args.out, 'model'))
@@ -45,7 +45,7 @@ def train(args, model, strategy, ds_train, ds_test):
             # Test
             test_metrics = epoch_train(args, model, strategy, ds_test, optimize=False)
             test_df = pd.DataFrame(dict(zip(columns, (epoch,) + test_metrics)))
-            test_df.to_csv(test_path, mode='a', header=False)
+            test_df.to_csv(test_path, mode='a', header=False, index=False)
 
             # Progress bar
             pbar.set_postfix_str(f'train - {dict(train_df.mean())}, test - {dict(test_df.mean())}', refresh=False)
