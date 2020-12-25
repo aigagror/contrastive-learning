@@ -43,7 +43,7 @@ def get_strategy():
 
 def run(args):
     # Set log info
-    tf.get_logger().setLevel('INFO')
+    tf.autograph.set_verbosity(1)
 
     # Mixed precision
     policy = mixed_precision.Policy('mixed_float16')
