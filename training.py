@@ -53,7 +53,9 @@ def train(args, model, strategy, ds_train, ds_test):
             test_df.to_csv(test_path, mode='a', header=False, index=False)
 
             # Progress bar
-            pbar.set_postfix_str(f'train - {train_df.mean()}, test - {test_df.mean()}', refresh=False)
+            pbar.set_postfix_str(f"\nTrain\n{train_df.groupby('epoch').mean()[-1:]}\n"
+                                 f"\nTest\n{test_df.groupby('epoch').mean()[-1:]}",
+                                 refresh=False)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
