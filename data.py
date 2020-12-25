@@ -64,12 +64,15 @@ def load_datasets(args, strategy):
 
     augment = Augment(imsize, rand_crop=True, rand_flip=True, rand_jitter=True, rand_gray=True)
 
-    def dual_views(imgs, labels):
+    def dual_augment(imgs, labels):
         return augment(imgs), augment(imgs), labels
+
+    def dual_views(imgs, labels):
+        return imgs, imgs, labels
 
     ds_train = (
         ds_train
-            .map(dual_views, num_parallel_calls=AUTOTUNE)
+            .map(dual_augment, num_parallel_calls=AUTOTUNE)
             .shuffle(len(ds_train))
             .batch(args.bsz, drop_remainder=True)
             .prefetch(AUTOTUNE)
