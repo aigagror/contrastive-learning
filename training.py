@@ -23,6 +23,7 @@ def epoch_train(args, model, strategy, ds, optimize):
 
 
 def train(args, model, strategy, ds_train, ds_test):
+    pd.options.display.float_format = '{:.3}'.format
     columns = ['epoch', 'acc', 'ce-loss', 'con-loss']
     train_path = os.path.join(args.out, 'train.csv')
     test_path = os.path.join(args.out, 'test.csv')
