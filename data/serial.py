@@ -2,8 +2,7 @@ import tensorflow as tf
 
 
 def serialize_example(img, label):
-    serialized_img = tf.io.serialize_tensor(img)
-    tf.train.Feature(bytes_list=tf.train.BytesList(value=[serialized_img.numpy()]))
+    serialized_img = tf.io.encode_png(img)
     features = {
         'image': tf.train.Feature(bytes_list=tf.train.BytesList(value=[serialized_img.numpy()])),
         'label': tf.train.Feature(int64_list=tf.train.Int64List(value=[label]))
@@ -22,7 +21,7 @@ def parse_example(serial):
         'label': tf.io.FixedLenFeature([], tf.int64)
     }
     example = tf.io.parse_example(serial, feature_description)
-    image = tf.io.parse_tensor(example['image'], tf.uint8)
+    image = tf.io.decode_png(example['image'])
     label = tf.cast(example['label'], tf.uint16)
     return image, label
 

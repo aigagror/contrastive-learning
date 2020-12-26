@@ -85,14 +85,14 @@ def load_datasets(args, strategy):
     ds_train = (
         ds_train
             .map(dual_augment, num_parallel_calls=AUTOTUNE)
-            .shuffle(len(ds_train))
+            .shuffle(1024)
             .batch(args.bsz, drop_remainder=True)
             .prefetch(AUTOTUNE)
     )
     ds_test = (
         ds_test
             .map(dual_views, num_parallel_calls=AUTOTUNE)
-            .shuffle(len(ds_test))
+            .shuffle(1024)
             .batch(args.bsz)
             .prefetch(AUTOTUNE)
     )
