@@ -71,7 +71,8 @@ def run(args):
         model = models.ContrastModel(args)
         opt = keras.optimizers.SGD(args.lr, momentum=0.9)
         if policy != 'mixed_bfloat16':
-            model.optimizer = mixed_precision.LossScaleOptimizer(opt)
+            opt = mixed_precision.LossScaleOptimizer(opt)
+        model.optimizer = opt
 
     # Train
     train_df, test_df = training.train(args, model, strategy, ds_train, ds_test)
