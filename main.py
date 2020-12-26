@@ -43,6 +43,7 @@ def setup(args):
         # This is the TPU initialization code that has to be at the beginning.
         tf.tpu.experimental.initialize_tpu_system(resolver)
         strategy = tf.distribute.TPUStrategy(resolver)
+        print("All devices: ", tf.config.list_logical_devices('TPU'))
         policy_str = 'mixed_bfloat16'
     elif len(gpus) > 1:
         strategy = tf.distribute.MirroredStrategy()
