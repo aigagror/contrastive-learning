@@ -35,37 +35,36 @@ parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
 
 
-def get_strategy(args):
+def setup(args):
+    gpus = tf.config.list_physical_devices('GPU')
     if args.tpu:
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='grpc://' + os.environ['COLAB_TPU_ADDR'])
         tf.config.experimental_connect_to_cluster(resolver)
         # This is the TPU initialization code that has to be at the beginning.
         tf.tpu.experimental.initialize_tpu_system(resolver)
         strategy = tf.distribute.TPUStrategy(resolver)
-        return strategy
-
-    gpus = tf.config.list_physical_devices('GPU')
-    print(f'{len(gpus)} gpus')
-    if len(gpus) > 1:
+        policy = 'mixed_bfloat16'
+    elif len(gpus) > 1:
         strategy = tf.distribute.MirroredStrategy()
+        policy = 'mixed_float16'
     else:
         strategy = tf.distribute.get_strategy()
+        policy = 'mixed_float16'
     print(f'using {strategy.__class__.__name__} strategy')
+
+    # Mixed precision
+    policy = mixed_precision.Policy(policy)
+    mixed_precision.set_global_policy(policy)
+
     return strategy
 
 
 def run(args):
-    # Mixed precision
-    policy = mixed_precision.Policy('mixed_float16')
-    mixed_precision.set_global_policy(policy)
-
-    # Strategy
-    strategy = get_strategy(args)
+    # Strategy and policy
+    strategy = setup(args)
 
     # Data
     ds_train, ds_test = data.load_datasets(args, strategy)
-    if not isinstance(strategy, tf.distribute.MirroredStrategy):
-        plots.plot_img_samples(args, ds_train, ds_test)
 
     # Model and optimizer
     with strategy.scope():
