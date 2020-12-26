@@ -29,12 +29,21 @@ parser.add_argument('--bsz', type=int)
 parser.add_argument('--lr', type=float)
 
 # Other
+parser.add_argument('--tpu', action='store_true')
 parser.add_argument('--load', action='store_true')
 parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
 
 
-def get_strategy():
+def get_strategy(args):
+    if args.tpu:
+        resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='grpc://' + os.environ['COLAB_TPU_ADDR'])
+        tf.config.experimental_connect_to_cluster(resolver)
+        # This is the TPU initialization code that has to be at the beginning.
+        tf.tpu.experimental.initialize_tpu_system(resolver)
+        strategy = tf.distribute.TPUStrategy(resolver)
+        return strategy
+
     gpus = tf.config.list_physical_devices('GPU')
     print(f'{len(gpus)} gpus')
     if len(gpus) > 1:
@@ -51,7 +60,7 @@ def run(args):
     mixed_precision.set_global_policy(policy)
 
     # Strategy
-    strategy = get_strategy()
+    strategy = get_strategy(args)
 
     # Data
     ds_train, ds_test = data.load_datasets(args, strategy)
