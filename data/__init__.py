@@ -87,7 +87,7 @@ def load_datasets(args, strategy):
         ds_test
             .map(dual_views, num_parallel_calls=AUTOTUNE)
             .shuffle(1024)
-            .batch(args.bsz)
+            .batch(args.bsz, drop_remainder=True)
             .prefetch(AUTOTUNE)
     )
 
