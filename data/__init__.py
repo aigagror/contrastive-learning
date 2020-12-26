@@ -1,56 +1,41 @@
-import os
-
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from tensorflow.keras import layers, datasets
+from tensorflow.keras import datasets
 from tensorflow.python.data import AUTOTUNE
 
 from data import serial
 
 
-class Augment(layers.Layer):
-    def __init__(self, imsize, rand_crop, rand_flip, rand_jitter, rand_gray):
-        super().__init__(name='image-augmentation')
-        self.imsize = imsize
-        self.rand_crop = rand_crop
-        self.rand_flip = rand_flip
-        self.rand_jitter = rand_jitter
-        self.rand_gray = rand_gray
+def augment(image):
+    # Convert to float
+    image = tf.image.convert_image_dtype(image, tf.float32)
+    imsize = image.shape[0]
 
-    @tf.function
-    def call(self, image):
-        # Convert to float
-        image = tf.image.convert_image_dtype(image, tf.float32)
+    # Crop
+    rand_scale = tf.random.uniform([], 1, 2)
+    rand_size = tf.round(rand_scale * imsize)
+    image = tf.image.resize(image, [rand_size, rand_size])
+    image = tf.image.random_crop(image, [imsize, imsize, 3])
 
-        # Crop
-        if self.rand_crop:
-            rand_scale = tf.random.uniform([], 1, 2)
-            rand_size = tf.round(rand_scale * self.imsize)
-            image = tf.image.resize(image, [rand_size, rand_size])
-            image = tf.image.random_crop(image, [self.imsize, self.imsize, 3])
-        else:
-            image = tf.image.resize(image, [self.imsize, self.imsize])
+    # Random flip
+    image = tf.image.random_flip_left_right(image)
 
-        # Random flip
-        if self.rand_flip:
-            image = tf.image.random_flip_left_right(image)
+    # Color Jitter
+    if tf.random.uniform([]) < 0.8:
+        image = tf.image.random_brightness(image, 0.4)
+        image = tf.image.random_contrast(image, 0.6, 1.4)
+        image = tf.image.random_saturation(image, 0.6, 1.4)
+        image = tf.image.random_hue(image, 0.1)
 
-        # Color Jitter
-        if self.rand_jitter and tf.random.uniform([]) < 0.8:
-            image = tf.image.random_brightness(image, 0.4)
-            image = tf.image.random_contrast(image, 0.6, 1.4)
-            image = tf.image.random_saturation(image, 0.6, 1.4)
-            image = tf.image.random_hue(image, 0.1)
+    # Gray scale
+    if tf.random.uniform([]) < 0.2:
+        image = tf.image.rgb_to_grayscale(image)
+        image = tf.tile(image, [1, 1, 3])
 
-        # Gray scale
-        if self.rand_gray and tf.random.uniform([]) < 0.2:
-            image = tf.image.rgb_to_grayscale(image)
-            image = tf.tile(image, [1, 1, 3])
+    # Clip
+    image = tf.clip_by_value(image, 0, 1)
 
-        # Clip
-        image = tf.clip_by_value(image, 0, 1)
-
-        return image
+    return image
 
 
 def load_datasets(args, strategy):
@@ -67,7 +52,9 @@ def load_datasets(args, strategy):
     else:
         raise Exception(f'unknown data {args.data}')
 
-    augment = Augment(imsize, rand_crop=True, rand_flip=True, rand_jitter=True, rand_gray=True)
+    # Map functions
+    def resize(img, labels):
+        return tf.image.resize(img, [imsize, imsize]), labels
 
     def dual_augment(imgs, labels):
         return augment(imgs), augment(imgs), labels
@@ -76,8 +63,10 @@ def load_datasets(args, strategy):
         imgs = tf.image.convert_image_dtype(imgs, tf.float32)
         return imgs, imgs, labels
 
+    # Preprocess
     ds_train = (
         ds_train
+            .map(resize, num_parallel_calls=AUTOTUNE)
             .map(dual_augment, num_parallel_calls=AUTOTUNE)
             .shuffle(1024)
             .batch(args.bsz, drop_remainder=True)
@@ -85,6 +74,7 @@ def load_datasets(args, strategy):
     )
     ds_test = (
         ds_test
+            .map(resize, num_parallel_calls=AUTOTUNE)
             .map(dual_views, num_parallel_calls=AUTOTUNE)
             .shuffle(1024)
             .batch(args.bsz, drop_remainder=True)
