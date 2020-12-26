@@ -53,8 +53,8 @@ def load_datasets(args, strategy):
     if args.data == 'cifar10':
         imsize = 32
         (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
-        ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
-        ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten()))
+        ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten())).cache()
+        ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten())).cache()
     elif args.data =='imagenet':
         imsize = 224
         ds_train = tfds.folder_dataset.ImageFolder(args.imagenet_train).as_dataset(shuffle_files=True)
