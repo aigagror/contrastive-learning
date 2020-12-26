@@ -114,7 +114,6 @@ def load_datasets(args, strategy):
         def _parse_function(example_proto):
             # Parse the input `tf.train.Example` proto using the dictionary above.
             example = tf.io.parse_single_example(example_proto, feature_description)
-            print(example)
             return example['image'], example['label']
 
         ds_train = raw_dataset.map(_parse_function)
@@ -129,6 +128,7 @@ def load_datasets(args, strategy):
     augment = Augment(imsize, rand_crop=True, rand_flip=True, rand_jitter=True, rand_gray=True)
 
     def dual_augment(imgs, labels):
+        print(imgs)
         return augment(imgs), augment(imgs), labels
 
     def dual_views(imgs, labels):
