@@ -61,7 +61,7 @@ def setup(args):
 
 def run(args):
     # Strategy and policy
-    strategy = setup(args)
+    strategy, policy = setup(args)
 
     # Data
     ds_train, ds_test = data.load_datasets(args, strategy)
@@ -70,7 +70,8 @@ def run(args):
     with strategy.scope():
         model = models.ContrastModel(args)
         opt = keras.optimizers.SGD(args.lr, momentum=0.9)
-        model.optimizer = mixed_precision.LossScaleOptimizer(opt)
+        if policy != 'mixed_bfloat16':
+            model.optimizer = mixed_precision.LossScaleOptimizer(opt)
 
     # Train
     train_df, test_df = training.train(args, model, strategy, ds_train, ds_test)
