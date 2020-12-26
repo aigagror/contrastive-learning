@@ -36,7 +36,6 @@ parser.add_argument('--out', type=str, default='out/')
 
 
 def setup(args):
-    gpus = tf.config.list_physical_devices('GPU')
     if args.tpu:
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='grpc://' + os.environ['COLAB_TPU_ADDR'])
         tf.config.experimental_connect_to_cluster(resolver)
@@ -45,7 +44,7 @@ def setup(args):
         strategy = tf.distribute.TPUStrategy(resolver)
         print("All devices: ", tf.config.list_logical_devices('TPU'))
         policy_str = 'mixed_bfloat16'
-    elif len(gpus) > 1:
+    elif len(tf.config.list_physical_devices('GPU')) > 1:
         strategy = tf.distribute.MirroredStrategy()
         policy_str = 'mixed_float16'
     else:
