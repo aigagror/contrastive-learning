@@ -50,7 +50,7 @@ def setup(args):
     else:
         strategy = tf.distribute.get_strategy()
         policy_str = 'mixed_float16'
-    print(f'using {strategy.__class__.__name__} strategy')
+    print(f'using {strategy.__class__.__name__} strategy, {policy_str} policy')
 
     # Mixed precision
     policy = mixed_precision.Policy(policy_str)
