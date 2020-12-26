@@ -67,8 +67,8 @@ def _int64_feature(value):
 
 
 feature_description = {
-    'image': tf.io.FixedLenFeature([], tf.float32, default_value=0.0),
-    'label': tf.io.FixedLenFeature([], tf.int64, default_value=0),
+    'image': tf.io.FixedLenFeature([], tf.uint8, default_value=0),
+    'label': tf.io.FixedLenFeature([], tf.uint8, default_value=0),
 }
 
 
@@ -79,8 +79,8 @@ def serialize_example(img, label):
     # Create a dictionary mapping the feature name to the tf.train.Example-compatible
     # data type.
     feature = {
-        'image': _int64_feature(img),
-        'label': _int64_feature(label)
+        'image': _bytes_feature(img),
+        'label': _bytes_feature(label)
     }
 
     # Create a Features message using tf.train.Example.
