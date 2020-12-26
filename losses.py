@@ -17,7 +17,10 @@ def supcon_loss(labels, feats1, feats2, partial):
     sims = tf.matmul(feats1, tf.transpose(feats2))
 
     if partial:
-        # Partial cross entropy
+        # Cross entropy on instance similarities
+        inst_loss = losses.categorical_crossentropy(inst_mask, sims * 10, from_logits=True)
+
+        # Partial cross entropy on class similarities
         pos_mask = tf.maximum(inst_mask, class_mask)
         neg_mask = 1 - pos_mask
 
@@ -28,10 +31,11 @@ def supcon_loss(labels, feats1, feats2, partial):
         # Class positive pairs log prob (contains instance positive pairs too)
         class_log_prob = class_mask * log_prob
         class_log_prob = tf.math.reduce_sum(class_log_prob / class_sum, axis=1)
+        class_loss = -class_log_prob
 
-        loss = -class_log_prob
+        # Combine instance loss and class loss
+        loss = inst_loss + class_loss
     else:
-        # Cross entropy
-        loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10,
-                                               from_logits=True)
+        # Cross entropy on everything
+        loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10, from_logits=True)
     return loss
