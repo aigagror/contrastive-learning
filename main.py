@@ -43,20 +43,20 @@ def setup(args):
         # This is the TPU initialization code that has to be at the beginning.
         tf.tpu.experimental.initialize_tpu_system(resolver)
         strategy = tf.distribute.TPUStrategy(resolver)
-        policy = 'mixed_bfloat16'
+        policy_str = 'mixed_bfloat16'
     elif len(gpus) > 1:
         strategy = tf.distribute.MirroredStrategy()
-        policy = 'mixed_float16'
+        policy_str = 'mixed_float16'
     else:
         strategy = tf.distribute.get_strategy()
-        policy = 'mixed_float16'
+        policy_str = 'mixed_float16'
     print(f'using {strategy.__class__.__name__} strategy')
 
     # Mixed precision
-    policy = mixed_precision.Policy(policy)
+    policy = mixed_precision.Policy(policy_str)
     mixed_precision.set_global_policy(policy)
 
-    return strategy
+    return strategy, policy_str
 
 
 def run(args):
