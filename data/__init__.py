@@ -56,15 +56,9 @@ class Augment(layers.Layer):
 def load_datasets(args, strategy):
     if args.data == 'cifar10':
         imsize = 32
-        if not os.path.exists('cifar10-train.tfrecord') or not os.path.exists('cifar10-test.tfrecord'):
-            print('making cifar10 TF Record')
-            (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
-            ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
-            ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten()))
-            serial.ds_to_tfrecord(ds_train, 'cifar10-train.tfrecord')
-            serial.ds_to_tfrecord(ds_test, 'cifar10-test.tfrecord')
-
-        ds_train, ds_test = serial.ds_from_tfrecord(['cifar10-train.tfrecord'], ['cifar10-test.tfrecord'])
+        (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
+        ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
+        ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten()))
 
     elif args.data == 'imagenet':
         imsize = 224
