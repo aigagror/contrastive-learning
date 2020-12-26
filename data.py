@@ -67,8 +67,8 @@ def _int64_feature(value):
 
 
 feature_description = {
-    'image': tf.io.FixedLenFeature([], tf.uint8, default_value=0),
-    'label': tf.io.FixedLenFeature([], tf.uint8, default_value=0),
+    'image': tf.io.FixedLenFeature([], tf.int64, default_value=0),
+    'label': tf.io.FixedLenFeature([], tf.int64, default_value=0),
 }
 
 
