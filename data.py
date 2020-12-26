@@ -101,8 +101,8 @@ def load_datasets(args, strategy):
     if args.data == 'cifar10':
         imsize = 32
         (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
-        ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten())).cache()
-        ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten())).cache()
+        ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
+        ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten()))
 
         serialized_ds_train = ds_train.map(tf_serialize_example)
 
@@ -114,6 +114,7 @@ def load_datasets(args, strategy):
         def _parse_function(example_proto):
             # Parse the input `tf.train.Example` proto using the dictionary above.
             example = tf.io.parse_single_example(example_proto, feature_description)
+            print(example)
             return example['image'], example['label']
 
         ds_train = raw_dataset.map(_parse_function)
