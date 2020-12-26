@@ -1,7 +1,11 @@
+import os
+
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.keras import layers, datasets
 from tensorflow.python.data import AUTOTUNE
+
+from data import serial
 
 
 class Augment(layers.Layer):
@@ -52,9 +56,15 @@ class Augment(layers.Layer):
 def load_datasets(args, strategy):
     if args.data == 'cifar10':
         imsize = 32
-        (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
-        ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten())).cache()
-        ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten())).cache()
+        if os.path.exists('cifar10-train.tfrecord') and os.path.exists('cifar10-test.tfrecord'):
+            ds_train, ds_test = serial.ds_from_tfrecord(['cifar10-train.tfrecord'], ['cifar10-test.tfrecord'])
+        else:
+            print('making cifar10 TF Record')
+            (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
+            ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
+            ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten()))
+            serial.ds_to_tfrecord(ds_train, 'cifar10-train.tfrecord')
+            serial.ds_to_tfrecord(ds_test, 'cifar10-test.tfrecord')
 
     elif args.data == 'imagenet':
         imsize = 224
