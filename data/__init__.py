@@ -1,17 +1,15 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
-from tensorflow.keras import datasets
+from tensorflow.keras import datasets, preprocessing
 from tensorflow.python.data import AUTOTUNE
 
 from data import serial
 
 
 def augment(image):
-    # Convert to float
-    image = tf.image.convert_image_dtype(image, tf.float32)
-    imsize = image.shape[0]
 
     # Crop
+    imsize = image.shape[0]
     rand_scale = tf.random.uniform([], 1, 2)
     rand_size = tf.round(rand_scale * imsize)
     image = tf.image.resize(image, [rand_size, rand_size])
@@ -53,20 +51,20 @@ def load_datasets(args, strategy):
         raise Exception(f'unknown data {args.data}')
 
     # Map functions
-    def resize(img, labels):
-        return tf.image.resize_with_crop_or_pad(img, imsize, imsize), labels
+    def cast_resize(img, labels):
+        img = tf.image.convert_image_dtype(img, tf.float32)
+        return preprocessing.image.smart_resize(img, [imsize, imsize]), labels
 
     def dual_augment(imgs, labels):
         return augment(imgs), augment(imgs), labels
 
     def dual_views(imgs, labels):
-        imgs = tf.image.convert_image_dtype(imgs, tf.float32)
         return imgs, imgs, labels
 
     # Preprocess
     ds_train = (
         ds_train
-            .map(resize, num_parallel_calls=AUTOTUNE)
+            .map(cast_resize, num_parallel_calls=AUTOTUNE)
             .map(dual_augment, num_parallel_calls=AUTOTUNE)
             .shuffle(1024)
             .batch(args.bsz, drop_remainder=True)
@@ -74,7 +72,7 @@ def load_datasets(args, strategy):
     )
     ds_test = (
         ds_test
-            .map(resize, num_parallel_calls=AUTOTUNE)
+            .map(cast_resize, num_parallel_calls=AUTOTUNE)
             .map(dual_views, num_parallel_calls=AUTOTUNE)
             .shuffle(1024)
             .batch(args.bsz, drop_remainder=True)
