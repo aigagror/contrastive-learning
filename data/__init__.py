@@ -43,6 +43,10 @@ def load_datasets(args, strategy):
         ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten())).cache()
         ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten())).cache()
 
+        # Shuffle entire dataset
+        ds_train = ds_train.shuffle(len(ds_train))
+        ds_test = ds_test.shuffle(len(ds_test))
+
     elif args.data == 'imagenet':
         imsize = 224
         ds_train = tfds.folder_dataset.ImageFolder(args.imagenet_train).as_dataset(shuffle_files=True)
@@ -66,7 +70,6 @@ def load_datasets(args, strategy):
         ds_train
             .map(cast_resize, num_parallel_calls=AUTOTUNE)
             .map(dual_augment, num_parallel_calls=AUTOTUNE)
-            .shuffle(1024)
             .batch(args.bsz, drop_remainder=True)
             .prefetch(AUTOTUNE)
     )
@@ -74,7 +77,6 @@ def load_datasets(args, strategy):
         ds_test
             .map(cast_resize, num_parallel_calls=AUTOTUNE)
             .map(dual_views, num_parallel_calls=AUTOTUNE)
-            .shuffle(1024)
             .batch(args.bsz, drop_remainder=True)
             .prefetch(AUTOTUNE)
     )
