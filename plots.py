@@ -44,7 +44,7 @@ def plot_img_samples(args, ds_train, ds_test):
     f, ax = plt.subplots(2, 8)
     f.set_size_inches(20, 6)
     for i, ds in enumerate([ds_train, ds_test]):
-        imgs = next(iter(ds))[0]
+        imgs, _, _ = next(iter(ds))
         for j in range(8):
             ax[i, j].set_title('train' if i == 0 else 'test')
             ax[i, j].imshow(imgs[j])

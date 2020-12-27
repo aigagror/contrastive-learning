@@ -11,7 +11,19 @@ class ContrastModel(keras.Model):
     def __init__(self, args):
         super().__init__()
 
-        self.cnn = applications.ResNet50V2(weights=None, include_top=False)
+        if args.cnn == 'simple':
+            self.cnn = keras.Sequential([
+                layers.Conv2D(128, 3),
+                layers.BatchNormalization(),
+                layers.ReLU(),
+                layers.Conv2D(128, 3),
+                layers.BatchNormalization(),
+                layers.ReLU(),
+                layers.Conv2D(128, 3)
+            ])
+        else:
+            assert args.cnn == 'resnet50v2'
+            self.cnn = applications.ResNet50V2(weights=None, include_top=False)
         self.avg_pool = layers.GlobalAveragePooling2D()
         self.proj_w = layers.Dense(128, name='projection')
         self.classifier = layers.Dense(10, name='classifier')

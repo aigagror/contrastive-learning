@@ -21,6 +21,7 @@ parser.add_argument('--imagenet-train', type=str)
 parser.add_argument('--imagenet-val', type=str)
 
 # Method
+parser.add_argument('--cnn', choices=['simple', 'resnet50v2'])
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
 # Training
@@ -67,7 +68,8 @@ def run(args):
     strategy, policy = setup(args)
 
     # Data
-    ds_train, ds_test = data.load_datasets(args, strategy)
+    (dist_ds_train, dist_ds_test), (ds_train, ds_test) = data.load_datasets(args, strategy)
+    plots.plot_img_samples(args, ds_train, ds_test)
 
     # Model and optimizer
     with strategy.scope():
@@ -78,7 +80,7 @@ def run(args):
         model.optimizer = opt
 
     # Train
-    train_df, test_df = training.train(args, model, strategy, ds_train, ds_test)
+    train_df, test_df = training.train(args, model, strategy, dist_ds_train, dist_ds_test)
 
     # Plot
     plots.plot_metrics(args, train_df, test_df)

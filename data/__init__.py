@@ -54,7 +54,7 @@ def load_datasets(args, strategy):
 
     # Map functions
     def resize(img, labels):
-        return tf.image.resize(img, [imsize, imsize]), labels
+        return tf.image.resize_with_crop_or_pad(img, imsize, imsize), labels
 
     def dual_augment(imgs, labels):
         return augment(imgs), augment(imgs), labels
@@ -81,7 +81,7 @@ def load_datasets(args, strategy):
             .prefetch(AUTOTUNE)
     )
 
-    ds_train = strategy.experimental_distribute_dataset(ds_train)
-    ds_test = strategy.experimental_distribute_dataset(ds_test)
+    dist_ds_train = strategy.experimental_distribute_dataset(ds_train)
+    dist_ds_test = strategy.experimental_distribute_dataset(ds_test)
 
-    return ds_train, ds_test
+    return (dist_ds_train, dist_ds_test), (ds_train, ds_test)
