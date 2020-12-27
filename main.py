@@ -21,7 +21,7 @@ parser.add_argument('--imagenet-train', type=str)
 parser.add_argument('--imagenet-val', type=str)
 
 # Method
-parser.add_argument('--cnn', choices=['simple', 'resnet50v2'])
+parser.add_argument('--cnn', choices=['simple', 'resnet50v2'], default='resnet50v2')
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
 # Training
