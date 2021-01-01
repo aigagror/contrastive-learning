@@ -64,12 +64,12 @@ def run(args):
     strategy = setup(args)
 
     # Data
-    ds_train, ds_val = data.load_datasets(args, strategy)
+    ds_train, ds_val, nclass = data.load_datasets(args, strategy)
     plots.plot_img_samples(args, ds_train, ds_val)
 
     # Model and optimizer
     with strategy.scope():
-        model = models.ContrastModel(args)
+        model = models.ContrastModel(args, nclass)
         model.optimizer = keras.optimizers.SGD(args.lr, momentum=0.9)
 
     # Train

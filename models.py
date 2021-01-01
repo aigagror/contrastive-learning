@@ -8,7 +8,7 @@ from losses import supcon_loss
 
 
 class ContrastModel(keras.Model):
-    def __init__(self, args):
+    def __init__(self, args, nclass):
         super().__init__()
 
         self.method = args.method
@@ -31,7 +31,7 @@ class ContrastModel(keras.Model):
 
         self.avg_pool = layers.GlobalAveragePooling2D()
         self.proj_w = layers.Dense(128, name='projection')
-        self.classifier = layers.Dense(10, name='classifier')
+        self.classifier = layers.Dense(nclass, name='classifier')
 
         if args.load:
             print(f'loaded previously saved model weights')
@@ -60,6 +60,7 @@ class ContrastModel(keras.Model):
     def train_step(self, imgs1, imgs2, labels, bsz, optimize):
         with tf.GradientTape(watch_accessed_variables=optimize) as tape:
             if self.method.startswith('supcon'):
+                print('train step with supcon')
                 partial = self.method.endswith('pce')
 
                 # Features
@@ -72,6 +73,7 @@ class ContrastModel(keras.Model):
 
                 pred_logits = self.classifier(feats1)
             elif self.method == 'ce':
+                print('train step with ce')
                 con_loss = 0
                 pred_logits, _ = self(imgs1)
             else:
@@ -91,4 +93,4 @@ class ContrastModel(keras.Model):
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
         acc = tf.cast(acc, bsz.dtype)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
-        return acc, con_loss, ce_loss
+        return acc, ce_loss, con_loss

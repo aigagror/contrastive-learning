@@ -54,7 +54,7 @@ def parse_imagenet_example(serial):
 
 def load_datasets(args, strategy):
     if args.data == 'cifar10':
-        imsize = 32
+        imsize, nclass = 32, 10
         (x_train, y_train), (x_val, y_val) = datasets.cifar10.load_data()
         ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten())).cache()
         ds_val = tf.data.Dataset.from_tensor_slices((x_val, y_val.flatten())).cache()
@@ -64,7 +64,7 @@ def load_datasets(args, strategy):
         ds_val = ds_val.shuffle(len(ds_val))
 
     elif args.data == 'imagenet':
-        imsize = 224
+        imsize, nclass = 224, 1000
         train_files = tf.io.gfile.glob('gs://aigagror/datasets/imagenet/train-*')
         val_files = tf.io.gfile.glob('gs://aigagror/datasets/imagenet/validation-*')
 
@@ -105,4 +105,4 @@ def load_datasets(args, strategy):
     ds_train = strategy.experimental_distribute_dataset(ds_train)
     ds_val = strategy.experimental_distribute_dataset(ds_val)
 
-    return ds_train, ds_val
+    return ds_train, ds_val, nclass
