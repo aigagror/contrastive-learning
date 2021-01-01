@@ -78,8 +78,7 @@ class ContrastModel(keras.Model):
                 raise Exception(f'unknown train method {self.method}')
 
             # Classifer cross entropy
-            ce_loss = losses.sparse_categorical_crossentropy(labels, pred_logits,
-                                                             from_logits=True)
+            ce_loss = losses.sparse_categorical_crossentropy(labels, pred_logits, from_logits=True)
             ce_loss = tf.nn.compute_average_loss(ce_loss, global_batch_size=bsz)
             loss = con_loss + ce_loss
 
