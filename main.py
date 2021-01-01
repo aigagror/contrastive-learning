@@ -34,8 +34,10 @@ parser.add_argument('--out', type=str, default='out/')
 
 
 def setup(args):
+    # Logging
     tf.get_logger().setLevel('WARNING')
 
+    # Strategy
     if args.tpu:
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
         tf.config.experimental_connect_to_cluster(resolver)
@@ -60,7 +62,7 @@ def setup(args):
 
 
 def run(args):
-    # Strategy and policy
+    # Setup
     strategy = setup(args)
 
     # Data

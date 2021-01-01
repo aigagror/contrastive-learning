@@ -83,6 +83,7 @@ class ContrastModel(keras.Model):
             loss = con_loss + ce_loss
 
             # Gradient descent
+            print(optimize)
             if optimize:
                 gradients = tape.gradient(loss, self.trainable_variables)
                 self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
