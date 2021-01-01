@@ -3,13 +3,14 @@ import os
 import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
+from tqdm.auto import tqdm
 
 
 def plot_tsne(args, model, ds_test):
     from sklearn import manifold
 
     all_feats, all_proj, all_labels = [], [], []
-    for imgs, labels in ds_test:
+    for imgs, labels in tqdm(ds_test, 'tsne'):
         imgs = tf.image.convert_image_dtype(imgs, tf.float32)
         feats = model.feats(imgs)
         proj = model.project(feats)
@@ -56,7 +57,7 @@ def plot_img_samples(args, ds_train, ds_test):
 def plot_hist_sims(args, model, ds_test):
     neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
     proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
-    for imgs1, imgs2, labels in ds_test:
+    for imgs1, imgs2, labels in tqdm(ds_test, 'similarity histogram'):
         # Features and similarities
         feats1, feats2 = model.feats(imgs1), model.feats(imgs2)
         proj1, proj2 = model.project(feats1), model.project(feats2)
