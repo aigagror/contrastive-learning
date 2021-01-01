@@ -39,7 +39,6 @@ parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
 
 
-
 def setup(args):
     if args.tpu:
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver()

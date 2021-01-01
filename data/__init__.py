@@ -1,5 +1,4 @@
 import tensorflow as tf
-import tensorflow_datasets as tfds
 from tensorflow.keras import datasets, preprocessing
 from tensorflow.python.data import AUTOTUNE
 
@@ -7,7 +6,6 @@ from data import serial
 
 
 def augment(image):
-
     # Crop
     imsize = image.shape[0]
     rand_scale = tf.random.uniform([], 1, 2)
@@ -37,7 +35,7 @@ def augment(image):
 
 
 def parse_imagenet_example(serial):
-  features = {
+    features = {
         'image/height': tf.io.FixedLenFeature([], tf.int64),
         'image/width': tf.io.FixedLenFeature([], tf.int64),
         'image/colorspace': tf.io.FixedLenFeature([], tf.string),
@@ -47,11 +45,12 @@ def parse_imagenet_example(serial):
         'image/format': tf.io.FixedLenFeature([], tf.string),
         'image/filename': tf.io.FixedLenFeature([], tf.string),
         'image/encoded': tf.io.FixedLenFeature([], tf.string),
-  }
-  example = tf.io.parse_example(serial, features)
-  img = tf.io.decode_image(example['image/encoded'], channels=3)
-  label = example['image/class/label']
-  return img, label
+    }
+    example = tf.io.parse_example(serial, features)
+    img = tf.io.decode_image(example['image/encoded'], channels=3)
+    label = example['image/class/label']
+    return img, label
+
 
 def load_datasets(args, strategy):
     if args.data == 'cifar10':

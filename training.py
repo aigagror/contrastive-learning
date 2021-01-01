@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
+
 def make_status_str(train_df, val_df):
     train_status = dict(train_df.drop(columns='epoch').mean())
     val_status = dict(val_df.drop(columns='epoch').mean())
@@ -14,6 +15,7 @@ def make_status_str(train_df, val_df):
     for k, v in val_status.items():
         ret += f'{v:.3} {k}, '
     return ret
+
 
 def epoch_train(args, model, strategy, ds, optimize):
     all_accs, all_ce_losses, all_con_losses = [], [], []

@@ -15,7 +15,6 @@ def plot_tsne(args, strategy, model, ds_val):
         proj = model.project(feats)
         return feats, proj
 
-
     all_feats, all_proj, all_labels = [], [], []
     for imgs1, imgs2, labels in tqdm(ds_val, 'tsne'):
         feats, proj = strategy.run(get_feats, (imgs1,))
@@ -66,7 +65,6 @@ def plot_img_samples(args, ds_train, ds_val):
 
 
 def plot_hist_sims(args, strategy, model, ds_val):
-
     @tf.function
     def get_sims(imgs1, imgs2, labels):
         # Features and similarities
