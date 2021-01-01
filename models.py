@@ -67,10 +67,10 @@ class ContrastModel(keras.Model):
                 proj1, proj2 = self.project(feats1), self.project(feats2)
 
                 # Contrast
-                con_loss = supcon_loss(labels, proj1, tf.stop_gradient(proj2), partial)
+                con_loss = supcon_loss(labels, proj1, proj2, partial)
                 con_loss = tf.nn.compute_average_loss(con_loss, global_batch_size=bsz)
 
-                pred_logits = self.classifier(tf.stop_gradient(feats1))
+                pred_logits = self.classifier(feats1)
             elif self.method == 'ce':
                 con_loss = 0
                 pred_logits, _ = self(imgs1)
