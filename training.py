@@ -17,7 +17,8 @@ def make_status_str(train_df, test_df):
 
 def epoch_train(args, model, strategy, ds, optimize):
     all_accs, all_ce_losses, all_con_losses = [], [], []
-    for imgs1, imgs2, labels in ds:
+    pbar = tqdm(ds)
+    for imgs1, imgs2, labels in pbar:
         # Train step
         step_args = (args.method, args.bsz, imgs1, imgs2, labels, optimize)
         acc, ce_loss, con_loss = strategy.run(model.train_step, args=step_args)
@@ -26,10 +27,11 @@ def epoch_train(args, model, strategy, ds, optimize):
         con_loss = strategy.reduce('SUM', con_loss, axis=None)
 
         # Record
-        all_accs.append(float(acc))
-        all_ce_losses.append(float(ce_loss))
-        all_con_losses.append(float(con_loss))
+        all_accs.append(acc)
+        all_ce_losses.append(ce_loss)
+        all_con_losses.append(con_loss)
 
+        pbar.set_postfix_str(f'{acc:.3} acc')
     return all_accs, all_ce_losses, all_con_losses
 
 
@@ -47,8 +49,7 @@ def train(args, model, strategy, ds_train, ds_test):
         start_epoch = pd.read_csv(train_path)['epoch'].max() + 1
 
     try:
-        pbar = tqdm(start_epoch + np.arange(args.epochs), 'epochs')
-        for epoch in pbar:
+        for epoch in (start_epoch + np.arange(args.epochs)):
             # Train
             train_metrics = epoch_train(args, model, strategy, ds_train, optimize=True)
             train_df = pd.DataFrame(dict(zip(columns, (epoch,) + train_metrics)))
@@ -62,8 +63,7 @@ def train(args, model, strategy, ds_train, ds_test):
             test_df = pd.DataFrame(dict(zip(columns, (epoch,) + test_metrics)))
             test_df.to_csv(test_path, mode='a', header=False, index=False)
 
-            # Progress bar
-            pbar.set_postfix_str(make_status_str(train_df, test_df), refresh=False)
+            print(make_status_str(train_df, test_df))
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
