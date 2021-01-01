@@ -54,7 +54,7 @@ def train(args, model, strategy, ds_train, ds_val):
     try:
         for epoch in (start_epoch + np.arange(args.epochs)):
             # Train
-            train_metrics = epoch_train(args, model, strategy, ds_train, optimize=True)
+            train_metrics = epoch_train(args, model, strategy, ds_train, optimize=False)
             train_df = pd.DataFrame(dict(zip(columns, (epoch,) + train_metrics)))
             train_df.to_csv(train_path, mode='a', header=False, index=False)
 
