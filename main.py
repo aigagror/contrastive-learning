@@ -63,7 +63,7 @@ def setup(args):
 
 def run(args):
     # Strategy and policy
-    strategy, policy = setup(args)
+    strategy = setup(args)
 
     # Data
     ds_train, ds_val = data.load_datasets(args, strategy)
