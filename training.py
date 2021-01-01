@@ -4,14 +4,14 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
-def make_status_str(train_df, test_df):
+def make_status_str(train_df, val_df):
     train_status = dict(train_df.drop(columns='epoch').mean())
-    test_status = dict(test_df.drop(columns='epoch').mean())
+    val_status = dict(val_df.drop(columns='epoch').mean())
     ret = 'train: '
     for k, v in train_status.items():
         ret += f'{v:.3} {k}, '
-    ret += 'test: '
-    for k, v in test_status.items():
+    ret += 'val: '
+    for k, v in val_status.items():
         ret += f'{v:.3} {k}, '
     return ret
 
@@ -35,15 +35,15 @@ def epoch_train(args, model, strategy, ds, optimize):
     return all_accs, all_ce_losses, all_con_losses
 
 
-def train(args, model, strategy, ds_train, ds_test):
+def train(args, model, strategy, ds_train, ds_val):
     pd.options.display.float_format = '{:.3}'.format
     columns = ['epoch', 'acc', 'ce-loss', 'con-loss']
     train_path = os.path.join(args.out, 'train.csv')
-    test_path = os.path.join(args.out, 'test.csv')
+    val_path = os.path.join(args.out, 'val.csv')
     if not args.load:
         # Reset metrics
         pd.DataFrame(columns=columns).to_csv(train_path, index=False)
-        pd.DataFrame(columns=columns).to_csv(test_path, index=False)
+        pd.DataFrame(columns=columns).to_csv(val_path, index=False)
         start_epoch = 1
     else:
         start_epoch = pd.read_csv(train_path)['epoch'].max() + 1
@@ -58,13 +58,13 @@ def train(args, model, strategy, ds_train, ds_test):
             # Save weights
             model.save_weights(os.path.join(args.out, 'model'))
 
-            # Test
-            test_metrics = epoch_train(args, model, strategy, ds_test, optimize=False)
-            test_df = pd.DataFrame(dict(zip(columns, (epoch,) + test_metrics)))
-            test_df.to_csv(test_path, mode='a', header=False, index=False)
+            # Validate
+            val_metrics = epoch_train(args, model, strategy, ds_val, optimize=False)
+            val_df = pd.DataFrame(dict(zip(columns, (epoch,) + val_metrics)))
+            val_df.to_csv(val_path, mode='a', header=False, index=False)
 
-            print(make_status_str(train_df, test_df))
+            print(make_status_str(train_df, val_df))
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
-    return pd.read_csv(train_path), pd.read_csv(test_path)
+    return pd.read_csv(train_path), pd.read_csv(val_path)

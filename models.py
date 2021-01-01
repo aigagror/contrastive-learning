@@ -21,9 +21,12 @@ class ContrastModel(keras.Model):
                 layers.ReLU(),
                 layers.Conv2D(128, 3)
             ])
+            self.preprocess = lambda img: 2 * img - 1
         else:
             assert args.cnn == 'resnet50v2'
             self.cnn = applications.ResNet50V2(weights=None, include_top=False)
+            self.preprocess = applications.resnet_v2.preprocess_input
+
         self.avg_pool = layers.GlobalAveragePooling2D()
         self.proj_w = layers.Dense(128, name='projection')
         self.classifier = layers.Dense(10, name='classifier')
@@ -35,7 +38,7 @@ class ContrastModel(keras.Model):
             print(f'starting with new model weights')
 
     def feats(self, img):
-        x = img * 2 - 1
+        x = self.preprocess(img * 255)
         x = self.cnn(x)
         x = self.avg_pool(x)
         x, _ = tf.linalg.normalize(x, axis=-1)

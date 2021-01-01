@@ -33,10 +33,10 @@ def ds_to_tfrecord(ds, path):
     writer.write(serialized_ds)
 
 
-def ds_from_tfrecord(train_paths, test_paths):
+def ds_from_tfrecord(train_paths, val_paths):
     train_serialized = tf.data.TFRecordDataset(train_paths)
-    test_serialized = tf.data.TFRecordDataset(test_paths)
+    val_serialized = tf.data.TFRecordDataset(val_paths)
 
     ds_train = train_serialized.map(parse_example, num_parallel_calls=tf.data.AUTOTUNE)
-    ds_test = test_serialized.map(parse_example, num_parallel_calls=tf.data.AUTOTUNE)
-    return ds_train, ds_test
+    ds_val = val_serialized.map(parse_example, num_parallel_calls=tf.data.AUTOTUNE)
+    return ds_train, ds_val

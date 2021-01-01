@@ -78,7 +78,7 @@ def load_datasets(args, strategy):
 
     # Map functions
     def cast_resize(img, labels):
-        img = tf.image.convert_image_dtype(img, tf.float32)
+        img = tf.image.convert_image_dtype(img, args.dtype)
         return preprocessing.image.smart_resize(img, [imsize, imsize]), labels
 
     def dual_augment(imgs, labels):
@@ -103,7 +103,7 @@ def load_datasets(args, strategy):
             .prefetch(AUTOTUNE)
     )
 
-    dist_ds_train = strategy.experimental_distribute_dataset(ds_train)
-    dist_ds_val = strategy.experimental_distribute_dataset(ds_val)
+    ds_train = strategy.experimental_distribute_dataset(ds_train)
+    ds_val = strategy.experimental_distribute_dataset(ds_val)
 
-    return (dist_ds_train, dist_ds_val), (ds_train, ds_val)
+    return ds_train, ds_val

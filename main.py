@@ -29,11 +29,15 @@ parser.add_argument('--epochs', type=int)
 parser.add_argument('--bsz', type=int)
 parser.add_argument('--lr', type=float)
 
-# Other
+# Strategy
 parser.add_argument('--tpu', action='store_true')
+parser.add_argument('--policy', choices=['mixed_bfloat16', 'float32'])
+
+# Other
 parser.add_argument('--load', action='store_true')
 parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
+
 
 
 def setup(args):
@@ -44,20 +48,21 @@ def setup(args):
         tf.tpu.experimental.initialize_tpu_system(resolver)
         strategy = tf.distribute.TPUStrategy(resolver)
         print("All devices: ", tf.config.list_logical_devices('TPU'))
-        policy_str = 'mixed_bfloat16'
     elif len(tf.config.list_physical_devices('GPU')) > 1:
         strategy = tf.distribute.MirroredStrategy()
-        policy_str = 'mixed_float16'
     else:
         strategy = tf.distribute.get_strategy()
-        policy_str = 'mixed_float16'
-    print(f'using {strategy.__class__.__name__} strategy, {policy_str} policy')
 
     # Mixed precision
-    policy = mixed_precision.Policy(policy_str)
+    policy = mixed_precision.Policy(args.policy)
     mixed_precision.set_global_policy(policy)
 
-    return strategy, policy_str
+    for dtype in ['bfloat16', 'float16', 'float32']:
+        if dtype in args.policy:
+            args.dtype = dtype
+            break
+
+    return strategy
 
 
 def run(args):
@@ -65,25 +70,22 @@ def run(args):
     strategy, policy = setup(args)
 
     # Data
-    (dist_ds_train, dist_ds_test), (ds_train, ds_test) = data.load_datasets(args, strategy)
-    plots.plot_img_samples(args, ds_train, ds_test)
+    ds_train, ds_val = data.load_datasets(args, strategy)
+    plots.plot_img_samples(args, ds_train, ds_val)
 
     # Model and optimizer
     with strategy.scope():
         model = models.ContrastModel(args)
-        opt = keras.optimizers.SGD(args.lr, momentum=0.9)
-        if policy != 'mixed_bfloat16':
-            opt = mixed_precision.LossScaleOptimizer(opt)
-        model.optimizer = opt
+        model.optimizer = keras.optimizers.SGD(args.lr, momentum=0.9)
 
     # Train
-    train_df, test_df = training.train(args, model, strategy, dist_ds_train, dist_ds_test)
+    train_df, val_df = training.train(args, model, strategy, ds_train, ds_val)
 
     # Plot
-    plots.plot_metrics(args, train_df, test_df)
-    plots.plot_hist_sims(args, model, ds_test)
+    plots.plot_metrics(args, train_df, val_df)
+    plots.plot_hist_sims(args, strategy, model, ds_val)
     if args.tsne:
-        plots.plot_tsne(args, model, ds_test)
+        plots.plot_tsne(args, strategy, model, ds_val)
 
 
 if __name__ == '__main__':
