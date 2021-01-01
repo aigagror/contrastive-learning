@@ -34,7 +34,7 @@ def epoch_train(args, model, strategy, ds, optimize):
         all_ce_losses.append(ce_loss)
         all_con_losses.append(con_loss)
 
-        pbar.set_postfix_str(f'{acc:.3} acc')
+        pbar.set_postfix_str(f'{acc:.3} acc, {ce_loss} ce, {con_loss} supcon')
     return all_accs, all_ce_losses, all_con_losses
 
 

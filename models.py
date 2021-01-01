@@ -60,7 +60,6 @@ class ContrastModel(keras.Model):
     def train_step(self, imgs1, imgs2, labels, bsz, optimize):
         with tf.GradientTape(watch_accessed_variables=optimize) as tape:
             if self.method.startswith('supcon'):
-                print('train step with supcon')
                 partial = self.method.endswith('pce')
 
                 # Features
@@ -73,7 +72,6 @@ class ContrastModel(keras.Model):
 
                 pred_logits = self.classifier(feats1)
             elif self.method == 'ce':
-                print('train step with ce')
                 con_loss = 0
                 pred_logits, _ = self(imgs1)
             else:
@@ -85,7 +83,7 @@ class ContrastModel(keras.Model):
             loss = con_loss + ce_loss
 
             # Gradient descent
-            if False:
+            if optimize:
                 gradients = tape.gradient(loss, self.trainable_variables)
                 self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
