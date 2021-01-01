@@ -1,7 +1,3 @@
-import os
-
-# Logging
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "1"
 import argparse
 
 import tensorflow as tf
@@ -38,6 +34,8 @@ parser.add_argument('--out', type=str, default='out/')
 
 
 def setup(args):
+    tf.get_logger().setLevel('WARNING')
+
     if args.tpu:
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
         tf.config.experimental_connect_to_cluster(resolver)
