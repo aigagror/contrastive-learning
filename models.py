@@ -88,6 +88,7 @@ class ContrastModel(keras.Model):
                 self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
+        print(labels)
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
         return acc, con_loss, ce_loss
