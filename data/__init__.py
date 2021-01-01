@@ -36,21 +36,43 @@ def augment(image):
     return image
 
 
+def parse_imagenet_example(serial):
+  features = {
+        'image/height': tf.io.FixedLenFeature([], tf.int64),
+        'image/width': tf.io.FixedLenFeature([], tf.int64),
+        'image/colorspace': tf.io.FixedLenFeature([], tf.string),
+        'image/channels': tf.io.FixedLenFeature([], tf.int64),
+        'image/class/label': tf.io.FixedLenFeature([], tf.int64),
+        'image/class/synset': tf.io.FixedLenFeature([], tf.string),
+        'image/format': tf.io.FixedLenFeature([], tf.string),
+        'image/filename': tf.io.FixedLenFeature([], tf.string),
+        'image/encoded': tf.io.FixedLenFeature([], tf.string),
+  }
+  example = tf.io.parse_example(serial, features)
+  img = tf.io.decode_image(example['image/encoded'])
+  label = example['image/class/label']
+  return img, label
+
 def load_datasets(args, strategy):
     if args.data == 'cifar10':
         imsize = 32
-        (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
+        (x_train, y_train), (x_val, y_val) = datasets.cifar10.load_data()
         ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten())).cache()
-        ds_test = tf.data.Dataset.from_tensor_slices((x_test, y_test.flatten())).cache()
+        ds_val = tf.data.Dataset.from_tensor_slices((x_val, y_val.flatten())).cache()
 
         # Shuffle entire dataset
         ds_train = ds_train.shuffle(len(ds_train))
-        ds_test = ds_test.shuffle(len(ds_test))
+        ds_val = ds_val.shuffle(len(ds_val))
 
     elif args.data == 'imagenet':
         imsize = 224
-        ds_train = tfds.folder_dataset.ImageFolder(args.imagenet_train).as_dataset(shuffle_files=True)
-        ds_test = tfds.folder_dataset.ImageFolder(args.imagenet_val).as_dataset(shuffle_files=True)
+        train_files = tf.io.gfile.glob('gs://aigagror/datasets/imagenet/train-*')
+        val_files = tf.io.gfile.glob('gs://aigagror/datasets/imagenet/validation-*')
+
+        ds_train = tf.data.TFRecordDataset(train_files, num_parallel_reads=tf.data.AUTOTUNE)
+        ds_val = tf.data.TFRecordDataset(val_files, num_parallel_reads=tf.data.AUTOTUNE)
+        ds_train = ds_train.map(parse_imagenet_example, tf.data.AUTOTUNE)
+        ds_val = ds_val.map(parse_imagenet_example, tf.data.AUTOTUNE)
     else:
         raise Exception(f'unknown data {args.data}')
 
@@ -73,8 +95,8 @@ def load_datasets(args, strategy):
             .batch(args.bsz, drop_remainder=True)
             .prefetch(AUTOTUNE)
     )
-    ds_test = (
-        ds_test
+    ds_val = (
+        ds_val
             .map(cast_resize, num_parallel_calls=AUTOTUNE)
             .map(dual_views, num_parallel_calls=AUTOTUNE)
             .batch(args.bsz, drop_remainder=True)
@@ -82,6 +104,6 @@ def load_datasets(args, strategy):
     )
 
     dist_ds_train = strategy.experimental_distribute_dataset(ds_train)
-    dist_ds_test = strategy.experimental_distribute_dataset(ds_test)
+    dist_ds_val = strategy.experimental_distribute_dataset(ds_val)
 
-    return (dist_ds_train, dist_ds_test), (ds_train, ds_test)
+    return (dist_ds_train, dist_ds_val), (ds_train, ds_val)
