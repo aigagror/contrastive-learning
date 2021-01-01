@@ -100,23 +100,23 @@ def plot_hist_sims(args, strategy, model, ds_val):
         sims, proj_sims = strategy.run(get_sims, (imgs1, imgs2, labels))
 
         if args.tpu:
-            sims = sims.values
-            proj_sims = proj_sims.values
+            sims = [s.values for s in sims]
+            proj_sims = [p.values for p in proj_sims]
         else:
-            sims = [sims]
-            proj_sims = [proj_sims]
+            sims = [[s] for s in sims]
+            proj_sims = [[p] for p in proj_sims]
 
         # Similarity types
-        for s in sims:
-            neg_sims = np.append(neg_sims, s[0].numpy())
-            class_sims = np.append(class_sims, s[1].numpy())
-            inst_sims = np.append(inst_sims, s[2].numpy())
+        for n, c, i in zip(*sims):
+            neg_sims = np.append(neg_sims, n.numpy())
+            class_sims = np.append(class_sims, c.numpy())
+            inst_sims = np.append(inst_sims, i.numpy())
 
         # Projected similarity types
-        for p in proj_sims:
-            proj_neg_sims = np.append(proj_neg_sims, p[0].numpy())
-            proj_class_sims = np.append(proj_class_sims, p[1].numpy())
-            proj_inst_sims = np.append(proj_inst_sims, p[2].numpy())
+        for n, c, i in zip(*proj_sims):
+            proj_neg_sims = np.append(proj_neg_sims, n.numpy())
+            proj_class_sims = np.append(proj_class_sims, c.numpy())
+            proj_inst_sims = np.append(proj_inst_sims, i.numpy())
 
     # Plot
     f, ax = plt.subplots(1, 2)
