@@ -17,8 +17,6 @@ parser = argparse.ArgumentParser()
 
 # Data
 parser.add_argument('--data', choices=['cifar10', 'imagenet'])
-parser.add_argument('--imagenet-train', type=str)
-parser.add_argument('--imagenet-val', type=str)
 
 # Method
 parser.add_argument('--cnn', choices=['simple', 'resnet50v2'], default='resnet50v2')
@@ -46,7 +44,6 @@ def setup(args):
         # This is the TPU initialization code that has to be at the beginning.
         tf.tpu.experimental.initialize_tpu_system(resolver)
         strategy = tf.distribute.TPUStrategy(resolver)
-        print("All devices: ", tf.config.list_logical_devices('TPU'))
     elif len(tf.config.list_physical_devices('GPU')) > 1:
         strategy = tf.distribute.MirroredStrategy()
     else:
