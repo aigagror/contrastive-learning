@@ -11,6 +11,8 @@ class ContrastModel(keras.Model):
     def __init__(self, args):
         super().__init__()
 
+        self.method = args.method
+
         if args.cnn == 'simple':
             self.cnn = keras.Sequential([
                 layers.Conv2D(128, 3),
@@ -55,10 +57,10 @@ class ContrastModel(keras.Model):
         return self.classifier(feats), proj
 
     @tf.function
-    def train_step(self, method, bsz, imgs1, imgs2, labels, optimize):
+    def train_step(self, imgs1, imgs2, labels, bsz, optimize):
         with tf.GradientTape(watch_accessed_variables=optimize) as tape:
-            if method.startswith('supcon'):
-                partial = method.endswith('pce')
+            if self.method.startswith('supcon'):
+                partial = self.method.endswith('pce')
 
                 # Features
                 feats1, feats2 = self.feats(imgs1), self.feats(imgs2)
@@ -69,11 +71,11 @@ class ContrastModel(keras.Model):
                 con_loss = tf.nn.compute_average_loss(con_loss, global_batch_size=bsz)
 
                 pred_logits = self.classifier(tf.stop_gradient(feats1))
-            elif method == 'ce':
+            elif self.method == 'ce':
                 con_loss = 0
                 pred_logits, _ = self(imgs1)
             else:
-                raise Exception(f'unknown train method {method}')
+                raise Exception(f'unknown train method {self.method}')
 
             # Classifer cross entropy
             ce_loss = losses.sparse_categorical_crossentropy(labels, pred_logits,

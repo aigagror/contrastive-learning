@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from tqdm.auto import tqdm
 
 
@@ -22,7 +23,7 @@ def epoch_train(args, model, strategy, ds, optimize):
     pbar = tqdm(ds)
     for imgs1, imgs2, labels in pbar:
         # Train step
-        step_args = (args.method, args.bsz, imgs1, imgs2, labels, optimize)
+        step_args = (imgs1, imgs2, labels, tf.cast(args.bsz, args.dtype), optimize)
         acc, ce_loss, con_loss = strategy.run(model.train_step, args=step_args)
         acc = strategy.reduce('SUM', acc, axis=None)
         ce_loss = strategy.reduce('SUM', ce_loss, axis=None)
