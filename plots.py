@@ -3,10 +3,10 @@ import os
 import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
-from tqdm.auto import tqdm
 
 
 def plot_tsne(args, strategy, model, ds_val):
+    print('plotting tsne of features')
     from sklearn import manifold
 
     @tf.function
@@ -16,7 +16,7 @@ def plot_tsne(args, strategy, model, ds_val):
         return feats, proj
 
     all_feats, all_proj, all_labels = [], [], []
-    for imgs1, imgs2, labels in tqdm(ds_val, 'tsne'):
+    for imgs1, imgs2, labels in ds_val:
         feats, proj = strategy.run(get_feats, (imgs1,))
 
         if args.tpu:
@@ -67,6 +67,8 @@ def plot_img_samples(args, ds_train, ds_val):
 
 
 def plot_hist_sims(args, strategy, model, ds_val):
+    print('plotting similarities histograms')
+
     @tf.function
     def get_sims(imgs1, imgs2, labels):
         # Features and similarities
@@ -96,7 +98,7 @@ def plot_hist_sims(args, strategy, model, ds_val):
 
     neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
     proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
-    for imgs1, imgs2, labels in tqdm(ds_val, 'similarity histogram'):
+    for imgs1, imgs2, labels in ds_val:
         sims, proj_sims = strategy.run(get_sims, (imgs1, imgs2, labels))
 
         if args.tpu:
