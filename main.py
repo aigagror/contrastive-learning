@@ -37,9 +37,6 @@ parser.add_argument('--out', type=str, default='out/')
 
 
 def setup(args):
-    if not os.path.exists(args.out):
-        os.makedirs(args.out)
-
     if args.tpu:
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
         tf.config.experimental_connect_to_cluster(resolver)

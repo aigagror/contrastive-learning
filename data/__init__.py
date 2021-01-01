@@ -49,7 +49,7 @@ def parse_imagenet_example(serial):
         'image/encoded': tf.io.FixedLenFeature([], tf.string),
   }
   example = tf.io.parse_example(serial, features)
-  img = tf.io.decode_image(example['image/encoded'])
+  img = tf.io.decode_image(example['image/encoded'], channels=3)
   label = example['image/class/label']
   return img, label
 
