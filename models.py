@@ -1,9 +1,8 @@
-import os
-
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import applications, layers, losses, metrics
 
+import optimize
 from losses import supcon_loss
 
 
@@ -62,8 +61,8 @@ class ContrastModel(keras.Model):
         proj = self.norm_project(feats)
         return self.classifier(feats), proj
 
-    def supcon_step(self, imgs1, imgs2, labels, bsz, optimize):
-        with tf.GradientTape(watch_accessed_variables=optimize) as tape:
+    def supcon_step(self, imgs1, imgs2, labels, bsz, train):
+        with tf.GradientTape(watch_accessed_variables=train) as tape:
             # Features
             feats1, feats2 = self.norm_feats(imgs1), self.norm_feats(imgs2)
             proj1, proj2 = self.norm_project(feats1), self.norm_project(feats2)
@@ -82,28 +81,30 @@ class ContrastModel(keras.Model):
             # Total loss
             loss = con_loss + ce_loss
 
-        if optimize:
+        if train:
             # Gradient descent
             gradients = tape.gradient(loss, self.trainable_variables)
-            optimizer.apply_gradients(zip(gradients, self.trainable_weights))
+            optim = optimize.get_global_optimizer()
+            optim.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
         return acc, ce_loss, con_loss
 
-    def ce_step(self, imgs, labels, bsz, optimize):
-        with tf.GradientTape(watch_accessed_variables=optimize) as tape:
+    def ce_step(self, imgs, labels, bsz, train):
+        with tf.GradientTape(watch_accessed_variables=train) as tape:
             pred_logits, _ = self(imgs)
 
             # Classifer cross entropy
             loss = losses.sparse_categorical_crossentropy(labels, tf.cast(pred_logits, tf.float32), from_logits=True)
             loss = tf.nn.compute_average_loss(loss, global_batch_size=bsz)
 
-        if optimize:
+        if train:
             # Gradient descent
             gradients = tape.gradient(loss, self.trainable_variables)
-            optimizer.apply_gradients(zip(gradients, self.trainable_weights))
+            optim = optimize.get_global_optimizer()
+            optim.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)

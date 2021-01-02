@@ -3,7 +3,8 @@ import os
 import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
-from tensorflow.keras import optimizers
+
+import optimize
 
 
 def make_status_str(train_df, val_df):
@@ -41,20 +42,6 @@ def set_metric_dfs(args, columns):
         start_epoch = pd.read_csv(train_path)['epoch'].max() + 1
     return start_epoch, train_path, val_path
 
-def set_global_lr(args, epoch):
-    global global_lr
-    ref_lr = 0.1 * args.bsz / 256
-    warmup = np.linspace(0.1, ref_lr, 5)
-    decays = ref_lr * 0.1 ** np.arange(1, 4)
-    values = np.append(warmup, decays).tolist()
-    boundaries = [0, 1, 2, 3, 29, 59, 79]
-    lr_fn = optimizers.schedules.PiecewiseConstantDecay(boundaries, values)
-    global_lr = lr_fn(epoch).numpy()
-    return global_lr
-
-def get_global_lr():
-    global global_lr
-    return global_lr
 
 def epoch_train(args, strategy, step_fn, ds):
     all_accs, all_ce_losses, all_con_losses = [], [], []
@@ -79,8 +66,6 @@ def epoch_train(args, strategy, step_fn, ds):
 
 
 def train(args, strategy, model, ds_train, ds_val):
-    global optimizer
-
     # Metrics setup
     columns = ['epoch', 'lr', 'acc', 'ce-loss', 'con-loss']
     start_epoch, train_path, val_path = set_metric_dfs(args, columns)
@@ -89,13 +74,13 @@ def train(args, strategy, model, ds_train, ds_val):
     train_step, val_step = get_train_steps(args, model)
 
     # Optimizer
-    optimizer = optimizers.SGD(get_global_lr, momentum=0.9)
+    optimize.set_global_optimizer(args)
 
     # Train
     try:
         for epoch in (start_epoch + np.arange(args.epochs)):
             # Set learning rate
-            lr = set_global_lr(args, epoch)
+            lr = optimize.set_global_lr(args, epoch)
 
             # Train
             train_metrics = epoch_train(args, strategy, train_step, ds_train)
