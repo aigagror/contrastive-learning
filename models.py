@@ -57,14 +57,12 @@ class ContrastModel(keras.Model):
     def train_step(self, imgs1, imgs2, labels, bsz, supcon):
         with tf.GradientTape() as tape:
             if supcon:
-                partial = self.method.endswith('pce')
-
                 # Features
                 feats1, feats2 = self.feats(imgs1), self.feats(imgs2)
                 proj1, proj2 = self.project(feats1), self.project(feats2)
 
                 # Contrast
-                con_loss = supcon_loss(labels, proj1, proj2, partial)
+                con_loss = supcon_loss(labels, proj1, proj2, partial=False)
                 con_loss = tf.nn.compute_average_loss(con_loss, global_batch_size=bsz)
 
                 pred_logits = self.classifier(tf.stop_gradient(feats1))
