@@ -40,12 +40,12 @@ class ContrastModel(keras.Model):
         x = self.preprocess(img * 255)
         x = self.cnn(x)
         x = self.avg_pool(x)
-        x, _ = tf.linalg.normalize(x, axis=-1)
+        # x, _ = tf.linalg.normalize(x, axis=-1)
         return x
 
     def project(self, feats):
         x = self.proj_w(feats)
-        x, _ = tf.linalg.normalize(x, axis=-1)
+        # x, _ = tf.linalg.normalize(x, axis=-1)
         return x
 
     def call(self, img):
