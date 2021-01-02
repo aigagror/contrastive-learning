@@ -49,11 +49,6 @@ class ContrastModel(keras.Model):
         x, _ = tf.linalg.normalize(x, axis=-1)
         return x
 
-    def build(self):
-        self.cnn.build(tf.TensorShape([None, 224, 224, 3]))
-        self.projection.build(tf.TensorShape([None, 2048]))
-        self.classifier.build(tf.TensorShape([None, 2048]))
-
     def call(self, img):
         feats = self.norm_feats(img)
         proj = self.norm_project(feats)
