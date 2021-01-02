@@ -84,4 +84,4 @@ class ContrastModel(keras.Model):
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
         acc = tf.cast(acc, bsz.dtype)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
-        return acc, ce_loss, con_loss, labels
+        return acc, ce_loss, con_loss, (unreduced_ce_loss, labels)
