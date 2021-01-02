@@ -36,21 +36,21 @@ class ContrastModel(keras.Model):
         else:
             print(f'starting with new model weights')
 
-    def feats(self, img):
+    def norm_feats(self, img):
         x = self.preprocess(img * 255)
         x = self.cnn(x)
         x = self.avg_pool(x)
         x, _ = tf.linalg.normalize(x, axis=-1)
         return x
 
-    def project(self, feats):
+    def norm_project(self, feats):
         x = self.projection(feats)
         x, _ = tf.linalg.normalize(x, axis=-1)
         return x
 
     def call(self, img):
-        feats = self.feats(img)
-        proj = self.projection(feats)
+        feats = self.norm_feats(img)
+        proj = self.norm_project(feats)
         return self.classifier(feats), proj
 
     @tf.function
@@ -58,8 +58,8 @@ class ContrastModel(keras.Model):
         with tf.GradientTape() as tape:
             if False:
                 # Features
-                feats1, feats2 = self.feats(imgs1), self.feats(imgs2)
-                proj1, proj2 = self.project(feats1), self.project(feats2)
+                feats1, feats2 = self.norm_feats(imgs1), self.norm_feats(imgs2)
+                proj1, proj2 = self.norm_project(feats1), self.norm_project(feats2)
 
                 # Contrast
                 con_loss = supcon_loss(labels, proj1, proj2, partial=False)
