@@ -53,9 +53,9 @@ def epoch_train(args, strategy, step_fn, ds):
         con_loss = strategy.reduce('SUM', con_loss, axis=None)
 
         # Record
-        all_accs.append(acc)
-        all_ce_losses.append(ce_loss)
-        all_con_losses.append(con_loss)
+        all_accs.append(float(acc))
+        all_ce_losses.append(float(ce_loss))
+        all_con_losses.append(float(con_loss))
 
         pbar.set_postfix_str(f'{acc:.3} acc, {ce_loss:.3} ce, {con_loss:.3} supcon')
 
