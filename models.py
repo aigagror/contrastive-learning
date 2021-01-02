@@ -32,7 +32,7 @@ class ContrastModel(keras.Model):
 
         if args.load:
             # Call to build weights, then load
-            self(tf.ones([1, 224, 224, 3]))
+            self(tf.zeros([1, 224, 224, 3]))
             print(f'loaded previously saved model weights')
             self.load_weights(os.path.join(args.out, 'model'))
         else:
