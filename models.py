@@ -30,6 +30,14 @@ class ContrastModel(keras.Model):
         self.projection = layers.Dense(128, name='projection')
         self.classifier = layers.Dense(nclass, name='classifier')
 
+        # L2 regularization
+        regularizer = keras.regularizers.l2(args.l2_reg)
+        for layer in self.layers:
+            for attr in ['kernel_regularizer', 'bias_regularizer']:
+                if hasattr(layer, attr):
+                    setattr(layer, attr, regularizer)
+
+        # Load weights?
         if args.load:
             # Call to build weights, then load
             print(f'loaded previously saved model weights')
@@ -55,6 +63,7 @@ class ContrastModel(keras.Model):
         return self.classifier(feats), proj
 
     def supcon_step(self, imgs1, imgs2, labels, bsz, optimize):
+        global optimizer
         with tf.GradientTape(watch_accessed_variables=optimize) as tape:
             # Features
             feats1, feats2 = self.norm_feats(imgs1), self.norm_feats(imgs2)
@@ -77,7 +86,7 @@ class ContrastModel(keras.Model):
         if optimize:
             # Gradient descent
             gradients = tape.gradient(loss, self.trainable_variables)
-            self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
+            optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
@@ -85,6 +94,7 @@ class ContrastModel(keras.Model):
         return acc, ce_loss, con_loss
 
     def ce_step(self, imgs, labels, bsz, optimize):
+        global optimizer
         with tf.GradientTape(watch_accessed_variables=optimize) as tape:
             pred_logits, _ = self(imgs)
 
@@ -95,7 +105,7 @@ class ContrastModel(keras.Model):
         if optimize:
             # Gradient descent
             gradients = tape.gradient(loss, self.trainable_variables)
-            self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
+            optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)

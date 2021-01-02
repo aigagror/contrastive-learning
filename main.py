@@ -2,7 +2,6 @@ import argparse
 
 import pandas as pd
 import tensorflow as tf
-from tensorflow import keras
 from tensorflow.keras import mixed_precision
 
 import data
@@ -23,6 +22,7 @@ parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 parser.add_argument('--epochs', type=int)
 parser.add_argument('--bsz', type=int)
 parser.add_argument('--lr', type=float)
+parser.add_argument('--l2_reg', type=float)
 
 # Strategy
 parser.add_argument('--tpu', action='store_true')
@@ -74,7 +74,6 @@ def run(args):
     # Model and optimizer
     with strategy.scope():
         model = models.ContrastModel(args, nclass)
-        model.optimizer = keras.optimizers.SGD(args.lr, momentum=0.9)
 
     # Train
     train_df, val_df = training.train(args, strategy, model, ds_train, ds_val)
