@@ -27,7 +27,7 @@ class ContrastModel(keras.Model):
             self.preprocess = applications.resnet_v2.preprocess_input
 
         self.avg_pool = layers.GlobalAveragePooling2D()
-        self.proj_w = layers.Dense(128, name='projection')
+        self.projection = layers.Dense(128, name='projection')
         self.classifier = layers.Dense(nclass, name='classifier')
 
         if args.load:
@@ -40,23 +40,23 @@ class ContrastModel(keras.Model):
         x = self.preprocess(img * 255)
         x = self.cnn(x)
         x = self.avg_pool(x)
-        # x, _ = tf.linalg.normalize(x, axis=-1)
+        x, _ = tf.linalg.normalize(x, axis=-1)
         return x
 
     def project(self, feats):
-        x = self.proj_w(feats)
-        # x, _ = tf.linalg.normalize(x, axis=-1)
+        x = self.projection(feats)
+        x, _ = tf.linalg.normalize(x, axis=-1)
         return x
 
     def call(self, img):
         feats = self.feats(img)
-        proj = self.project(feats)
+        proj = self.projection(feats)
         return self.classifier(feats), proj
 
     @tf.function
     def train_step(self, imgs1, imgs2, labels, bsz, supcon):
         with tf.GradientTape() as tape:
-            if supcon:
+            if False:
                 # Features
                 feats1, feats2 = self.feats(imgs1), self.feats(imgs2)
                 proj1, proj2 = self.project(feats1), self.project(feats2)
