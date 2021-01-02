@@ -33,7 +33,7 @@ class ContrastModel(keras.Model):
         if args.load:
             # Call to build weights, then load
             print(f'loaded previously saved model weights')
-            self.load_weights(os.path.join(args.out, 'model'))
+            self.load_weights('gs://aigagror/out/model')
         else:
             print(f'starting with new model weights')
 
