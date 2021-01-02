@@ -32,7 +32,7 @@ class ContrastModel(keras.Model):
 
         if args.load:
             # Call to build weights, then load
-            self(tf.zeros([1, 224, 224, 3]))
+            self.build()
             print(f'loaded previously saved model weights')
             self.load_weights(os.path.join(args.out, 'model'))
         else:
@@ -49,6 +49,11 @@ class ContrastModel(keras.Model):
         x = self.projection(feats)
         x, _ = tf.linalg.normalize(x, axis=-1)
         return x
+
+    def build(self):
+        self.cnn.build(tf.TensorShape([None, 224, 224, 3]))
+        self.projection.build(tf.TensorShape([None, 2048]))
+        self.classifier.build(tf.TensorShape([None, 2048]))
 
     def call(self, img):
         feats = self.norm_feats(img)
