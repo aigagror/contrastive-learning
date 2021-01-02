@@ -71,6 +71,7 @@ class ContrastModel(keras.Model):
                 pred_logits, _ = self(imgs1)
 
             # Classifer cross entropy
+            tf.debugging.assert_less_equal(tf.reduce_max(labels), 999)
             ce_loss = losses.sparse_categorical_crossentropy(labels, pred_logits, from_logits=True)
             ce_loss = tf.nn.compute_average_loss(ce_loss, global_batch_size=bsz)
             loss = con_loss + ce_loss
