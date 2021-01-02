@@ -63,7 +63,6 @@ class ContrastModel(keras.Model):
         return self.classifier(feats), proj
 
     def supcon_step(self, imgs1, imgs2, labels, bsz, optimize):
-        global optimizer
         with tf.GradientTape(watch_accessed_variables=optimize) as tape:
             # Features
             feats1, feats2 = self.norm_feats(imgs1), self.norm_feats(imgs2)
@@ -94,7 +93,6 @@ class ContrastModel(keras.Model):
         return acc, ce_loss, con_loss
 
     def ce_step(self, imgs, labels, bsz, optimize):
-        global optimizer
         with tf.GradientTape(watch_accessed_variables=optimize) as tape:
             pred_logits, _ = self(imgs)
 
