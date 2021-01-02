@@ -58,7 +58,7 @@ class ContrastModel(keras.Model):
 
     @tf.function
     def train_step(self, imgs1, imgs2, labels, bsz, optimize):
-        with tf.GradientTape(watch_accessed_variables=optimize) as tape:
+        with tf.GradientTape() as tape:
             if self.method.startswith('supcon'):
                 partial = self.method.endswith('pce')
 
