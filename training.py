@@ -48,7 +48,7 @@ def epoch_train(args, strategy, step_fn, ds):
     pbar = tqdm(ds)
     for input in pbar:
         # Step
-        step_args = input + (float(args.bsz), )
+        step_args = input + (float(args.bsz),)
         acc, ce_loss, con_loss = strategy.run(step_fn, args=step_args)
         acc = strategy.reduce('SUM', acc, axis=None)
         ce_loss = strategy.reduce('SUM', ce_loss, axis=None)
@@ -62,7 +62,6 @@ def epoch_train(args, strategy, step_fn, ds):
         pbar.set_postfix_str(f'{acc:.3} acc, {ce_loss:.3} ce, {con_loss:.3} supcon')
 
     return all_accs, all_ce_losses, all_con_losses
-
 
 
 def train(args, strategy, model, ds_train, ds_val):
@@ -84,7 +83,7 @@ def train(args, strategy, model, ds_train, ds_val):
 
             # Train
             train_metrics = epoch_train(args, strategy, train_step, ds_train)
-            train_df = pd.DataFrame(dict(zip(columns, (epoch,lr) + train_metrics)))
+            train_df = pd.DataFrame(dict(zip(columns, (epoch, lr) + train_metrics)))
             train_df.to_csv(train_path, mode='a', header=False, index=False)
 
             # Save weights

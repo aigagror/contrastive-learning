@@ -113,16 +113,16 @@ class ContrastModel(keras.Model):
 
     @tf.function
     def supcon_train(self, imgs1, imgs2, labels, bsz):
-        return self.supcon_step(imgs1, imgs2, labels, bsz, optimize=True)
+        return self.supcon_step(imgs1, imgs2, labels, bsz, train=True)
 
     @tf.function
     def supcon_val(self, imgs1, imgs2, labels, bsz):
-        return self.supcon_step(imgs1, imgs2, labels, bsz, optimize=False)
+        return self.supcon_step(imgs1, imgs2, labels, bsz, train=False)
 
     @tf.function
     def ce_train(self, imgs, labels, bsz):
-        return self.ce_step(imgs, labels, bsz, optimize=True)
+        return self.ce_step(imgs, labels, bsz, train=True)
 
     @tf.function
     def ce_val(self, imgs, labels, bsz):
-        return self.ce_step(imgs, labels, bsz, optimize=False)
+        return self.ce_step(imgs, labels, bsz, train=False)
