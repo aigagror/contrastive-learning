@@ -67,7 +67,7 @@ class ContrastModel(keras.Model):
 
                 pred_logits = self.classifier(tf.stop_gradient(feats1))
             else:
-                con_loss = tf.constant(0, bsz.dtype)
+                con_loss = tf.constant(0, tf.float32)
                 pred_logits, _ = self(imgs1)
 
             # Classifer cross entropy

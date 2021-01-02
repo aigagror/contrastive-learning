@@ -25,7 +25,7 @@ def epoch_train(args, model, strategy, ds, train):
     step_fn = model.train_step if train else model.test_step
     for imgs1, imgs2, labels in pbar:
         # Step
-        step_args = (imgs1, imgs2, labels, tf.cast(args.bsz, args.dtype), supcon)
+        step_args = (imgs1, imgs2, labels, float(args.bsz), supcon)
         acc, ce_loss, con_loss = strategy.run(step_fn, args=step_args)
         acc = strategy.reduce('SUM', acc, axis=None)
         ce_loss = strategy.reduce('SUM', ce_loss, axis=None)
