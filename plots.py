@@ -55,7 +55,7 @@ def plot_img_samples(args, ds_train, ds_val):
     f, ax = plt.subplots(2, 8)
     f.set_size_inches(20, 6)
     for i, ds in enumerate([ds_train, ds_val]):
-        imgs, _, _ = next(iter(ds))
+        imgs = next(iter(ds))[0]
         if args.tpu:
             imgs = imgs.values[0]
         for j in range(8):

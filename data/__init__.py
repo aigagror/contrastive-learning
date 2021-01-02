@@ -80,28 +80,25 @@ def load_datasets(args, strategy):
         img = tf.image.convert_image_dtype(img, args.dtype)
         return preprocessing.image.smart_resize(img, [imsize, imsize]), labels
 
-    def dual_augment(imgs, labels):
-        return augment(imgs), augment(imgs), labels
-
-    def dual_views(imgs, labels):
-        return imgs, imgs, labels
-
     # Preprocess
-    ds_train = (
-        ds_train
-            .map(cast_resize, num_parallel_calls=AUTOTUNE)
-            .map(dual_augment, num_parallel_calls=AUTOTUNE)
-            .batch(args.bsz, drop_remainder=True)
-            .prefetch(AUTOTUNE)
-    )
-    ds_val = (
-        ds_val
-            .map(cast_resize, num_parallel_calls=AUTOTUNE)
-            .map(dual_views, num_parallel_calls=AUTOTUNE)
-            .batch(args.bsz, drop_remainder=True)
-            .prefetch(AUTOTUNE)
-    )
+    ds_train = ds_train.map(cast_resize, num_parallel_calls=AUTOTUNE)
+    ds_val = ds_val.map(cast_resize, num_parallel_calls=AUTOTUNE)
 
+    if args.method.startswith('supcon'):
+        def dual_augment(imgs, labels):
+            return augment(imgs), augment(imgs), labels
+
+        def dual_views(imgs, labels):
+            return imgs, imgs, labels
+
+        ds_train = ds_train.map(dual_augment, num_parallel_calls=AUTOTUNE)
+        ds_val = ds_val.map(dual_views, num_parallel_calls=AUTOTUNE)
+
+    # Batch and prefetch
+    ds_train = ds_train.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
+    ds_val = ds_val.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
+
+    # Distribute among strategy
     ds_train = strategy.experimental_distribute_dataset(ds_train)
     ds_val = strategy.experimental_distribute_dataset(ds_val)
 

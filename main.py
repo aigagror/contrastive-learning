@@ -81,7 +81,8 @@ def run(args):
 
     # Plot
     plots.plot_metrics(args, train_df, val_df)
-    plots.plot_hist_sims(args, strategy, model, ds_val)
+    if args.method.startswith('supcon'):
+        plots.plot_hist_sims(args, strategy, model, ds_val)
     if args.tsne:
         plots.plot_tsne(args, strategy, model, ds_val)
 
