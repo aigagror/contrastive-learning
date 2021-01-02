@@ -18,14 +18,15 @@ def make_status_str(train_df, val_df):
     return ret
 
 
-def epoch_train(args, model, strategy, ds):
+def epoch_train(args, model, strategy, ds, train):
     all_accs, all_ce_losses, all_con_losses = [], [], []
     pbar = tqdm(ds)
     supcon = args.method == 'supcon'
+    step_fn = model.train_step if train else model.test_step
     for imgs1, imgs2, labels in pbar:
-        # Train step
+        # Step
         step_args = (imgs1, imgs2, labels, tf.cast(args.bsz, args.dtype), supcon)
-        acc, ce_loss, con_loss = strategy.run(model.train_step, args=step_args)
+        acc, ce_loss, con_loss = strategy.run(step_fn, args=step_args)
         acc = strategy.reduce('SUM', acc, axis=None)
         ce_loss = strategy.reduce('SUM', ce_loss, axis=None)
         con_loss = strategy.reduce('SUM', con_loss, axis=None)
@@ -55,7 +56,7 @@ def train(args, model, strategy, ds_train, ds_val):
     try:
         for epoch in (start_epoch + np.arange(args.epochs)):
             # Train
-            train_metrics = epoch_train(args, model, strategy, ds_train, optimize=False)
+            train_metrics = epoch_train(args, model, strategy, ds_train)
             train_df = pd.DataFrame(dict(zip(columns, (epoch,) + train_metrics)))
             train_df.to_csv(train_path, mode='a', header=False, index=False)
 
@@ -63,7 +64,7 @@ def train(args, model, strategy, ds_train, ds_val):
             model.save_weights(os.path.join(args.out, 'model'))
 
             # Validate
-            val_metrics = epoch_train(args, model, strategy, ds_val, optimize=False)
+            val_metrics = epoch_train(args, model, strategy, ds_val)
             val_df = pd.DataFrame(dict(zip(columns, (epoch,) + val_metrics)))
             val_df.to_csv(val_path, mode='a', header=False, index=False)
 
