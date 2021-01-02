@@ -44,9 +44,9 @@ def set_metric_dfs(args, columns):
 def epoch_train(args, strategy, step_fn, ds):
     all_accs, all_ce_losses, all_con_losses = [], [], []
     pbar = tqdm(ds)
-    for imgs1, imgs2, labels in pbar:
+    for input in pbar:
         # Step
-        step_args = (imgs1, imgs2, labels, float(args.bsz))
+        step_args = input + (float(args.bsz), )
         acc, ce_loss, con_loss = strategy.run(step_fn, args=step_args)
         acc = strategy.reduce('SUM', acc, axis=None)
         ce_loss = strategy.reduce('SUM', ce_loss, axis=None)
