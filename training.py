@@ -37,7 +37,7 @@ def set_metric_dfs(args, columns):
         # Reset metrics
         pd.DataFrame(columns=columns).to_csv(train_path, index=False)
         pd.DataFrame(columns=columns).to_csv(val_path, index=False)
-        start_epoch = 1
+        start_epoch = 0
     else:
         start_epoch = pd.read_csv(train_path)['epoch'].max() + 1
     return start_epoch, train_path, val_path
