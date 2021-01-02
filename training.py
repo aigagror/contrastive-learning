@@ -88,7 +88,7 @@ def train(args, strategy, model, ds_train, ds_val):
 
             print(make_status_str(train_df, val_df))
     except KeyboardInterrupt:
-        model.save_weights(os.path.join(args.out, 'model'))
+        model.save_weights(os.path.join(args.out, 'model'), save_format='hdf5')
         print('keyboard interrupt caught. ending training early')
 
     return pd.read_csv(train_path), pd.read_csv(val_path)
