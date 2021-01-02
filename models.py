@@ -20,7 +20,7 @@ class ContrastModel(keras.Model):
                 layers.ReLU(),
                 layers.Conv2D(128, 3)
             ])
-            self.preprocess = lambda img: 2 * img - 1
+            self.preprocess = lambda img: img / 127.5 - 1
         else:
             assert args.cnn == 'resnet50v2'
             self.cnn = applications.ResNet50V2(weights=None, include_top=False)
