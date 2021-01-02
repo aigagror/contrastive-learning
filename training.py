@@ -56,7 +56,7 @@ def train(args, model, strategy, ds_train, ds_val):
     try:
         for epoch in (start_epoch + np.arange(args.epochs)):
             # Train
-            train_metrics = epoch_train(args, model, strategy, ds_train)
+            train_metrics = epoch_train(args, model, strategy, ds_train, train=True)
             train_df = pd.DataFrame(dict(zip(columns, (epoch,) + train_metrics)))
             train_df.to_csv(train_path, mode='a', header=False, index=False)
 
@@ -64,7 +64,7 @@ def train(args, model, strategy, ds_train, ds_val):
             model.save_weights(os.path.join(args.out, 'model'))
 
             # Validate
-            val_metrics = epoch_train(args, model, strategy, ds_val)
+            val_metrics = epoch_train(args, model, strategy, ds_val, train=False)
             val_df = pd.DataFrame(dict(zip(columns, (epoch,) + val_metrics)))
             val_df.to_csv(val_path, mode='a', header=False, index=False)
 
