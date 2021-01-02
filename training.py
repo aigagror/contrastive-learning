@@ -26,21 +26,18 @@ def epoch_train(args, model, strategy, ds, train):
     for imgs1, imgs2, labels in pbar:
         # Step
         step_args = (imgs1, imgs2, labels, tf.cast(args.bsz, args.dtype), supcon)
-        acc, ce_loss, con_loss, debug = strategy.run(step_fn, args=step_args)
-        print('debug', debug)
-        print('before reduce', ce_loss)
+        acc, ce_loss, con_loss = strategy.run(step_fn, args=step_args)
         acc = strategy.reduce('SUM', acc, axis=None)
         ce_loss = strategy.reduce('SUM', ce_loss, axis=None)
         con_loss = strategy.reduce('SUM', con_loss, axis=None)
-        print('after reduce', ce_loss)
 
         # Record
         all_accs.append(acc)
         all_ce_losses.append(ce_loss)
         all_con_losses.append(con_loss)
 
-        pbar.set_postfix_str(f'{acc:.3} acc, {ce_loss} ce, {con_loss} supcon')
-        break
+        pbar.set_postfix_str(f'{acc:.3} acc, {ce_loss:.3} ce, {con_loss:.3} supcon')
+
     return all_accs, all_ce_losses, all_con_losses
 
 
