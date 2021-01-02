@@ -99,7 +99,7 @@ class ContrastModel(keras.Model):
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
-        return acc, loss, 0
+        return acc, loss, 0.0
 
     @tf.function
     def supcon_train(self, imgs1, imgs2, labels, bsz):
