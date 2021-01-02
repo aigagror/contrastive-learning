@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 
 
 def make_status_str(train_df, val_df):
-    train_status = dict(train_df.drop(columns='epoch').mean())
+    train_status = dict(train_df.mean())
     val_status = dict(val_df.drop(columns='epoch').mean())
     ret = 'train: '
     for k, v in train_status.items():
