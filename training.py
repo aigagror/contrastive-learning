@@ -18,12 +18,13 @@ def make_status_str(train_df, val_df):
     return ret
 
 
-def epoch_train(args, model, strategy, ds, optimize):
+def epoch_train(args, model, strategy, ds):
     all_accs, all_ce_losses, all_con_losses = [], [], []
     pbar = tqdm(ds)
+    supcon = args.method == 'supcon'
     for imgs1, imgs2, labels in pbar:
         # Train step
-        step_args = (imgs1, imgs2, labels, tf.cast(args.bsz, args.dtype), optimize)
+        step_args = (imgs1, imgs2, labels, tf.cast(args.bsz, args.dtype), supcon)
         acc, ce_loss, con_loss = strategy.run(model.train_step, args=step_args)
         acc = strategy.reduce('SUM', acc, axis=None)
         ce_loss = strategy.reduce('SUM', ce_loss, axis=None)

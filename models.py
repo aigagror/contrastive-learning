@@ -10,9 +10,6 @@ from losses import supcon_loss
 class ContrastModel(keras.Model):
     def __init__(self, args, nclass):
         super().__init__()
-
-        self.method = args.method
-
         if args.cnn == 'simple':
             self.cnn = keras.Sequential([
                 layers.Conv2D(128, 3),
@@ -57,9 +54,9 @@ class ContrastModel(keras.Model):
         return self.classifier(feats), proj
 
     @tf.function
-    def train_step(self, imgs1, imgs2, labels, bsz, optimize):
+    def train_step(self, imgs1, imgs2, labels, bsz, supcon):
         with tf.GradientTape() as tape:
-            if self.method.startswith('supcon'):
+            if supcon:
                 partial = self.method.endswith('pce')
 
                 # Features
@@ -70,12 +67,10 @@ class ContrastModel(keras.Model):
                 con_loss = supcon_loss(labels, proj1, proj2, partial)
                 con_loss = tf.nn.compute_average_loss(con_loss, global_batch_size=bsz)
 
-                pred_logits = self.classifier(feats1)
-            elif self.method == 'ce':
+                pred_logits = self.classifier(tf.stop_gradient(feats1))
+            else:
                 con_loss = 0
                 pred_logits, _ = self(imgs1)
-            else:
-                raise Exception(f'unknown train method {self.method}')
 
             # Classifer cross entropy
             ce_loss = losses.sparse_categorical_crossentropy(labels, pred_logits, from_logits=True)
@@ -83,11 +78,8 @@ class ContrastModel(keras.Model):
             loss = con_loss + ce_loss
 
             # Gradient descent
-            print(optimize)
-            tf.print(optimize)
-            if optimize:
-                gradients = tape.gradient(loss, self.trainable_variables)
-                self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
+            gradients = tape.gradient(loss, self.trainable_variables)
+            self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
