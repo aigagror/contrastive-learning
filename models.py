@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import applications, layers, losses, metrics
@@ -30,7 +32,7 @@ class ContrastModel(keras.Model):
 
         if args.load:
             print(f'loaded previously saved model weights')
-            self.load_weights(args.out)
+            self.load_weights(os.path.join(args.out, 'model'))
         else:
             print(f'starting with new model weights')
 

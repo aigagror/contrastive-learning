@@ -79,7 +79,7 @@ def train(args, strategy, model, ds_train, ds_val):
             train_df.to_csv(train_path, mode='a', header=False, index=False)
 
             # Save weights
-            model.save_weights(args.out)
+            model.save_weights(os.path.join(args.out, 'model'))
 
             # Validate
             val_metrics = epoch_train(args, strategy, val_step, ds_val)
@@ -88,7 +88,7 @@ def train(args, strategy, model, ds_train, ds_val):
 
             print(make_status_str(train_df, val_df))
     except KeyboardInterrupt:
-        model.save_weights(args.out)
+        model.save_weights(os.path.join(args.out, 'model'))
         print('keyboard interrupt caught. ending training early')
 
     return pd.read_csv(train_path), pd.read_csv(val_path)
