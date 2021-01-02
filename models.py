@@ -71,8 +71,8 @@ class ContrastModel(keras.Model):
                 pred_logits, _ = self(imgs1)
 
             # Classifer cross entropy
-            ce_loss = losses.sparse_categorical_crossentropy(labels, pred_logits, from_logits=True)
-            ce_loss = tf.nn.compute_average_loss(ce_loss, global_batch_size=bsz)
+            unreduced_ce_loss = losses.sparse_categorical_crossentropy(labels, pred_logits, from_logits=True)
+            ce_loss = tf.nn.compute_average_loss(unreduced_ce_loss, global_batch_size=bsz)
             loss = con_loss + ce_loss
 
             # Gradient descent
@@ -83,4 +83,4 @@ class ContrastModel(keras.Model):
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
         acc = tf.cast(acc, bsz.dtype)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
-        return acc, ce_loss, con_loss
+        return acc, ce_loss, con_loss, (unreduced_ce_loss, labels, logits)
