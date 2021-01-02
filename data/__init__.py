@@ -48,7 +48,7 @@ def parse_imagenet_example(serial):
     }
     example = tf.io.parse_example(serial, features)
     img = tf.io.decode_image(example['image/encoded'], channels=3)
-    label = example['image/class/label']
+    label = example['image/class/label'] - 1
     return img, label
 
 
