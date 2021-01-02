@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 from tqdm.auto import tqdm
 
 
@@ -18,14 +17,36 @@ def make_status_str(train_df, val_df):
     return ret
 
 
-def epoch_train(args, model, strategy, ds, train):
+def get_train_steps(args, model):
+    if args.method == 'ce':
+        train_step = model.ce_train
+        val_step = model.ce_val
+    else:
+        assert args.method.startswith('supcon')
+        train_step = model.supcon_train
+        val_step = model.supcon_val
+    return train_step, val_step
+
+
+def set_metric_dfs(args, columns):
+    train_path = os.path.join(args.out, 'train.csv')
+    val_path = os.path.join(args.out, 'val.csv')
+    if not args.load:
+        # Reset metrics
+        pd.DataFrame(columns=columns).to_csv(train_path, index=False)
+        pd.DataFrame(columns=columns).to_csv(val_path, index=False)
+        start_epoch = 1
+    else:
+        start_epoch = pd.read_csv(train_path)['epoch'].max() + 1
+    return start_epoch, train_path, val_path
+
+
+def epoch_train(args, strategy, step_fn, ds):
     all_accs, all_ce_losses, all_con_losses = [], [], []
     pbar = tqdm(ds)
-    supcon = args.method == 'supcon'
-    step_fn = model.train_step if train else model.test_step
     for imgs1, imgs2, labels in pbar:
         # Step
-        step_args = (imgs1, imgs2, labels, float(args.bsz), supcon)
+        step_args = (imgs1, imgs2, labels, float(args.bsz))
         acc, ce_loss, con_loss = strategy.run(step_fn, args=step_args)
         acc = strategy.reduce('SUM', acc, axis=None)
         ce_loss = strategy.reduce('SUM', ce_loss, axis=None)
@@ -41,23 +62,19 @@ def epoch_train(args, model, strategy, ds, train):
     return all_accs, all_ce_losses, all_con_losses
 
 
-def train(args, model, strategy, ds_train, ds_val):
-    pd.options.display.float_format = '{:.3}'.format
+def train(args, strategy, model, ds_train, ds_val):
+    # Metrics setup
     columns = ['epoch', 'acc', 'ce-loss', 'con-loss']
-    train_path = os.path.join(args.out, 'train.csv')
-    val_path = os.path.join(args.out, 'val.csv')
-    if not args.load:
-        # Reset metrics
-        pd.DataFrame(columns=columns).to_csv(train_path, index=False)
-        pd.DataFrame(columns=columns).to_csv(val_path, index=False)
-        start_epoch = 1
-    else:
-        start_epoch = pd.read_csv(train_path)['epoch'].max() + 1
+    start_epoch, train_path, val_path = set_metric_dfs(args, columns)
 
+    # Train steps
+    train_step, val_step = get_train_steps(args, model)
+
+    # Train
     try:
         for epoch in (start_epoch + np.arange(args.epochs)):
             # Train
-            train_metrics = epoch_train(args, model, strategy, ds_train, train=True)
+            train_metrics = epoch_train(args, strategy, train_step, ds_train)
             train_df = pd.DataFrame(dict(zip(columns, (epoch,) + train_metrics)))
             train_df.to_csv(train_path, mode='a', header=False, index=False)
 
@@ -65,7 +82,7 @@ def train(args, model, strategy, ds_train, ds_val):
             model.save_weights(os.path.join(args.out, 'model'))
 
             # Validate
-            val_metrics = epoch_train(args, model, strategy, ds_val, train=False)
+            val_metrics = epoch_train(args, strategy, val_step, ds_val)
             val_df = pd.DataFrame(dict(zip(columns, (epoch,) + val_metrics)))
             val_df.to_csv(val_path, mode='a', header=False, index=False)
 

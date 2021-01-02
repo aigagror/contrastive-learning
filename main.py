@@ -1,5 +1,6 @@
 import argparse
 
+import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import mixed_precision
@@ -36,6 +37,7 @@ parser.add_argument('--out', type=str, default='out/')
 def setup(args):
     # Logging
     tf.get_logger().setLevel('WARNING')
+    pd.options.display.float_format = '{:.3}'.format
 
     # Strategy
     if args.tpu:
@@ -75,7 +77,7 @@ def run(args):
         model.optimizer = keras.optimizers.SGD(args.lr, momentum=0.9)
 
     # Train
-    train_df, val_df = training.train(args, model, strategy, ds_train, ds_val)
+    train_df, val_df = training.train(args, strategy, model, ds_train, ds_val)
 
     # Plot
     plots.plot_metrics(args, train_df, val_df)

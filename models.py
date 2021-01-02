@@ -53,35 +53,66 @@ class ContrastModel(keras.Model):
         proj = self.norm_project(feats)
         return self.classifier(feats), proj
 
-    @tf.function
-    def train_step(self, imgs1, imgs2, labels, bsz, supcon):
-        with tf.GradientTape() as tape:
-            if False:
-                # Features
-                feats1, feats2 = self.norm_feats(imgs1), self.norm_feats(imgs2)
-                proj1, proj2 = self.norm_project(feats1), self.norm_project(feats2)
+    def supcon_step(self, imgs1, imgs2, labels, bsz, optimize):
+        with tf.GradientTape(watch_accessed_variables=optimize) as tape:
+            # Features
+            feats1, feats2 = self.norm_feats(imgs1), self.norm_feats(imgs2)
+            proj1, proj2 = self.norm_project(feats1), self.norm_project(feats2)
 
-                # Contrast
-                con_loss = supcon_loss(labels, proj1, proj2, partial=False)
-                con_loss = tf.nn.compute_average_loss(con_loss, global_batch_size=bsz)
+            # Contrast loss
+            con_loss = supcon_loss(labels, proj1, proj2, partial=False)
+            con_loss = tf.nn.compute_average_loss(con_loss, global_batch_size=bsz)
 
-                pred_logits = self.classifier(tf.stop_gradient(feats1))
-            else:
-                con_loss = tf.constant(0, tf.float32)
-                pred_logits, _ = self(imgs1)
+            pred_logits = self.classifier(tf.stop_gradient(feats1))
 
             # Classifer cross entropy
             unreduced_ce_loss = losses.sparse_categorical_crossentropy(labels, tf.cast(pred_logits, tf.float32),
                                                                        from_logits=True)
             ce_loss = tf.nn.compute_average_loss(unreduced_ce_loss, global_batch_size=bsz)
+
+            # Total loss
             loss = con_loss + ce_loss
 
+        if optimize:
             # Gradient descent
             gradients = tape.gradient(loss, self.trainable_variables)
             self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
-        acc = tf.cast(acc, bsz.dtype)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
         return acc, ce_loss, con_loss
+
+    def ce_step(self, imgs, labels, bsz, optimize):
+        with tf.GradientTape(watch_accessed_variables=optimize) as tape:
+            pred_logits, _ = self(imgs)
+
+            # Classifer cross entropy
+            loss = losses.sparse_categorical_crossentropy(labels, tf.cast(pred_logits, tf.float32), from_logits=True)
+            loss = tf.nn.compute_average_loss(loss, global_batch_size=bsz)
+
+        if optimize:
+            # Gradient descent
+            gradients = tape.gradient(loss, self.trainable_variables)
+            self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
+
+        # Accuracy
+        acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
+        acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
+        return acc, loss, 0
+
+    @tf.function
+    def supcon_train(self, imgs1, imgs2, labels, bsz):
+        return self.supcon_step(imgs1, imgs2, labels, bsz, optimize=True)
+
+    @tf.function
+    def supcon_val(self, imgs1, imgs2, labels, bsz):
+        return self.supcon_step(imgs1, imgs2, labels, bsz, optimize=False)
+
+    @tf.function
+    def ce_train(self, imgs, labels, bsz):
+        return self.ce_step(imgs, labels, bsz, optimize=True)
+
+    @tf.function
+    def ce_val(self, imgs, labels, bsz):
+        return self.ce_step(imgs, labels, bsz, optimize=False)
