@@ -11,8 +11,8 @@ def plot_tsne(args, strategy, model, ds_val):
 
     @tf.function
     def get_feats(imgs):
-        feats = model.feats(imgs)
-        proj = model.project(feats)
+        feats = model.norm_feats(imgs)
+        proj = model.norm_project(feats)
         return feats, proj
 
     all_feats, all_proj, all_labels = [], [], []
@@ -72,8 +72,8 @@ def plot_hist_sims(args, strategy, model, ds_val):
     @tf.function
     def get_sims(imgs1, imgs2, labels):
         # Features and similarities
-        feats1, feats2 = model.feats(imgs1), model.feats(imgs2)
-        proj1, proj2 = model.project(feats1), model.project(feats2)
+        feats1, feats2 = model.norm_feats(imgs1), model.norm_feats(imgs2)
+        proj1, proj2 = model.norm_project(feats1), model.norm_project(feats2)
         sims = tf.matmul(feats1, tf.transpose(feats2))
         proj_sims = tf.matmul(proj1, tf.transpose(proj2))
 
