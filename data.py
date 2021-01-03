@@ -2,8 +2,6 @@ import tensorflow as tf
 from tensorflow.keras import datasets, preprocessing
 from tensorflow.python.data import AUTOTUNE
 
-from data import serial
-
 
 def augment_img(image):
     # Crop
@@ -96,6 +94,7 @@ def load_datasets(args, strategy):
     else:
         def augment(image, labels):
             return augment_img(image), labels
+
         ds_train = ds_train.map(augment, num_parallel_calls=AUTOTUNE)
 
     # Batch and prefetch
