@@ -87,16 +87,16 @@ def train(args, strategy, model, ds_train, ds_val):
             train_df.to_csv(train_path, mode='a', header=False, index=False)
 
             # Save weights
-            model.save_weights('gs://aigagror/out/model')
+            model.save_weights('gs://aigagror/contrastive-learning/model')
 
             # Validate
             val_metrics = epoch_train(args, strategy, val_step, ds_val)
-            val_df = pd.DataFrame(dict(zip(columns, (epoch,) + val_metrics)))
+            val_df = pd.DataFrame(dict(zip(columns, (epoch, lr) + val_metrics)))
             val_df.to_csv(val_path, mode='a', header=False, index=False)
 
             print(make_status_str(train_df, val_df))
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
-    model.save_weights('gs://aigagror/out/model')
+    model.save_weights('gs://aigagror/contrastive-learning/model')
     return pd.read_csv(train_path), pd.read_csv(val_path)
