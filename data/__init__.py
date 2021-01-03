@@ -5,7 +5,7 @@ from tensorflow.python.data import AUTOTUNE
 from data import serial
 
 
-def augment(image):
+def augment_img(image):
     # Crop
     imsize = image.shape[0]
     rand_scale = tf.random.uniform([], 1, 2)
@@ -68,7 +68,7 @@ def load_datasets(args, strategy):
         train_files = tf.io.gfile.glob('gs://aigagror/datasets/imagenet/train-*')
         val_files = tf.io.gfile.glob('gs://aigagror/datasets/imagenet/validation-*')
 
-        ds_train = tf.data.TFRecordDataset(train_files, num_parallel_reads=AUTOTUNE)
+        ds_train = tf.data.TFRecordDataset(train_files, num_parallel_reads=AUTOTUNE).shuffle(50000)
         ds_val = tf.data.TFRecordDataset(val_files, num_parallel_reads=AUTOTUNE)
         ds_train = ds_train.map(parse_imagenet_example, AUTOTUNE)
         ds_val = ds_val.map(parse_imagenet_example, AUTOTUNE)
@@ -86,13 +86,17 @@ def load_datasets(args, strategy):
 
     if args.method.startswith('supcon'):
         def dual_augment(imgs, labels):
-            return augment(imgs), augment(imgs), labels
+            return augment_img(imgs), augment_img(imgs), labels
 
         def dual_views(imgs, labels):
             return imgs, imgs, labels
 
         ds_train = ds_train.map(dual_augment, num_parallel_calls=AUTOTUNE)
         ds_val = ds_val.map(dual_views, num_parallel_calls=AUTOTUNE)
+    else:
+        def augment(image, labels):
+            return augment_img(image), labels
+        ds_train = ds_train.map(augment, num_parallel_calls=AUTOTUNE)
 
     # Batch and prefetch
     ds_train = ds_train.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
