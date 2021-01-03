@@ -15,7 +15,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--data', choices=['cifar10', 'imagenet'])
 
 # Method
-parser.add_argument('--cnn', choices=['simple', 'resnet50v2'], default='resnet50v2')
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
 # Training

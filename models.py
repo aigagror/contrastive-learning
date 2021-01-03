@@ -9,21 +9,8 @@ from losses import supcon_loss
 class ContrastModel(keras.Model):
     def __init__(self, args, nclass):
         super().__init__()
-        if args.cnn == 'simple':
-            self.cnn = keras.Sequential([
-                layers.Conv2D(128, 3),
-                layers.BatchNormalization(),
-                layers.ReLU(),
-                layers.Conv2D(128, 3),
-                layers.BatchNormalization(),
-                layers.ReLU(),
-                layers.Conv2D(128, 3)
-            ])
-            self.preprocess = lambda img: img / 127.5 - 1
-        else:
-            assert args.cnn == 'resnet50v2'
-            self.cnn = applications.ResNet50V2(weights=None, include_top=False)
-            self.preprocess = applications.resnet_v2.preprocess_input
+        self.preprocess = applications.resnet_v2.preprocess_input
+        self.cnn = applications.ResNet50V2(weights=None, include_top=False)
 
         self.avg_pool = layers.GlobalAveragePooling2D()
         self.projection = layers.Dense(128, name='projection')
@@ -58,8 +45,7 @@ class ContrastModel(keras.Model):
 
     def call(self, img):
         feats = self.norm_feats(img)
-        proj = self.norm_project(feats)
-        return self.classifier(feats), proj
+        return self.classifier(feats)
 
     def supcon_step(self, imgs1, imgs2, labels, bsz, train):
         with tf.GradientTape(watch_accessed_variables=train) as tape:
@@ -94,7 +80,7 @@ class ContrastModel(keras.Model):
 
     def ce_step(self, imgs, labels, bsz, train):
         with tf.GradientTape(watch_accessed_variables=train) as tape:
-            pred_logits, _ = self(imgs)
+            pred_logits = self(imgs)
 
             # Classifer cross entropy
             loss = losses.sparse_categorical_crossentropy(labels, tf.cast(pred_logits, tf.float32), from_logits=True)
