@@ -63,13 +63,14 @@ def load_datasets(args, strategy):
 
     elif args.data == 'imagenet':
         imsize, nclass = 224, 1000
-        train_files = tf.io.gfile.glob('gs://aigagror/datasets/imagenet/train-*')
-        val_files = tf.io.gfile.glob('gs://aigagror/datasets/imagenet/validation-*')
+        train_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/train*', shuffle=True)
+        val_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/validation-*', shuffle=True)
 
-        ds_train = tf.data.TFRecordDataset(train_files, num_parallel_reads=AUTOTUNE).shuffle(50000)
-        ds_val = tf.data.TFRecordDataset(val_files, num_parallel_reads=AUTOTUNE)
-        ds_train = ds_train.map(parse_imagenet_example, AUTOTUNE)
-        ds_val = ds_val.map(parse_imagenet_example, AUTOTUNE)
+        train_data = train_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE)
+        val_data = val_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE)
+
+        ds_train = train_data.map(parse_imagenet_example, AUTOTUNE)
+        ds_val = val_data.map(parse_imagenet_example, AUTOTUNE)
     else:
         raise Exception(f'unknown data {args.data}')
 
