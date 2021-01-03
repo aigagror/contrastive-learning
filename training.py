@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from tqdm.auto import tqdm
 
-import optimize
+import optim
 
 
 def make_status_str(train_df, val_df):
@@ -73,13 +73,13 @@ def train(args, strategy, model, ds_train, ds_val):
     train_step, val_step = get_train_steps(args, model)
 
     # Optimizer
-    optimize.set_global_optimizer(args)
+    optim.set_global_optimizer(args)
 
     # Train
     try:
         for epoch in (start_epoch + np.arange(args.epochs)):
             # Set learning rate
-            lr = optimize.set_global_lr(args, epoch)
+            lr = optim.set_global_lr(args, epoch)
 
             # Train
             train_metrics = epoch_train(args, strategy, train_step, ds_train)

@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import applications, layers, losses, metrics
 
-import optimize
+import optim
 from losses import supcon_loss
 
 
@@ -84,8 +84,8 @@ class ContrastModel(keras.Model):
         if train:
             # Gradient descent
             gradients = tape.gradient(loss, self.trainable_variables)
-            optim = optimize.get_global_optimizer()
-            optim.apply_gradients(zip(gradients, self.trainable_weights))
+            optimizer = optim.get_global_optimizer()
+            optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
@@ -103,8 +103,8 @@ class ContrastModel(keras.Model):
         if train:
             # Gradient descent
             gradients = tape.gradient(loss, self.trainable_variables)
-            optim = optimize.get_global_optimizer()
-            optim.apply_gradients(zip(gradients, self.trainable_weights))
+            optimizer = optim.get_global_optimizer()
+            optimizer.apply_gradients(zip(gradients, self.trainable_weights))
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)

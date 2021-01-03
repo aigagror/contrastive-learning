@@ -8,6 +8,7 @@ def set_global_optimizer(args):
     global _global_optimizer
     _global_optimizer = keras.optimizers.SGD(get_global_lr, momentum=0.9)
 
+
 def get_global_optimizer():
     global _global_optimizer
     return _global_optimizer
