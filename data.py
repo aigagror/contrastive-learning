@@ -4,12 +4,12 @@ from tensorflow.python.data import AUTOTUNE
 
 
 def augment_img(image):
-    # Crop
-    imsize = image.shape[0]
-    rand_scale = tf.random.uniform([], 1, 2)
-    rand_size = tf.round(rand_scale * imsize)
-    image = tf.image.resize(image, [rand_size, rand_size])
-    image = tf.image.random_crop(image, [imsize, imsize, 3])
+    # Random crop
+    # imsize = image.shape[0]
+    # rand_scale = tf.random.uniform([], 1, 2)
+    # rand_size = tf.round(rand_scale * imsize)
+    # image = tf.image.resize(image, [rand_size, rand_size])
+    # image = tf.image.random_crop(image, [imsize, imsize, 3])
 
     # Random flip
     image = tf.image.random_flip_left_right(image)
