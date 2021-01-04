@@ -57,7 +57,7 @@ def plot_img_samples(args, ds_train, ds_val):
     for i, ds in enumerate([ds_train, ds_val]):
         imgs = next(iter(ds))[0]
         if args.tpu:
-            imgs = imgs.values[0]
+            imgs = tf.cast(imgs.values[0], tf.float32)
         for j in range(8):
             ax[i, j].set_title('train' if i == 0 else 'val')
             ax[i, j].imshow(imgs[j])
