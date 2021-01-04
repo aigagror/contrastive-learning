@@ -93,8 +93,8 @@ def load_datasets(args, strategy):
         ds_train = ds_train.map(dual_augment, num_parallel_calls=AUTOTUNE)
         ds_val = ds_val.map(dual_views, num_parallel_calls=AUTOTUNE)
     else:
-        def augment(image, labels):
-            return augment_img(image), labels
+        def augment(img, labels):
+            return augment_img(img), labels
 
         ds_train = ds_train.map(augment, num_parallel_calls=AUTOTUNE)
 
