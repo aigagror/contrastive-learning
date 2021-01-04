@@ -76,8 +76,9 @@ def load_datasets(args, strategy):
 
     # Map functions
     def cast_resize(img, labels):
+        img = preprocessing.image.smart_resize(img, [imsize, imsize])
         img = tf.image.convert_image_dtype(img, args.dtype)
-        return preprocessing.image.smart_resize(img, [imsize, imsize]), labels
+        return img, labels
 
     # Preprocess
     ds_train = ds_train.map(cast_resize, num_parallel_calls=AUTOTUNE)
