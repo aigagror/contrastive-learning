@@ -74,7 +74,7 @@ class ContrastModel(keras.Model):
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
-        acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
+        acc = tf.nn.compute_average_loss(acc, global_batch_size=tf.cast(bsz, tf.float32))
         return acc, ce_loss, con_loss
 
     def ce_step(self, imgs, labels, bsz, train):
@@ -93,7 +93,7 @@ class ContrastModel(keras.Model):
 
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
-        acc = tf.nn.compute_average_loss(acc, global_batch_size=bsz)
+        acc = tf.nn.compute_average_loss(acc, global_batch_size=tf.cast(bsz, tf.float32))
         return acc, loss, 0.0
 
     @tf.function
