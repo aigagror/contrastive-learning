@@ -77,6 +77,7 @@ def load_datasets(args, strategy):
     # Map functions
     def cast_resize(img, labels):
         img = preprocessing.image.smart_resize(img, [imsize, imsize])
+        img = tf.image.convert_image_dtype(img, tf.float32)
         img = tf.image.convert_image_dtype(img, args.dtype)
         return img, labels
 
