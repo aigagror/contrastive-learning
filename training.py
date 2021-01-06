@@ -97,7 +97,7 @@ def train(args, strategy, model, ds_train, ds_val):
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
-    model.save_weights('gs://aigagror/contrastive-learning/model')
+    model.save_weights(args.model_out)
     return
 
 
