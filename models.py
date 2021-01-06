@@ -75,7 +75,7 @@ class ContrastModel(keras.Model):
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=tf.cast(bsz, tf.float32))
-        return acc, ce_loss, con_loss
+        return {'acc': acc, 'ce-loss': ce_loss, 'con-loss': con_loss}
 
     def ce_step(self, imgs, labels, bsz, train):
         with tf.GradientTape(watch_accessed_variables=train) as tape:
@@ -94,7 +94,7 @@ class ContrastModel(keras.Model):
         # Accuracy
         acc = metrics.sparse_categorical_accuracy(labels, pred_logits)
         acc = tf.nn.compute_average_loss(acc, global_batch_size=tf.cast(bsz, tf.float32))
-        return acc, loss, 0.0
+        return {'acc': acc, 'ce-loss': loss, 'con-loss': 0.0}
 
     @tf.function
     def supcon_train(self, imgs1, imgs2, labels, bsz):
