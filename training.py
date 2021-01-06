@@ -1,4 +1,6 @@
 import os
+from collections import defaultdict
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -11,7 +13,10 @@ import optim
 def make_status_str(train_df, val_df):
     train_status = dict(train_df.mean())
     val_status = dict(val_df.drop(columns='epoch').mean())
-    ret = 'train: '
+
+    now = datetime.now().strftime("%H:%M:%S")
+
+    ret = f'{now} - train: '
     for k, v in train_status.items():
         ret += f'{v:.3} {k}, '
     ret += 'val: '
@@ -20,7 +25,7 @@ def make_status_str(train_df, val_df):
     return ret
 
 
-def get_train_steps(args, model):
+def get_step_fns(args, model):
     if args.method == 'ce':
         train_step = model.ce_train
         val_step = model.ce_val
@@ -31,47 +36,42 @@ def get_train_steps(args, model):
     return train_step, val_step
 
 
-def set_metric_dfs(args, columns):
-    train_path = os.path.join(args.out, 'train.csv')
-    val_path = os.path.join(args.out, 'val.csv')
-    if not args.load:
-        # Reset metrics
-        pd.DataFrame(columns=columns).to_csv(train_path, index=False)
-        pd.DataFrame(columns=columns).to_csv(val_path, index=False)
-        start_epoch = 0
-    else:
-        start_epoch = pd.read_csv(train_path)['epoch'].max() + 1
-    return start_epoch, train_path, val_path
-
-
 def epoch_train(args, strategy, step_fn, ds):
-    all_accs, all_ce_losses, all_con_losses = [], [], []
+    metrics_dict = defaultdict(lambda: [])
     pbar = tqdm(ds)
     for input in pbar:
         # Step
         step_args = input + (tf.cast(args.bsz, args.dtype),)
-        acc, ce_loss, con_loss = strategy.run(step_fn, args=step_args)
-        acc = strategy.reduce('SUM', acc, axis=None)
-        ce_loss = strategy.reduce('SUM', ce_loss, axis=None)
-        con_loss = strategy.reduce('SUM', con_loss, axis=None)
+        step_info = strategy.run(step_fn, args=step_args)
 
-        # Record
-        all_accs.append(float(acc))
-        all_ce_losses.append(float(ce_loss))
-        all_con_losses.append(float(con_loss))
+        # Metrics
+        status_str = 'loss: '
+        for key, value in step_info.items():
+            value = float(strategy.reduce('SUM', value, axis=None))
+            metrics_dict[key].append(value)
+            status_str += f'{value:.3} {key}, '
 
-        pbar.set_postfix_str(f'{acc:.3} acc, {ce_loss:.3} ce, {con_loss:.3} supcon')
+        pbar.set_postfix_str(status_str, refresh=False)
 
-    return all_accs, all_ce_losses, all_con_losses
+    return metrics_dict
+
+
+def get_starting_epoch(args):
+    train_path = os.path.join(args.out, 'train.csv')
+    if args.load and os.path.exists(train_path):
+        train_df = pd.read_csv(train_path)
+        start_epoch = train_df['epoch'].max() + 1
+    else:
+        start_epoch = 0
+    return start_epoch
 
 
 def train(args, strategy, model, ds_train, ds_val):
-    # Metrics setup
-    columns = ['epoch', 'lr', 'acc', 'ce-loss', 'con-loss']
-    start_epoch, train_path, val_path = set_metric_dfs(args, columns)
+    # Setup
+    start_epoch = get_starting_epoch(args)
 
     # Train steps
-    train_step, val_step = get_train_steps(args, model)
+    train_step_fn, val_step_fn = get_step_fns(args, model)
 
     # Optimizer
     optim.set_global_optimizer(args)
@@ -83,21 +83,40 @@ def train(args, strategy, model, ds_train, ds_val):
             lr = optim.set_global_lr(args, epoch)
 
             # Train
-            train_metrics = epoch_train(args, strategy, train_step, ds_train)
-            train_df = pd.DataFrame(dict(zip(columns, (epoch, lr) + train_metrics)))
-            train_df.to_csv(train_path, mode='a', header=False, index=False)
+            train_metrics = epoch_train(args, strategy, train_step_fn, ds_train)
 
             # Save weights
             model.save_weights('gs://aigagror/contrastive-learning/model')
 
             # Validate
-            val_metrics = epoch_train(args, strategy, val_step, ds_val)
-            val_df = pd.DataFrame(dict(zip(columns, (epoch, lr) + val_metrics)))
-            val_df.to_csv(val_path, mode='a', header=False, index=False)
+            val_metrics = epoch_train(args, strategy, val_step_fn, ds_val)
 
-            print(make_status_str(train_df, val_df))
+            # Record metrics
+            record_metrics(args, train_metrics, val_metrics, epoch, lr)
+
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
     model.save_weights('gs://aigagror/contrastive-learning/model')
-    return pd.read_csv(train_path), pd.read_csv(val_path)
+    return
+
+
+def record_metrics(args, train_metrics, val_metrics, epoch, lr):
+    # Determine write configuration
+    train_path = os.path.join(args.out, 'train.csv')
+    val_path = os.path.join(args.out, 'val.csv')
+    if epoch == 0 and not args.load:
+        mode, header = 'w', True
+    else:
+        mode, header = 'a', False
+
+    # Record train epoch results
+    train_metrics['lr'], train_metrics['epoch'] = lr, epoch
+    val_metrics['lr'], val_metrics['epoch'] = lr, epoch
+    train_df = pd.DataFrame(train_metrics)
+    val_df = pd.DataFrame(val_metrics)
+
+    # Write metrics to disk
+    train_df.to_csv(train_path, mode=mode, header=header, index=False)
+    val_df.to_csv(val_path, mode='a', header=False, index=False)
+    print(make_status_str(train_df, val_df))

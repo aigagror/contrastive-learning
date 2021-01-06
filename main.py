@@ -20,11 +20,11 @@ parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 # Training
 parser.add_argument('--epochs', type=int)
 parser.add_argument('--bsz', type=int)
-parser.add_argument('--l2_reg', type=float)
+parser.add_argument('--l2_reg', type=float, default=1e-4)
 
 # Strategy
 parser.add_argument('--tpu', action='store_true')
-parser.add_argument('--policy', choices=['mixed_bfloat16', 'float32'])
+parser.add_argument('--policy', choices=['mixed_bfloat16', 'float32'], default='float32')
 
 # Other
 parser.add_argument('--load', action='store_true')
@@ -74,10 +74,10 @@ def run(args):
         model = models.ContrastModel(args, nclass)
 
     # Train
-    train_df, val_df = training.train(args, strategy, model, ds_train, ds_val)
+    training.train(args, strategy, model, ds_train, ds_val)
 
     # Plot
-    plots.plot_metrics(args, train_df, val_df)
+    plots.plot_metrics(args)
     if args.method.startswith('supcon'):
         plots.plot_hist_sims(args, strategy, model, ds_val)
     if args.tsne:
