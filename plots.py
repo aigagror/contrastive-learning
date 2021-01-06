@@ -149,7 +149,7 @@ def plot_metrics(args):
     for i, metric in enumerate(all_metrics):
         ax[i].set_title(metric)
         for df, split in [(train_df, 'train'), (val_df, 'val')]:
-            nsteps, nepochs = len(df), df['epoch'].max()
+            nsteps, nepochs = len(df), df['epoch'].max() + 1
             x = np.linspace(0, nepochs, nsteps)
             ax[i].plot(x, df[metric], label=split)
             ax[i].legend()
