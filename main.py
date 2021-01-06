@@ -29,7 +29,8 @@ parser.add_argument('--policy', choices=['mixed_bfloat16', 'float32'], default='
 # Other
 parser.add_argument('--load', action='store_true')
 parser.add_argument('--tsne', action='store_true')
-parser.add_argument('--out', type=str, default='out/')
+parser.add_argument('--metrics-out', type=str, default='out/')
+parser.add_argument('--model-out', type=str, default='out/model')
 
 
 def setup(args):

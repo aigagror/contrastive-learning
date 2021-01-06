@@ -57,7 +57,7 @@ def epoch_train(args, strategy, step_fn, ds):
 
 
 def get_starting_epoch(args):
-    train_path = os.path.join(args.out, 'train.csv')
+    train_path = os.path.join(args.metrics_out, 'train.csv')
     if args.load and os.path.exists(train_path):
         train_df = pd.read_csv(train_path)
         start_epoch = train_df['epoch'].max() + 1
@@ -86,7 +86,7 @@ def train(args, strategy, model, ds_train, ds_val):
             train_metrics = epoch_train(args, strategy, train_step_fn, ds_train)
 
             # Save weights
-            model.save_weights('gs://aigagror/contrastive-learning/model')
+            model.save_weights(args.model_out)
 
             # Validate
             val_metrics = epoch_train(args, strategy, val_step_fn, ds_val)
@@ -103,8 +103,8 @@ def train(args, strategy, model, ds_train, ds_val):
 
 def record_metrics(args, train_metrics, val_metrics, epoch, lr):
     # Determine write configuration
-    train_path = os.path.join(args.out, 'train.csv')
-    val_path = os.path.join(args.out, 'val.csv')
+    train_path = os.path.join(args.metrics_out, 'train.csv')
+    val_path = os.path.join(args.metrics_out, 'val.csv')
     if epoch == 0 and not args.load:
         mode, header = 'w', True
     else:
