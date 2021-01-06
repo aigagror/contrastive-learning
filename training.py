@@ -118,5 +118,5 @@ def record_metrics(args, train_metrics, val_metrics, epoch, lr):
 
     # Write metrics to disk
     train_df.to_csv(train_path, mode=mode, header=header, index=False)
-    val_df.to_csv(val_path, mode='a', header=False, index=False)
+    val_df.to_csv(val_path, mode=mode, header=header, index=False)
     print(make_status_str(train_df, val_df))
