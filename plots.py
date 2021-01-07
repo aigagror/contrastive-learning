@@ -57,11 +57,9 @@ def plot_img_samples(args, ds_train, ds_val):
     f.set_size_inches(20, 6)
     for i, ds in enumerate([ds_train, ds_val]):
         imgs = next(iter(ds))[0]
-        if args.tpu:
-            imgs = tf.cast(imgs.values[0], tf.float32)
         for j in range(8):
             ax[i, j].set_title('train' if i == 0 else 'val')
-            ax[i, j].imshow(imgs[j])
+            ax[i, j].imshow(tf.cast(imgs[j], tf.uint8))
 
     f.tight_layout()
     f.savefig(os.path.join(args.metrics_out, 'img-samples.jpg'))
