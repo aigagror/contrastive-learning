@@ -20,6 +20,7 @@ parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 # Training
 parser.add_argument('--epochs', type=int)
 parser.add_argument('--bsz', type=int)
+parser.add_argument('--lr', type=float)
 parser.add_argument('--l2_reg', type=float, default=1e-4)
 
 # Strategy
@@ -54,7 +55,7 @@ def setup(args):
     policy = mixed_precision.Policy(args.policy)
     mixed_precision.set_global_policy(policy)
 
-    for dtype in ['bfloat16', 'float16', 'float32']:
+    for dtype in ['bfloat16', 'float32']:
         if dtype in args.policy:
             args.dtype = dtype
             break
