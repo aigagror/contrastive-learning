@@ -3,13 +3,16 @@ from tensorflow.keras import datasets, preprocessing
 from tensorflow.python.data import AUTOTUNE
 
 
+@tf.function()
 def augment_img(image):
-    # Random crop
-    # imsize = image.shape[0]
-    # rand_scale = tf.random.uniform([], 1, 2)
-    # rand_size = tf.round(rand_scale * imsize)
-    # image = tf.image.resize(image, [rand_size, rand_size])
-    # image = tf.image.random_crop(image, [imsize, imsize, 3])
+
+    # Random scale
+    h, w = image.shape[-3:-1]
+    rand_scale = tf.random.uniform([], 1, 1.5)
+    new_h = tf.round(rand_scale * h)
+    new_w = tf.round(rand_scale * w)
+    image = tf.image.resize(image, [new_h, new_w])
+    image = tf.image.random_crop(image, [h, w, 3])
 
     # Random flip
     image = tf.image.random_flip_left_right(image)
@@ -26,8 +29,8 @@ def augment_img(image):
         image = tf.image.rgb_to_grayscale(image)
         image = tf.tile(image, [1, 1, 3])
 
-    # Clip
-    image = tf.clip_by_value(image, 0, 1)
+    # Clip and cast
+    image = tf.clip_by_value(image, 0, 255)
 
     return image
 
@@ -75,30 +78,29 @@ def load_datasets(args, strategy):
         raise Exception(f'unknown data {args.data}')
 
     # Map functions
-    def cast_resize(img, labels):
+    def resize(img, labels):
+        # This smart resize function also casts images to float32 within the same 0-255 range.
         img = preprocessing.image.smart_resize(img, [imsize, imsize])
-        img = img / 255
-        img = tf.image.convert_image_dtype(img, args.dtype)
         return img, labels
 
     # Preprocess
-    ds_train = ds_train.map(cast_resize, num_parallel_calls=AUTOTUNE)
-    ds_val = ds_val.map(cast_resize, num_parallel_calls=AUTOTUNE)
-
     if args.method.startswith('supcon'):
         def dual_augment(imgs, labels):
             return augment_img(imgs), augment_img(imgs), labels
 
-        def dual_views(imgs, labels):
-            return imgs, imgs, labels
+        def augment_second(imgs, labels):
+            return imgs, augment_img(imgs), labels
 
         ds_train = ds_train.map(dual_augment, num_parallel_calls=AUTOTUNE)
-        ds_val = ds_val.map(dual_views, num_parallel_calls=AUTOTUNE)
+        ds_val = ds_val.map(augment_second, num_parallel_calls=AUTOTUNE)
     else:
         def augment(img, labels):
             return augment_img(img), labels
 
         ds_train = ds_train.map(augment, num_parallel_calls=AUTOTUNE)
+
+    ds_train = ds_train.map(resize, num_parallel_calls=AUTOTUNE)
+    ds_val = ds_val.map(resize, num_parallel_calls=AUTOTUNE)
 
     # Batch and prefetch
     ds_train = ds_train.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
