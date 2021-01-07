@@ -78,29 +78,30 @@ def load_datasets(args, strategy):
         raise Exception(f'unknown data {args.data}')
 
     # Map functions
-    def resize(img, labels):
+    def resize(img):
         # This smart resize function also casts images to float32 within the same 0-255 range.
         img = preprocessing.image.smart_resize(img, [imsize, imsize])
-        return img, labels
+        return img
 
     # Preprocess
     if args.method.startswith('supcon'):
         def dual_augment(imgs, labels):
-            return augment_img(imgs), augment_img(imgs), labels
+            im1, im2 = augment_img(imgs), augment_img(imgs)
+            im1, im2 = resize(im1), resize(im2)
+            return im1, im2, labels
 
         def augment_second(imgs, labels):
-            return imgs, augment_img(imgs), labels
+            im1, im2 = imgs, augment_img(imgs)
+            im1, im2 = resize(im1), resize(im2)
+            return im1, im2, labels
 
         ds_train = ds_train.map(dual_augment, num_parallel_calls=AUTOTUNE)
         ds_val = ds_val.map(augment_second, num_parallel_calls=AUTOTUNE)
     else:
         def augment(img, labels):
-            return augment_img(img), labels
+            return resize(augment_img(img)), labels
 
         ds_train = ds_train.map(augment, num_parallel_calls=AUTOTUNE)
-
-    ds_train = ds_train.map(resize, num_parallel_calls=AUTOTUNE)
-    ds_val = ds_val.map(resize, num_parallel_calls=AUTOTUNE)
 
     # Batch and prefetch
     ds_train = ds_train.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
