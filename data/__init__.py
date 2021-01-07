@@ -3,16 +3,34 @@ from tensorflow.keras import datasets, preprocessing
 from tensorflow.python.data import AUTOTUNE
 
 
-@tf.function()
+def parse_imagenet_example(serial):
+    features = {
+        'image/height': tf.io.FixedLenFeature([], tf.int64),
+        'image/width': tf.io.FixedLenFeature([], tf.int64),
+        'image/colorspace': tf.io.FixedLenFeature([], tf.string),
+        'image/channels': tf.io.FixedLenFeature([], tf.int64),
+        'image/class/label': tf.io.FixedLenFeature([], tf.int64),
+        'image/class/synset': tf.io.FixedLenFeature([], tf.string),
+        'image/format': tf.io.FixedLenFeature([], tf.string),
+        'image/filename': tf.io.FixedLenFeature([], tf.string),
+        'image/encoded': tf.io.FixedLenFeature([], tf.string),
+    }
+    example = tf.io.parse_example(serial, features)
+    img = tf.io.decode_image(example['image/encoded'], channels=3)
+    label = example['image/class/label'] - 1
+    return img, label
+
+
+@tf.function(input_signature=[tf.TensorSpec(shape=[None, None, 3], dtype=tf.uint8)])
 def augment_img(image):
 
     # Random scale
-    h, w = image.shape[-3:-1]
+    imshape = tf.shape(image)
     rand_scale = tf.random.uniform([], 1, 1.5)
-    new_h = tf.round(rand_scale * h)
-    new_w = tf.round(rand_scale * w)
+    new_h = tf.round(rand_scale * tf.cast(imshape[0], tf.float32))
+    new_w = tf.round(rand_scale * tf.cast(imshape[1], tf.float32))
     image = tf.image.resize(image, [new_h, new_w])
-    image = tf.image.random_crop(image, [h, w, 3])
+    image = tf.image.random_crop(image, [imshape[0], imshape[1], 3])
 
     # Random flip
     image = tf.image.random_flip_left_right(image)
@@ -33,24 +51,6 @@ def augment_img(image):
     image = tf.clip_by_value(image, 0, 255)
 
     return image
-
-
-def parse_imagenet_example(serial):
-    features = {
-        'image/height': tf.io.FixedLenFeature([], tf.int64),
-        'image/width': tf.io.FixedLenFeature([], tf.int64),
-        'image/colorspace': tf.io.FixedLenFeature([], tf.string),
-        'image/channels': tf.io.FixedLenFeature([], tf.int64),
-        'image/class/label': tf.io.FixedLenFeature([], tf.int64),
-        'image/class/synset': tf.io.FixedLenFeature([], tf.string),
-        'image/format': tf.io.FixedLenFeature([], tf.string),
-        'image/filename': tf.io.FixedLenFeature([], tf.string),
-        'image/encoded': tf.io.FixedLenFeature([], tf.string),
-    }
-    example = tf.io.parse_example(serial, features)
-    img = tf.io.decode_image(example['image/encoded'], channels=3)
-    label = example['image/class/label'] - 1
-    return img, label
 
 
 def load_datasets(args, strategy):
@@ -78,30 +78,35 @@ def load_datasets(args, strategy):
         raise Exception(f'unknown data {args.data}')
 
     # Map functions
-    def resize(img):
+    def resize_and_cast(img):
         # This smart resize function also casts images to float32 within the same 0-255 range.
         img = preprocessing.image.smart_resize(img, [imsize, imsize])
+        img = tf.cast(img, tf.float32)
         return img
 
     # Preprocess
     if args.method.startswith('supcon'):
         def dual_augment(imgs, labels):
             im1, im2 = augment_img(imgs), augment_img(imgs)
-            im1, im2 = resize(im1), resize(im2)
+            im1, im2 = resize_and_cast(im1), resize_and_cast(im2)
             return im1, im2, labels
 
         def augment_second(imgs, labels):
             im1, im2 = imgs, augment_img(imgs)
-            im1, im2 = resize(im1), resize(im2)
+            im1, im2 = resize_and_cast(im1), resize_and_cast(im2)
             return im1, im2, labels
 
         ds_train = ds_train.map(dual_augment, num_parallel_calls=AUTOTUNE)
         ds_val = ds_val.map(augment_second, num_parallel_calls=AUTOTUNE)
     else:
-        def augment(img, labels):
-            return resize(augment_img(img)), labels
+        def train_preprocess(img, labels):
+            return resize_and_cast(augment_img(img)), labels
 
-        ds_train = ds_train.map(augment, num_parallel_calls=AUTOTUNE)
+        def val_preprocess(img, labels):
+            return resize_and_cast(img), labels
+
+        ds_train = ds_train.map(train_preprocess, num_parallel_calls=AUTOTUNE)
+        ds_val = ds_val.map(val_preprocess, num_parallel_calls=AUTOTUNE)
 
     # Batch and prefetch
     ds_train = ds_train.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
