@@ -77,36 +77,25 @@ def load_datasets(args):
     else:
         raise Exception(f'unknown data {args.data}')
 
-    # Map functions
+    # Preprocess
     def resize(img):
         # This smart resize function also casts images to float32 within the same 0-255 range.
         img = preprocessing.image.smart_resize(img, [imsize, imsize])
         tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
         return img
 
-    # Preprocess
-    if args.method.startswith('supcon'):
-        def dual_augment(imgs, labels):
-            im1, im2 = augment_img(imgs), augment_img(imgs)
-            im1, im2 = resize(im1), resize(im2)
-            return im1, im2, labels
+    def process_train(imgs, labels):
+        im1, im2 = augment_img(imgs), augment_img(imgs)
+        im1, im2 = resize(im1), resize(im2)
+        return {'imgs': im1, 'imgs2': im2, 'labels': labels}
 
-        def augment_second(imgs, labels):
-            im1, im2 = imgs, augment_img(imgs)
-            im1, im2 = resize(im1), resize(im2)
-            return im1, im2, labels
+    def process_val(imgs, labels):
+        im1, im2 = imgs, augment_img(imgs)
+        im1, im2 = resize(im1), resize(im2)
+        return {'imgs': im1, 'imgs2': im2, 'labels': labels}
 
-        ds_train = ds_train.map(dual_augment, num_parallel_calls=AUTOTUNE)
-        ds_val = ds_val.map(augment_second, num_parallel_calls=AUTOTUNE)
-    else:
-        def train_preprocess(img, labels):
-            return resize(augment_img(img)), labels
-
-        def val_preprocess(img, labels):
-            return resize(img), labels
-
-        ds_train = ds_train.map(train_preprocess, num_parallel_calls=AUTOTUNE)
-        ds_val = ds_val.map(val_preprocess, num_parallel_calls=AUTOTUNE)
+    ds_train = ds_train.map(process_train, AUTOTUNE)
+    ds_val = ds_val.map(process_val, AUTOTUNE)
 
     # Batch and prefetch
     ds_train = ds_train.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
