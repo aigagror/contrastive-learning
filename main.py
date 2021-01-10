@@ -32,7 +32,7 @@ def run(args):
     try:
         cbks = [
             callbacks.TensorBoard(os.path.join(args.out, 'logs'), histogram_freq=1, write_images=True,
-                                  write_steps_per_second=True, update_freq='batch'),
+                                  update_freq='batch'),
             callbacks.LearningRateScheduler(scheduler),
             callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True)
         ]
