@@ -96,8 +96,9 @@ def plot_hist_sims(args, strategy, model, ds_val):
 
     neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
     proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
-    for imgs1, imgs2, labels in ds_val:
-        sims, proj_sims = strategy.run(get_sims, (imgs1, imgs2, labels))
+
+    for input in ds_val:
+        sims, proj_sims = strategy.run(get_sims, (input['imgs'], input['imgs2'], input['labels']))
 
         if args.tpu:
             sims = [s.values for s in sims]
