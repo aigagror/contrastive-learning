@@ -10,15 +10,17 @@ import utils
 class TestData(unittest.TestCase):
 
     def test_image_label_range(self):
-        args = '--data=cifar10 --bsz=1024 --method=ce'
+        args = '--data=cifar10 --bsz=32 --method=ce'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
         ds_train, ds_val, nclass = data.load_datasets(args)
 
         for ds in [ds_train, ds_val]:
-            img, label = next(iter(ds))
+            input = next(iter(ds))
+            img, label = input['imgs'], input['labels']
 
             # Label
+            tf.debugging.assert_shapes([(label, [None])])
             label = tf.cast(label, tf.int32)
             tf.debugging.assert_less_equal(label, nclass - 1, label)
             tf.debugging.assert_greater_equal(label, 0)
