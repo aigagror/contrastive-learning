@@ -18,7 +18,7 @@ def run(args):
     with strategy.scope():
         model = models.ContrastModel(args, nclass)
         model.compile(optimizers.SGD(args.lr, momentum=0.9), losses.SparseCategoricalCrossentropy(from_logits=True),
-                      steps_per_execution=50)
+                      metrics=['acc'], steps_per_execution=50)
 
     # Train
     try:
