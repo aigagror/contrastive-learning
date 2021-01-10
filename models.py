@@ -113,10 +113,6 @@ class ContrastModel(keras.Model):
         #     loss = inst_loss + class_loss
         # else:
         #     # Cross entropy on everything
-        a = class_mask / class_sum
-        b = sims * 10
-        tf.print('a', a.shape)
-        tf.print('b', b.shape)
-        loss = nn.softmax_cross_entropy_with_logits(a, b)
+        loss = nn.softmax_cross_entropy_with_logits(class_mask / class_sum, sims * 10)
         loss = tf.reduce_mean(loss)
         return loss
