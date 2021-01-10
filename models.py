@@ -59,7 +59,7 @@ class ContrastModel(keras.Model):
             feats2 = self.norm_feats(input['imgs2'])
             proj_feats2 = self.norm_project(feats2)
 
-            supcon_loss = self.compute_supcon_loss(0,0,0,0)
+            supcon_loss = 0 # self.compute_supcon_loss(0,0,0,0)
             supcon_loss = nn.compute_average_loss(supcon_loss, global_batch_size=self.args.bsz)
             self.add_loss(supcon_loss)
             self.add_metric(supcon_loss, 'supcon')
