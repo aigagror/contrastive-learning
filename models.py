@@ -87,8 +87,8 @@ class ContrastModel(keras.Model):
         # Masks
         inst_mask = tf.eye(bsz, dtype=dtype)
         class_mask = tf.cast(labels == tf.transpose(labels), dtype)
-        # class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
-        #
+        class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
+
         # # Similarities
         # sims = tf.matmul(feats1, tf.transpose(feats2))
         #
