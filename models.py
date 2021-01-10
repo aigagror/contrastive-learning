@@ -92,27 +92,28 @@ class ContrastModel(keras.Model):
         # Similarities
         sims = tf.matmul(feats1, tf.transpose(feats2))
 
-        # if partial:
-        #     # Cross entropy on instance similarities
-        #     inst_loss = losses.categorical_crossentropy(inst_mask, sims * 10, from_logits=True)
-        #
-        #     # Partial cross entropy on class similarities
-        #     pos_mask = tf.maximum(inst_mask, class_mask)
-        #     neg_mask = 1 - pos_mask
-        #
-        #     exp = tf.math.exp(sims * 10)
-        #     neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)
-        #     log_prob = sims - tf.math.log(neg_sum_exp + exp)
-        #
-        #     # Class positive pairs log prob (contains instance positive pairs too)
-        #     class_log_prob = class_mask * log_prob
-        #     class_log_prob = tf.math.reduce_sum(class_log_prob / class_sum, axis=1)
-        #     class_loss = -class_log_prob
-        #
-        #     # Combine instance loss and class loss
-        #     loss = inst_loss + class_loss
-        # else:
-        #     # Cross entropy on everything
-        loss = nn.softmax_cross_entropy_with_logits(class_mask / class_sum, sims * 10)
+        if partial:
+            # Cross entropy on instance similarities
+            inst_loss = nn.softmax_cross_entropy_with_logits(inst_mask, sims * 10)
+
+            # Partial cross entropy on class similarities
+            pos_mask = tf.maximum(inst_mask, class_mask)
+            neg_mask = 1 - pos_mask
+
+            exp = tf.math.exp(sims * 10)
+            neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)
+            log_prob = sims - tf.math.log(neg_sum_exp + exp)
+
+            # Class positive pairs log prob (contains instance positive pairs too)
+            class_log_prob = class_mask * log_prob
+            class_log_prob = tf.math.reduce_sum(class_log_prob / class_sum, axis=1)
+            class_loss = -class_log_prob
+
+            # Combine instance loss and class loss
+            loss = inst_loss + class_loss
+        else:
+            # Cross entropy on everything
+            loss = nn.softmax_cross_entropy_with_logits(class_mask / class_sum, sims * 10)
+
         loss = tf.reduce_mean(loss)
         return loss
