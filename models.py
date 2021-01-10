@@ -117,6 +117,6 @@ class ContrastModel(keras.Model):
         b = sims * 10
         tf.print('a', a.shape)
         tf.print('b', b.shape)
-        # loss = nn.softmax_cross_entropy_with_logits(, )
-        loss = 0
+        loss = nn.softmax_cross_entropy_with_logits(a, b)
+        loss = tf.reduce_mean(loss)
         return loss
