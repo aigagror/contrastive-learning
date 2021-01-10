@@ -57,8 +57,8 @@ def load_datasets(args):
     if args.data == 'cifar10':
         imsize, nclass = 32, 10
         (x_train, y_train), (x_val, y_val) = datasets.cifar10.load_data()
-        ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten())).cache()
-        ds_val = tf.data.Dataset.from_tensor_slices((x_val, y_val.flatten())).cache()
+        ds_train = tf.data.Dataset.from_tensor_slices((x_train, y_train.flatten()))
+        ds_val = tf.data.Dataset.from_tensor_slices((x_val, y_val.flatten()))
 
         # Shuffle entire dataset
         ds_train = ds_train.shuffle(len(ds_train))
