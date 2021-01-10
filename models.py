@@ -3,7 +3,7 @@ import os
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow import nn
-from tensorflow.keras import applications, layers, metrics, losses
+from tensorflow.keras import applications, layers, metrics
 
 
 class ContrastModel(keras.Model):
