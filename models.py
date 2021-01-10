@@ -101,8 +101,9 @@ class ContrastModel(keras.Model):
 
             # supcon_loss = compute_supcon_loss(input['labels'], proj_feats, proj_feats2, partial)
             # supcon_loss = nn.compute_average_loss(supcon_loss, global_batch_size=self.args.bsz)
-            # self.add_loss(supcon_loss)
-            # self.add_metric(supcon_loss, 'supcon')
+            supcon_loss = 0
+            self.add_loss(supcon_loss)
+            self.add_metric(supcon_loss, 'supcon')
 
             pred_logits = self.classifier(tf.stop_gradient(feats))
 
