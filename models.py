@@ -92,10 +92,6 @@ class ContrastModel(keras.Model):
         # Similarities
         sims = tf.matmul(feats1, tf.transpose(feats2))
 
-        tf.print('classmask', class_mask.shape)
-        tf.print('class_sum', class_sum.shape)
-        tf.print('sims', sims.shape)
-
         # if partial:
         #     # Cross entropy on instance similarities
         #     inst_loss = losses.categorical_crossentropy(inst_mask, sims * 10, from_logits=True)
@@ -119,6 +115,8 @@ class ContrastModel(keras.Model):
         #     # Cross entropy on everything
         a = class_mask / class_sum
         b = sims * 10
+        tf.print('a', a.shape)
+        tf.print('b', b.shape)
         # loss = nn.softmax_cross_entropy_with_logits(, )
         loss = 0
         return loss
