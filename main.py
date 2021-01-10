@@ -6,7 +6,7 @@ import data
 import models
 import plots
 import utils
-
+import shutil
 
 def scheduler(epoch, lr):
     if epoch in [30, 60, 80]:
@@ -29,9 +29,12 @@ def run(args):
         model.compile(optimizers.SGD(args.lr, momentum=0.9), steps_per_execution=50)
 
     # Train
+    log_dir = os.path.join(args.out, 'logs')
+    if not args.load:
+        shutil.rmtree(log_dir, ignore_errors=True)
     try:
         cbks = [
-            callbacks.TensorBoard(os.path.join(args.out, 'logs'), histogram_freq=1, write_images=True,
+            callbacks.TensorBoard(log_dir, histogram_freq=1, write_images=True,
                                   update_freq='batch'),
             callbacks.LearningRateScheduler(scheduler),
             callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True)
