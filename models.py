@@ -6,46 +6,6 @@ from tensorflow import nn
 from tensorflow.keras import applications, layers, losses, metrics
 
 
-def compute_supcon_loss(labels, feats1, feats2, partial):
-    loss = 0
-    # bsz = len(labels)
-    # labels = tf.expand_dims(labels, 1)
-    # dtype = feats1.dtype
-    #
-    # # Masks
-    # inst_mask = tf.eye(bsz, dtype=dtype)
-    # class_mask = tf.cast(labels == tf.transpose(labels), dtype)
-    # class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
-    #
-    # # Similarities
-    # sims = tf.matmul(feats1, tf.transpose(feats2))
-    #
-    # if partial:
-    #     # Cross entropy on instance similarities
-    #     inst_loss = losses.categorical_crossentropy(inst_mask, sims * 10, from_logits=True)
-    #
-    #     # Partial cross entropy on class similarities
-    #     pos_mask = tf.maximum(inst_mask, class_mask)
-    #     neg_mask = 1 - pos_mask
-    #
-    #     exp = tf.math.exp(sims * 10)
-    #     neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)
-    #     log_prob = sims - tf.math.log(neg_sum_exp + exp)
-    #
-    #     # Class positive pairs log prob (contains instance positive pairs too)
-    #     class_log_prob = class_mask * log_prob
-    #     class_log_prob = tf.math.reduce_sum(class_log_prob / class_sum, axis=1)
-    #     class_loss = -class_log_prob
-    #
-    #     # Combine instance loss and class loss
-    #     loss = inst_loss + class_loss
-    # else:
-    #     # Cross entropy on everything
-    #     loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10, from_logits=True)
-
-    return loss
-
-
 class ContrastModel(keras.Model):
     def __init__(self, args, nclass):
         super().__init__()
@@ -99,7 +59,7 @@ class ContrastModel(keras.Model):
             feats2 = self.norm_feats(input['imgs2'])
             proj_feats2 = self.norm_project(feats2)
 
-            supcon_loss = compute_supcon_loss(input['labels'], proj_feats, proj_feats2, partial)
+            supcon_loss = self.compute_supcon_loss(input['labels'], proj_feats, proj_feats2, partial)
             supcon_loss = nn.compute_average_loss(supcon_loss, global_batch_size=self.args.bsz)
             self.add_loss(supcon_loss)
             self.add_metric(supcon_loss, 'supcon')
@@ -118,3 +78,42 @@ class ContrastModel(keras.Model):
         # Prediction
         pred = tf.argmax(pred_logits, axis=1)
         return pred
+
+    def compute_supcon_loss(self, labels, feats1, feats2, partial):
+        loss = 0
+        # bsz = len(labels)
+        # labels = tf.expand_dims(labels, 1)
+        # dtype = feats1.dtype
+        #
+        # # Masks
+        # inst_mask = tf.eye(bsz, dtype=dtype)
+        # class_mask = tf.cast(labels == tf.transpose(labels), dtype)
+        # class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
+        #
+        # # Similarities
+        # sims = tf.matmul(feats1, tf.transpose(feats2))
+        #
+        # if partial:
+        #     # Cross entropy on instance similarities
+        #     inst_loss = losses.categorical_crossentropy(inst_mask, sims * 10, from_logits=True)
+        #
+        #     # Partial cross entropy on class similarities
+        #     pos_mask = tf.maximum(inst_mask, class_mask)
+        #     neg_mask = 1 - pos_mask
+        #
+        #     exp = tf.math.exp(sims * 10)
+        #     neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)
+        #     log_prob = sims - tf.math.log(neg_sum_exp + exp)
+        #
+        #     # Class positive pairs log prob (contains instance positive pairs too)
+        #     class_log_prob = class_mask * log_prob
+        #     class_log_prob = tf.math.reduce_sum(class_log_prob / class_sum, axis=1)
+        #     class_loss = -class_log_prob
+        #
+        #     # Combine instance loss and class loss
+        #     loss = inst_loss + class_loss
+        # else:
+        #     # Cross entropy on everything
+        #     loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10, from_logits=True)
+
+        return loss
