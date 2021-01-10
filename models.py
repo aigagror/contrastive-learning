@@ -116,5 +116,6 @@ class ContrastModel(keras.Model):
         tf.print(class_mask.shape)
         tf.print(class_sum.shape)
         tf.print(sims.shape)
-        loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10, from_logits=True)
+        loss = 0
+        # loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10, from_logits=True)
         return loss
