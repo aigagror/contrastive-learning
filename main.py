@@ -1,7 +1,8 @@
+from tensorflow.keras import optimizers, losses
+
 import data
 import models
 import plots
-import training
 import utils
 
 
@@ -10,15 +11,20 @@ def run(args):
     strategy = utils.setup(args)
 
     # Data
-    ds_train, ds_val, nclass = data.load_datasets(args, strategy)
+    ds_train, ds_val, nclass = data.load_datasets(args)
     plots.plot_img_samples(args, ds_train, ds_val)
 
     # Model and optimizer
     with strategy.scope():
         model = models.ContrastModel(args, nclass)
+        model.compile(optimizers.SGD(args.lr, momentum=0.9), losses.SparseCategoricalCrossentropy(from_logits=True),
+                      steps_per_execution=50)
 
     # Train
-    training.train(args, strategy, model, ds_train, ds_val)
+    try:
+        model.fit(ds_train, epochs=args.epochs, validation_data=ds_val, callbacks=[])
+    except KeyboardInterrupt:
+        print('keyboard interrupt caught. ending training early')
 
     # Plot
     plots.plot_metrics(args)

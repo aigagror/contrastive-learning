@@ -16,7 +16,7 @@ def parse_imagenet_example(serial):
         'image/encoded': tf.io.FixedLenFeature([], tf.string),
     }
     example = tf.io.parse_example(serial, features)
-    img = tf.io.decode_image(example['image/encoded'], channels=3)
+    img = tf.io.decode_image(example['image/encoded'], channels=3, expand_animations=False)
     label = example['image/class/label'] - 1
     return img, label
 
@@ -47,13 +47,13 @@ def augment_img(image):
         image = tf.image.rgb_to_grayscale(image)
         image = tf.tile(image, [1, 1, 3])
 
-    # Clip and cast
+    # Clip
     image = tf.clip_by_value(image, 0, 255)
 
     return image
 
 
-def load_datasets(args, strategy):
+def load_datasets(args):
     if args.data == 'cifar10':
         imsize, nclass = 32, 10
         (x_train, y_train), (x_val, y_val) = datasets.cifar10.load_data()
@@ -78,32 +78,32 @@ def load_datasets(args, strategy):
         raise Exception(f'unknown data {args.data}')
 
     # Map functions
-    def resize_and_cast(img):
+    def resize(img):
         # This smart resize function also casts images to float32 within the same 0-255 range.
         img = preprocessing.image.smart_resize(img, [imsize, imsize])
-        img = tf.cast(img, tf.float32)
+        tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
         return img
 
     # Preprocess
     if args.method.startswith('supcon'):
         def dual_augment(imgs, labels):
             im1, im2 = augment_img(imgs), augment_img(imgs)
-            im1, im2 = resize_and_cast(im1), resize_and_cast(im2)
+            im1, im2 = resize(im1), resize(im2)
             return im1, im2, labels
 
         def augment_second(imgs, labels):
             im1, im2 = imgs, augment_img(imgs)
-            im1, im2 = resize_and_cast(im1), resize_and_cast(im2)
+            im1, im2 = resize(im1), resize(im2)
             return im1, im2, labels
 
         ds_train = ds_train.map(dual_augment, num_parallel_calls=AUTOTUNE)
         ds_val = ds_val.map(augment_second, num_parallel_calls=AUTOTUNE)
     else:
         def train_preprocess(img, labels):
-            return resize_and_cast(augment_img(img)), labels
+            return resize(augment_img(img)), labels
 
         def val_preprocess(img, labels):
-            return resize_and_cast(img), labels
+            return resize(img), labels
 
         ds_train = ds_train.map(train_preprocess, num_parallel_calls=AUTOTUNE)
         ds_val = ds_val.map(val_preprocess, num_parallel_calls=AUTOTUNE)
@@ -111,9 +111,5 @@ def load_datasets(args, strategy):
     # Batch and prefetch
     ds_train = ds_train.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
     ds_val = ds_val.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
-
-    # Distribute among strategy
-    ds_train = strategy.experimental_distribute_dataset(ds_train)
-    ds_val = strategy.experimental_distribute_dataset(ds_val)
 
     return ds_train, ds_val, nclass

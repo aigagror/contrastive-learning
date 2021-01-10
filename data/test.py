@@ -12,8 +12,8 @@ class TestData(unittest.TestCase):
     def test_image_label_range(self):
         args = '--data=cifar10 --bsz=1024 --method=ce'
         args = utils.parser.parse_args(args.split())
-        strategy = utils.setup(args)
-        ds_train, ds_val, nclass = data.load_datasets(args, strategy)
+        _ = utils.setup(args)
+        ds_train, ds_val, nclass = data.load_datasets(args)
 
         for ds in [ds_train, ds_val]:
             img, label = next(iter(ds))
