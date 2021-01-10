@@ -81,9 +81,7 @@ class ContrastModel(keras.Model):
 
     def compute_supcon_loss(self, labels, feats1, feats2, partial):
         bsz = len(labels)
-        labels = tf.expand_dims(labels, 1)
-        tf.print('labels', labels.shape)
-        # tf.debugging.assert_shapes([(labels, [None, 1])])
+        tf.debugging.assert_shapes([(labels, [None, 1])])
         dtype = feats1.dtype
 
         # Masks
@@ -115,9 +113,5 @@ class ContrastModel(keras.Model):
         #     loss = inst_loss + class_loss
         # else:
         #     # Cross entropy on everything
-        tf.print('classmask', class_mask.shape)
-        tf.print('classsum', class_sum.shape)
-        tf.print('sims', sims.shape)
-        loss = 0
-        # loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10, from_logits=True)
+        loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10, from_logits=True)
         return loss
