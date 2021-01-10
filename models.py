@@ -81,7 +81,7 @@ class ContrastModel(keras.Model):
 
     def compute_supcon_loss(self, labels, feats1, feats2, partial):
         bsz = len(labels)
-        labels = tf.expand_dims(labels, 1)
+        tf.debugging.assert_shapes([(labels, [None, 1])])
         dtype = feats1.dtype
 
         # Masks

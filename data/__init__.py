@@ -84,15 +84,15 @@ def load_datasets(args):
         tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
         return img
 
-    def process_train(imgs, labels):
-        im1, im2 = augment_img(imgs), augment_img(imgs)
+    def process_train(img, label):
+        im1, im2 = augment_img(img), augment_img(img)
         im1, im2 = resize(im1), resize(im2)
-        return {'imgs': im1, 'imgs2': im2, 'labels': labels}
+        return {'imgs': im1, 'imgs2': im2, 'labels': label}
 
-    def process_val(imgs, labels):
-        im1, im2 = imgs, augment_img(imgs)
+    def process_val(img, label):
+        im1, im2 = img, augment_img(img)
         im1, im2 = resize(im1), resize(im2)
-        return {'imgs': im1, 'imgs2': im2, 'labels': labels}
+        return {'imgs': im1, 'imgs2': im2, 'labels': label}
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
