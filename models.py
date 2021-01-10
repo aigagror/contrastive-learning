@@ -117,5 +117,5 @@ class ContrastModel(keras.Model):
         #     loss = inst_loss + class_loss
         # else:
         #     # Cross entropy on everything
-        loss = losses.categorical_crossentropy(class_mask / class_sum, sims * 10, from_logits=True)
+        loss = nn.softmax_cross_entropy_with_logits(class_mask / class_sum, sims * 10)
         return loss
