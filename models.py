@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow import nn
-from tensorflow.keras import applications, layers, losses
+from tensorflow.keras import applications, layers, losses, metrics
 
 
 def compute_supcon_loss(labels, feats1, feats2, partial):
@@ -100,13 +100,19 @@ class ContrastModel(keras.Model):
             supcon_loss = compute_supcon_loss(input['labels'], proj_feats, proj_feats2, partial)
             supcon_loss = nn.compute_average_loss(supcon_loss, global_batch_size=self.args.bsz)
             self.add_loss(supcon_loss)
+            self.add_metric(supcon_loss, 'supcon')
 
             pred_logits = self.classifier(tf.stop_gradient(feats))
 
+        # Cross entropy and accuracy
         ce_loss = losses.sparse_categorical_crossentropy(input['labels'], pred_logits, from_logits=True)
         ce_loss = nn.compute_average_loss(ce_loss, global_batch_size=self.args.bsz)
+        acc = metrics.sparse_categorical_accuracy(input['labels'], pred_logits)
+        acc = nn.compute_average_loss(acc, global_batch_size=self.args.bsz)
         self.add_loss(ce_loss)
-        self.add_metric(ce_loss, 'cross-entropy')
+        self.add_metric(ce_loss, 'ce')
+        self.add_metric(acc, 'acc')
 
+        # Prediction
         pred = tf.argmax(pred_logits, axis=1)
         return pred
