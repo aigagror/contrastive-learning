@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
@@ -135,21 +134,3 @@ def plot_hist_sims(args, strategy, model, ds_val):
     ax[1].legend()
 
     f.savefig(os.path.join(args.metrics_out, 'similarity-types.jpg'))
-
-
-def plot_metrics(args):
-    train_df = pd.read_csv(os.path.join(args.metrics_out, 'train.csv'))
-    val_df = pd.read_csv(os.path.join(args.metrics_out, 'val.csv'))
-    all_metrics = ['acc', 'ce-loss', 'con-loss']
-    f, ax = plt.subplots(1, 3)
-    f.set_size_inches(20, 5)
-
-    for i, metric in enumerate(all_metrics):
-        ax[i].set_title(metric)
-        for df, split in [(train_df, 'train'), (val_df, 'val')]:
-            nsteps, nepochs = len(df), df['epoch'].max() + 1
-            x = np.linspace(0, nepochs, nsteps)
-            ax[i].plot(x, df[metric], label=split)
-            ax[i].legend()
-
-    f.savefig(os.path.join(args.metrics_out, 'metrics.jpg'))
