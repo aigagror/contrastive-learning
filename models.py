@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow import nn
@@ -55,7 +57,6 @@ class ContrastModel(keras.Model):
         self.projection = layers.Dense(128, name='projection')
         self.classifier = layers.Dense(nclass, name='classifier')
 
-
         # L2 regularization
         regularizer = keras.regularizers.l2(args.l2_reg)
         for layer in self.layers:
@@ -67,7 +68,7 @@ class ContrastModel(keras.Model):
         if args.load:
             # Call to build weights, then load
             print(f'loaded previously saved model weights')
-            self.load_weights(args.model_out)
+            self.load_weights(os.path.join(args.out, 'model'))
         else:
             print(f'starting with new model weights')
 
