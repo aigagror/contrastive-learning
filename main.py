@@ -1,9 +1,18 @@
-from tensorflow.keras import optimizers, losses
+import os
+
+from tensorflow.keras import optimizers, callbacks
 
 import data
 import models
 import plots
 import utils
+
+
+def scheduler(epoch, lr):
+    if epoch in [30, 60, 80]:
+        return 0.1 * lr
+    else:
+        return lr
 
 
 def run(args):
@@ -21,7 +30,13 @@ def run(args):
 
     # Train
     try:
-        model.fit(ds_train, epochs=args.epochs, validation_data=ds_val, callbacks=[])
+        cbks = [
+            callbacks.TensorBoard(os.path.join(args.out, 'logs'), histogram_freq=1, write_images=True,
+                                  write_steps_per_second=True, update_freq='batch'),
+            callbacks.LearningRateScheduler(scheduler),
+            callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True)
+        ]
+        model.fit(ds_train, epochs=args.epochs, validation_data=ds_val, callbacks=cbks)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
