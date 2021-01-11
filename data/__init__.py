@@ -20,6 +20,7 @@ def parse_imagenet_example(serial):
     label = example['image/class/label'] - 1
     return img, label
 
+
 def scale_min_dim(img, imsize):
     imshape = tf.cast(tf.shape(img), tf.float32)
     h, w = imshape[0], imshape[1]
@@ -29,17 +30,18 @@ def scale_min_dim(img, imsize):
     img = tf.image.resize(img, new_size)
     return img
 
-@tf.function(input_signature=[tf.TensorSpec([None, None, 3], tf.float32), tf.TensorSpec([], tf.int32)])
+
 def rand_resize(img, imsize):
     img = scale_min_dim(img, imsize)
     img = tf.image.random_crop(img, [imsize, imsize, 3])
     return img
 
-@tf.function(input_signature=[tf.TensorSpec([None, None, 3], tf.float32), tf.TensorSpec([], tf.int32)])
+
 def center_resize(img, imsize):
     img = scale_min_dim(img, imsize)
     img = tf.image.resize_with_crop_or_pad(img, imsize, imsize)
     return img
+
 
 def augment_img(image):
     # Random scale
@@ -68,6 +70,7 @@ def augment_img(image):
     # Clip
     image = tf.clip_by_value(image, 0, 255)
     return image
+
 
 def load_datasets(args):
     if args.data == 'cifar10':
