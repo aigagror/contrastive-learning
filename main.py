@@ -26,7 +26,7 @@ def run(args):
     # Model and optimizer
     with strategy.scope():
         model = models.ContrastModel(args, nclass)
-        model.compile(optimizers.SGD(args.lr, momentum=0.9))
+        model.compile(optimizers.SGD(args.lr, momentum=0.9), steps_per_execution=args.spe)
 
     # Train
     log_dir = os.path.join(args.out, 'logs')

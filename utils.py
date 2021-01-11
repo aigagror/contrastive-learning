@@ -18,6 +18,8 @@ parser.add_argument('--bsz', type=int)
 parser.add_argument('--lr', type=float)
 parser.add_argument('--l2_reg', type=float, default=1e-4)
 
+parser.add_argument('--spe', type=int, help='steps per execution')
+
 # Strategy
 parser.add_argument('--tpu', action='store_true')
 parser.add_argument('--policy', choices=['mixed_bfloat16', 'float32'], default='float32')
