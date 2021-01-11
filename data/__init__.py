@@ -21,7 +21,6 @@ def parse_imagenet_example(serial):
     return img, label
 
 
-@tf.function(input_signature=[tf.TensorSpec(shape=[None, None, 3], dtype=tf.uint8)])
 def augment_img(image):
 
     # Random scale
