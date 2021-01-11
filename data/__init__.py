@@ -81,12 +81,14 @@ def load_datasets(args):
         return img
 
     def process_train(img, label):
+        img = tf.cast(img, args.dtype)
         ret = {'imgs': augment_img(resize(img)), 'labels': label}
         if args.method.startswith('supcon'):
             ret['imgs2'] = augment_img(resize(img))
         return ret
 
     def process_val(img, label):
+        img = tf.cast(img, args.dtype)
         ret = {'imgs': resize(img), 'labels': label}
         if args.method.startswith('supcon'):
             ret['imgs2'] = augment_img(resize(img))
