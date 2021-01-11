@@ -83,7 +83,7 @@ def load_datasets(args):
     def process_train(img, label):
         ret = {'imgs': augment_img(resize(img)), 'labels': label}
         if args.method.startswith('supcon'):
-            ret['imgs2'] = resize(augment_img(img))
+            ret['imgs2'] = augment_img(resize(img))
         return ret
 
     def process_val(img, label):
