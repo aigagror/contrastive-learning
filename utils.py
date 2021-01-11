@@ -17,7 +17,6 @@ parser.add_argument('--epochs', type=int)
 parser.add_argument('--bsz', type=int)
 parser.add_argument('--lr', type=float)
 parser.add_argument('--l2_reg', type=float, default=1e-4)
-
 parser.add_argument('--spe', type=int, help='steps per execution')
 
 # Strategy
