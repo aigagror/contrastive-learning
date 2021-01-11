@@ -11,7 +11,6 @@ class ContrastModel(keras.Model):
         super().__init__()
         self.args = args
 
-        self.preprocess = applications.resnet_v2.preprocess_input
         self.cnn = applications.ResNet50V2(weights=None, include_top=False)
 
         self.avg_pool = layers.GlobalAveragePooling2D()
@@ -34,7 +33,7 @@ class ContrastModel(keras.Model):
             print(f'starting with new model weights')
 
     def norm_feats(self, img):
-        x = self.preprocess(img)
+        x = img / 127.5 - 1
         x = self.cnn(x)
         x = self.avg_pool(x)
         x, _ = tf.linalg.normalize(x, axis=-1)
