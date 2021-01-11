@@ -26,7 +26,7 @@ def resize(img, imsize, crop):
 
     imshape = tf.shape(img)
     small_length = tf.reduce_min(imshape[:2])
-    scale = imsize / small_length
+    scale = imsize / small_length + 1
     imshape = tf.cast(imshape, tf.float64)
     new_size = [tf.cast(imshape[0] * scale, tf.int32), tf.cast(imshape[1] * scale, tf.int32)]
     img = tf.image.resize(img, new_size)
