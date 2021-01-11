@@ -22,6 +22,7 @@ def parse_imagenet_example(serial):
 
 def resize(img, imsize):
     # This smart resize function also casts images to float32 within the same 0-255 range.
+    print('before', img.shape)
     img = tf.keras.preprocessing.image.smart_resize(img, (imsize, imsize))
     tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
     print('resize', img.shape)
