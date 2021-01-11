@@ -24,7 +24,7 @@ def parse_imagenet_example(serial):
 def resize(img, imsize, crop):
     # This smart resize function also casts images to float32 within the same 0-255 range.
 
-    small_length = tf.reduce_min(img.shape[:2])
+    small_length = tf.reduce_min(tf.shape(img)[:2])
     scale = imsize / small_length
     img = tf.image.resize(img, [img.shape[0] * scale, img.shape[1] * scale])
 
