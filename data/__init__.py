@@ -48,6 +48,7 @@ def augment_img(image):
 
     # Clip
     image = tf.clip_by_value(image, 0, 255)
+    print('image', image.shape)
 
     return image
 
