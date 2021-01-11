@@ -20,7 +20,7 @@ def parse_imagenet_example(serial):
     label = example['image/class/label'] - 1
     return img, label
 
-
+@tf.function(input_signature=[tf.TensorSpec(shape=[None, None, 3], dtype=tf.uint8)])
 def resize(img, imsize, crop):
     # This smart resize function also casts images to float32 within the same 0-255 range.
 
