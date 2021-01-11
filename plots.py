@@ -48,7 +48,7 @@ def plot_tsne(args, strategy, model, ds_val):
         ax[0].scatter(class_feats_embed[:, 0], class_feats_embed[:, 1], label=f'{c}')
         ax[1].scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}')
 
-    f.savefig(os.path.join(args.out, 'tsne.jpg'))
+    f.savefig(os.path.join('out/', 'tsne.jpg'))
 
 
 def plot_img_samples(args, ds_train, ds_val):
@@ -61,7 +61,7 @@ def plot_img_samples(args, ds_train, ds_val):
             ax[i, j].imshow(tf.cast(input['imgs'][j], tf.uint8))
 
     f.tight_layout()
-    f.savefig(os.path.join(args.out, 'img-samples.jpg'))
+    f.savefig(os.path.join('out/', 'img-samples.jpg'))
 
 
 def plot_hist_sims(args, strategy, model, ds_val):
@@ -134,4 +134,4 @@ def plot_hist_sims(args, strategy, model, ds_val):
     ax[1].hist(proj_inst_sims, label='inst', weights=np.ones_like(proj_inst_sims) / len(proj_inst_sims), alpha=0.5)
     ax[1].legend()
 
-    f.savefig(os.path.join(args.out, 'similarity-types.jpg'))
+    f.savefig(os.path.join('out/', 'similarity-types.jpg'))
