@@ -29,7 +29,9 @@ def augment_img(image):
     new_h = tf.round(rand_scale * tf.cast(imshape[0], tf.float32))
     new_w = tf.round(rand_scale * tf.cast(imshape[1], tf.float32))
     image = tf.image.resize(image, [new_h, new_w])
+    print('resize', image.shape)
     image = tf.image.random_crop(image, [imshape[0], imshape[1], 3])
+    print('crop', image.shape)
 
     # Random flip
     image = tf.image.random_flip_left_right(image)
@@ -81,6 +83,7 @@ def load_datasets(args):
     def resize(img):
         # This smart resize function also casts images to float32 within the same 0-255 range.
         img = preprocessing.image.smart_resize(img, [imsize, imsize])
+        print('smart resize', img.shape)
         tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
         return img
 
