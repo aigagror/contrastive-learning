@@ -34,7 +34,7 @@ def run(args):
         shutil.rmtree(log_dir, ignore_errors=True)
     try:
         cbks = [
-            callbacks.TensorBoard(log_dir, histogram_freq=1, write_images=True, update_freq='epoch'),
+            callbacks.TensorBoard(log_dir, histogram_freq=1, write_images=True, update_freq='batch'),
             callbacks.LearningRateScheduler(scheduler),
             callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True)
         ]
