@@ -76,7 +76,7 @@ def load_datasets(args):
     # Preprocess
     def resize(img):
         # This smart resize function also casts images to float32 within the same 0-255 range.
-        img = tf.image.resize_with_pad(img, imsize, imsize)
+        img = tf.image.resize_with_crop_or_pad(img, imsize, imsize)
         tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
         return img
 
