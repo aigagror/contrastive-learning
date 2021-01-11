@@ -20,12 +20,21 @@ def parse_imagenet_example(serial):
     label = example['image/class/label'] - 1
     return img, label
 
-def resize(img, imsize):
+
+def resize(img, imsize, crop):
     # This smart resize function also casts images to float32 within the same 0-255 range.
-    print('before', img.shape)
-    img = tf.keras.preprocessing.image.smart_resize(img, (imsize, imsize))
+
+    small_length = tf.reduce_min(img.shape[:2])
+    scale = imsize / small_length
+    img = tf.image.resize(img, [img.shape[0] * scale, img.shape[1] * scale])
+
+    if crop == 'rand':
+        img = tf.image.random_crop(img, [imsize, imsize, 3])
+    else:
+        assert crop == 'center'
+        img = tf.image.resize_with_crop_or_pad(img, imsize, imsize)
+
     tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
-    print('resize', img.shape)
     return img
 
 def augment_img(image):
@@ -83,16 +92,16 @@ def load_datasets(args):
     # Preprocess
     def process_train(img, label):
         img = tf.cast(img, args.dtype)
-        ret = {'imgs': augment_img(resize(img, imsize)), 'labels': label}
+        ret = {'imgs': augment_img(resize(img, imsize, crop='rand')), 'labels': label}
         if args.method.startswith('supcon'):
-            ret['imgs2'] = augment_img(resize(img, imsize))
+            ret['imgs2'] = augment_img(resize(img, imsize, crop='rand'))
         return ret
 
     def process_val(img, label):
         img = tf.cast(img, args.dtype)
-        ret = {'imgs': resize(img, imsize), 'labels': label}
+        ret = {'imgs': resize(img, imsize, crop='center'), 'labels': label}
         if args.method.startswith('supcon'):
-            ret['imgs2'] = augment_img(resize(img, imsize))
+            ret['imgs2'] = augment_img(resize(img, imsize, crop='center'))
         return ret
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
