@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras import datasets, preprocessing
+from tensorflow.keras import datasets
 from tensorflow.python.data import AUTOTUNE
 
 
@@ -22,16 +22,13 @@ def parse_imagenet_example(serial):
 
 
 def augment_img(image):
-
     # Random scale
     imshape = tf.shape(image)
     rand_scale = tf.random.uniform([], 1, 1.5)
     new_h = tf.round(rand_scale * tf.cast(imshape[0], tf.float32))
     new_w = tf.round(rand_scale * tf.cast(imshape[1], tf.float32))
     image = tf.image.resize(image, [new_h, new_w])
-    print('resize', image.shape)
     image = tf.image.random_crop(image, [imshape[0], imshape[1], 3])
-    print('crop', image.shape)
 
     # Random flip
     image = tf.image.random_flip_left_right(image)
@@ -50,8 +47,6 @@ def augment_img(image):
 
     # Clip
     image = tf.clip_by_value(image, 0, 255)
-    print('image', image.shape)
-
     return image
 
 
@@ -82,8 +77,8 @@ def load_datasets(args):
     # Preprocess
     def resize(img):
         # This smart resize function also casts images to float32 within the same 0-255 range.
-        img = preprocessing.image.smart_resize(img, [imsize, imsize])
-        print('smart resize', img.shape)
+        img = tf.image.resize_with_pad(img, imsize, imsize)
+        print('resize_with_pad', img.shape)
         tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
         return img
 
