@@ -14,7 +14,8 @@ parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
 # Training
 parser.add_argument('--epochs', type=int)
-parser.add_argument('--steps', type=int, help='steps per epoch')
+parser.add_argument('--train-steps', type=int, help='train steps per epoch')
+parser.add_argument('--val-steps', type=int, help='val steps per epoch')
 parser.add_argument('--bsz', type=int)
 parser.add_argument('--lr', type=float)
 parser.add_argument('--l2_reg', type=float, default=1e-4)

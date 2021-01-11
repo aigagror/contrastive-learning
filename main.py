@@ -38,7 +38,8 @@ def run(args):
             callbacks.LearningRateScheduler(scheduler),
             callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True)
         ]
-        model.fit(ds_train, epochs=args.epochs, validation_data=ds_val, callbacks=cbks, steps_per_epoch=args.steps)
+        model.fit(ds_train, epochs=args.epochs, validation_data=ds_val, callbacks=cbks,
+                  steps_per_epoch=args.train_steps, validation_steps=args.val_steps)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
 
