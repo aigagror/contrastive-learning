@@ -34,23 +34,26 @@ def scale_min_dim(img, imsize):
 def rand_resize(img, imsize):
     img = scale_min_dim(img, imsize)
     img = tf.image.random_crop(img, [imsize, imsize, 3])
+    img = tf.cast(img, tf.uint8)
     return img
 
 
 def center_resize(img, imsize):
     img = scale_min_dim(img, imsize)
     img = tf.image.resize_with_crop_or_pad(img, imsize, imsize)
+    img = tf.cast(img, tf.uint8)
     return img
 
 
 def augment_img(image):
     # Random scale
     imshape = tf.shape(image)
+    h, w = imshape[0], imshape[1]
     rand_scale = tf.random.uniform([], 1, 1.5)
-    new_h = tf.round(rand_scale * tf.cast(imshape[0], tf.float32))
-    new_w = tf.round(rand_scale * tf.cast(imshape[1], tf.float32))
+    new_h = tf.round(rand_scale * tf.cast(h, tf.float32))
+    new_w = tf.round(rand_scale * tf.cast(w, tf.float32))
     image = tf.image.resize(image, [new_h, new_w])
-    image = tf.image.random_crop(image, [imshape[0], imshape[1], 3])
+    image = tf.image.random_crop(image, [h, w, 3])
 
     # Random flip
     image = tf.image.random_flip_left_right(image)
@@ -69,6 +72,7 @@ def augment_img(image):
 
     # Clip
     image = tf.clip_by_value(image, 0, 255)
+    image = tf.cast(image, tf.uint8)
     return image
 
 
@@ -98,14 +102,12 @@ def load_datasets(args):
 
     # Preprocess
     def process_train(img, label):
-        img = tf.cast(img, args.dtype)
         ret = {'imgs': augment_img(rand_resize(img, imsize)), 'labels': label}
         if args.method.startswith('supcon'):
             ret['imgs2'] = augment_img(rand_resize(img, imsize))
         return ret
 
     def process_val(img, label):
-        img = tf.cast(img, args.dtype)
         ret = {'imgs': center_resize(img, imsize), 'labels': label}
         if args.method.startswith('supcon'):
             ret['imgs2'] = augment_img(center_resize(img, imsize))
