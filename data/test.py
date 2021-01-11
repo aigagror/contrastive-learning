@@ -51,17 +51,18 @@ class TestData(unittest.TestCase):
         img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'), channels=3)
         tf.debugging.assert_shapes([(img, [None, None, 3])])
 
-        f, ax = plt.subplots(1, 9)
-        f.set_size_inches(20, 5)
-        ax[0].set_title('original')
-        ax[0].imshow(tf.cast(img, tf.uint8))
+        for crop_mode in ['rand', 'center']:
+            f, ax = plt.subplots(1, 9)
+            f.set_size_inches(20, 5)
+            ax[0].set_title('original')
+            ax[0].imshow(tf.cast(img, tf.uint8))
 
-        for i in range(1, 9):
-            aug_img = data.resize(img, 224, crop='rand')
-            ax[i].set_title('resize')
-            ax[i].imshow(tf.cast(aug_img, tf.uint8))
-        f.tight_layout()
-        f.savefig('images/test-resize.jpg')
+            for i in range(1, 9):
+                aug_img = data.resize(img, 224, crop=crop_mode)
+                ax[i].set_title('resize')
+                ax[i].imshow(tf.cast(aug_img, tf.uint8))
+            f.tight_layout()
+            f.savefig(f'images/test-{crop_mode}-resize.jpg')
 
 
 if __name__ == '__main__':

@@ -26,8 +26,10 @@ def resize(img, imsize, crop):
 
     imshape = tf.shape(img)
     small_length = tf.reduce_min(imshape[:2])
-    scale = tf.cast(imsize / small_length, tf.int32)
-    img = tf.image.resize(img, [imshape[0] * scale, imshape[1] * scale])
+    scale = imsize / small_length
+    imshape = tf.cast(imshape, tf.float64)
+    new_size = [tf.cast(imshape[0] * scale, tf.int32), tf.cast(imshape[1] * scale, tf.int32)]
+    img = tf.image.resize(img, new_size)
 
     if crop == 'rand':
         img = tf.image.random_crop(img, [imsize, imsize, 3])
