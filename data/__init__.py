@@ -21,11 +21,11 @@ def parse_imagenet_example(serial):
     return img, label
 
 def scale_min_dim(img, imsize):
-    imshape = tf.shape(img)
-    small_length = tf.reduce_min(imshape[:2])
-    scale = imsize / small_length + 1
-    imshape = tf.cast(imshape, tf.float64)
-    new_size = [tf.cast(imshape[0] * scale, tf.int32), tf.cast(imshape[1] * scale, tf.int32)]
+    imshape = tf.cast(tf.shape(img), tf.float32)
+    h, w = imshape[0], imshape[1]
+    small_length = tf.minimum(h, w)
+    scale = tf.cast(imsize + 1, tf.float32) / small_length
+    new_size = [tf.cast(h * scale, tf.int32), tf.cast(w * scale, tf.int32)]
     img = tf.image.resize(img, new_size)
     return img
 

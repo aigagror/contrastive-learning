@@ -63,7 +63,7 @@ class TestData(unittest.TestCase):
                 ax[i].set_title('resize')
                 ax[i].imshow(tf.cast(aug_img, tf.uint8))
             f.tight_layout()
-            f.savefig(f'images/test-{resize_fn.__name__}-resize.jpg')
+            f.savefig(f'images/test-{resize_fn.__name__}.jpg')
 
 
 if __name__ == '__main__':
