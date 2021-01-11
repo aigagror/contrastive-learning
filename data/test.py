@@ -48,7 +48,8 @@ class TestData(unittest.TestCase):
         f.savefig('images/test-augmentation.jpg')
 
     def test_resize(self):
-        img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'))
+        img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'), channels=3)
+        tf.debugging.assert_shapes([(img, [None, None, 3])])
 
         f, ax = plt.subplots(1, 2)
         f.set_size_inches(10, 5)
@@ -56,6 +57,7 @@ class TestData(unittest.TestCase):
         ax[0].imshow(tf.cast(img, tf.uint8))
 
         img = data.resize(img, 224)
+        tf.debugging.assert_shapes([(img, [224, 224, 3])])
         ax[1].set_title('resized')
         ax[1].imshow(tf.cast(img, tf.uint8))
         f.tight_layout()

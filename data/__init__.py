@@ -24,6 +24,7 @@ def resize(img, imsize):
     # This smart resize function also casts images to float32 within the same 0-255 range.
     img = tf.keras.preprocessing.image.smart_resize(img, (imsize, imsize))
     tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
+    tf.print('resize', img.shape)
     return img
 
 def augment_img(image):
