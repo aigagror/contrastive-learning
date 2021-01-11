@@ -20,24 +20,25 @@ def parse_imagenet_example(serial):
     label = example['image/class/label'] - 1
     return img, label
 
-@tf.function(input_signature=[tf.TensorSpec(shape=[None, None, 3], dtype=tf.uint8)])
-def resize(img, imsize, crop):
-    # This smart resize function also casts images to float32 within the same 0-255 range.
-
+def scale_min_dim(img, imsize):
     imshape = tf.shape(img)
     small_length = tf.reduce_min(imshape[:2])
     scale = imsize / small_length + 1
     imshape = tf.cast(imshape, tf.float64)
     new_size = [tf.cast(imshape[0] * scale, tf.int32), tf.cast(imshape[1] * scale, tf.int32)]
     img = tf.image.resize(img, new_size)
+    return img
 
-    if crop == 'rand':
-        img = tf.image.random_crop(img, [imsize, imsize, 3])
-    else:
-        assert crop == 'center'
-        img = tf.image.resize_with_crop_or_pad(img, imsize, imsize)
+@tf.function(input_signature=[tf.TensorSpec([None, None, 3], tf.float32), tf.TensorSpec([], tf.int32)])
+def rand_resize(img, imsize):
+    img = scale_min_dim(img, imsize)
+    img = tf.image.random_crop(img, [imsize, imsize, 3])
+    return img
 
-    tf.debugging.assert_shapes([(img, [imsize, imsize, 3])])
+@tf.function(input_signature=[tf.TensorSpec([None, None, 3], tf.float32), tf.TensorSpec([], tf.int32)])
+def center_resize(img, imsize):
+    img = scale_min_dim(img, imsize)
+    img = tf.image.resize_with_crop_or_pad(img, imsize, imsize)
     return img
 
 def augment_img(image):
@@ -95,16 +96,16 @@ def load_datasets(args):
     # Preprocess
     def process_train(img, label):
         img = tf.cast(img, args.dtype)
-        ret = {'imgs': augment_img(resize(img, imsize, crop='rand')), 'labels': label}
+        ret = {'imgs': augment_img(rand_resize(img, imsize)), 'labels': label}
         if args.method.startswith('supcon'):
-            ret['imgs2'] = augment_img(resize(img, imsize, crop='rand'))
+            ret['imgs2'] = augment_img(rand_resize(img, imsize))
         return ret
 
     def process_val(img, label):
         img = tf.cast(img, args.dtype)
-        ret = {'imgs': resize(img, imsize, crop='center'), 'labels': label}
+        ret = {'imgs': center_resize(img, imsize), 'labels': label}
         if args.method.startswith('supcon'):
-            ret['imgs2'] = augment_img(resize(img, imsize, crop='center'))
+            ret['imgs2'] = augment_img(center_resize(img, imsize))
         return ret
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
