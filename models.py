@@ -59,18 +59,17 @@ class ContrastModel(keras.Model):
             proj_feats2 = self.norm_project(feats2)
 
             supcon_loss = self.compute_supcon_loss(input['labels'], proj_feats, proj_feats2, partial)
-            supcon_loss = nn.compute_average_loss(supcon_loss, global_batch_size=self.args.bsz)
+            supcon_loss = tf.reduce_mean(supcon_loss)
             self.add_loss(supcon_loss)
             self.add_metric(supcon_loss, 'supcon')
 
             pred_logits = self.classifier(tf.stop_gradient(feats))
 
         # Cross entropy and accuracy
-        flat_labels = tf.reshape(input['labels'], [-1])
-        ce_loss = losses.sparse_categorical_crossentropy(flat_labels, pred_logits, from_logits=True)
-        ce_loss = nn.compute_average_loss(ce_loss, global_batch_size=self.args.bsz)
-        acc = metrics.sparse_categorical_accuracy(flat_labels, pred_logits)
-        acc = nn.compute_average_loss(acc, global_batch_size=self.args.bsz)
+        ce_loss = losses.sparse_categorical_crossentropy(input['labels'], pred_logits, from_logits=True)
+        ce_loss = tf.reduce_mean(ce_loss)
+        acc = metrics.sparse_categorical_accuracy(input['labels'], pred_logits)
+        acc = tf.reduce_mean(acc)
         self.add_loss(ce_loss)
         self.add_metric(ce_loss, 'ce')
         self.add_metric(acc, 'acc')
