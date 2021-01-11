@@ -20,7 +20,6 @@ def parse_imagenet_example(serial):
     label = example['image/class/label'] - 1
     return img, label
 
-@tf.function(input_signature=(tf.TensorSpec(shape=[None, None, 3], dtype=tf.uint8),))
 def augment_img(image):
     # Random scale
     imshape = tf.shape(image)
@@ -82,7 +81,7 @@ def load_datasets(args):
         return img
 
     def process_train(img, label):
-        ret = {'imgs': resize(augment_img(img)), 'labels': label}
+        ret = {'imgs': augment_img(resize(img)), 'labels': label}
         if args.method.startswith('supcon'):
             ret['imgs2'] = resize(augment_img(img))
         return ret
@@ -90,7 +89,7 @@ def load_datasets(args):
     def process_val(img, label):
         ret = {'imgs': resize(img), 'labels': label}
         if args.method.startswith('supcon'):
-            ret['imgs2'] = resize(augment_img(img))
+            ret['imgs2'] = augment_img(resize(img))
         return ret
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
