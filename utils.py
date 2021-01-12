@@ -13,6 +13,7 @@ parser.add_argument('--data', choices=['cifar10', 'imagenet'])
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
 # Training
+parser.add_argument('--init-epoch', type=int, default=0)
 parser.add_argument('--epochs', type=int)
 parser.add_argument('--train-steps', type=int, help='train steps per epoch')
 parser.add_argument('--val-steps', type=int, help='val steps per epoch')
