@@ -1,5 +1,6 @@
 import os
 
+import tensorflow as tf
 from tensorflow.keras import optimizers, callbacks
 
 import data
@@ -10,7 +11,7 @@ import shutil
 
 def scheduler(epoch, lr):
     if epoch in [30, 60, 80]:
-        return 0.1 * lr
+        return lr * tf.math.exp(-0.1)
     else:
         return lr
 
