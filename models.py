@@ -32,7 +32,7 @@ class ContrastModel(keras.Model):
         else:
             print(f'starting with new model weights')
 
-    def norm_feats(self, img):
+    def features(self, img):
         x = tf.cast(img, tf.float32) / 127.5 - 1
         x = self.cnn(x)
         x = self.avg_pool(x)
@@ -41,7 +41,7 @@ class ContrastModel(keras.Model):
             x = x / l2
         return x
 
-    def norm_project(self, feats):
+    def projection(self, feats):
         x = self.projection(feats)
         if self.args.norm_feats:
             l2 = tf.stop_gradient(tf.linalg.norm(x, axis=-1, keepdims=True))
@@ -50,17 +50,17 @@ class ContrastModel(keras.Model):
 
     def call(self, input, **kwargs):
         if self.args.method == 'ce':
-            feats = self.norm_feats(input['imgs'])
+            feats = self.features(input['imgs'])
             pred_logits = self.classifier(feats)
         else:
             assert self.args.method.startswith('supcon')
             partial = self.args.method.endswith('-pce')
 
-            feats = self.norm_feats(input['imgs'])
-            proj_feats = self.norm_project(feats)
+            feats = self.features(input['imgs'])
+            proj_feats = self.projection(feats)
 
-            feats2 = self.norm_feats(input['imgs2'])
-            proj_feats2 = self.norm_project(feats2)
+            feats2 = self.features(input['imgs2'])
+            proj_feats2 = self.projection(feats2)
 
             supcon_loss = self.compute_supcon_loss(input['labels'], proj_feats, proj_feats2, partial)
             supcon_loss = tf.reduce_mean(supcon_loss)
