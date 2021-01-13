@@ -16,7 +16,8 @@ def plot_tsne(args, strategy, model, ds_val):
         return feats, proj
 
     all_feats, all_proj, all_labels = [], [], []
-    for imgs1, imgs2, labels in ds_val:
+    for input in ds_val:
+        imgs1, imgs2, labels = input['imgs'], input['imgs2'], input['labels']
         feats, proj = strategy.run(get_feats, (imgs1,))
 
         if args.tpu:
