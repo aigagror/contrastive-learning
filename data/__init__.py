@@ -99,10 +99,8 @@ def load_datasets(args):
         return ret
 
     def process_val(img, label):
-        ret = {'imgs': center_resize(img, imsize), 'labels': label}
-        if args.method.startswith('supcon'):
-            ret['imgs2'] = augment_img(center_resize(img, imsize))
-        return ret
+        return {'imgs': center_resize(img, imsize), 'imgs2':  augment_img(center_resize(img, imsize)),
+                'labels': label}
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
