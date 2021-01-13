@@ -46,15 +46,6 @@ def center_resize(img, imsize):
 
 
 def augment_img(image):
-    # Random scale
-    imshape = tf.shape(image)
-    h, w = imshape[0], imshape[1]
-    rand_scale = tf.random.uniform([], 1, 1.5)
-    new_h = tf.round(rand_scale * tf.cast(h, tf.float32))
-    new_w = tf.round(rand_scale * tf.cast(w, tf.float32))
-    image = tf.image.resize(image, [new_h, new_w])
-    image = tf.image.random_crop(image, [h, w, 3])
-
     # Random flip
     image = tf.image.random_flip_left_right(image)
 
@@ -68,7 +59,7 @@ def augment_img(image):
     # Gray scale
     if tf.random.uniform([]) < 0.2:
         image = tf.image.rgb_to_grayscale(image)
-        image = tf.tile(image, [1, 1, 3])
+        image = tf.repeat(image, 3, axis=-1)
 
     # Clip
     image = tf.clip_by_value(image, 0, 255)
