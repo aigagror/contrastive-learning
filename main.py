@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import tensorflow as tf
 from tensorflow.keras import optimizers, callbacks
@@ -7,7 +8,7 @@ import data
 import models
 import plots
 import utils
-import shutil
+
 
 def scheduler(epoch, lr):
     if epoch in [30, 60, 80]:
