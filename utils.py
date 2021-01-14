@@ -10,6 +10,7 @@ parser.add_argument('--data', choices=['cifar10', 'imagenet'])
 
 # CNN
 parser.add_argument('--cnn', choices=['small-resnet50v2', 'resnet50v2'])
+parser.add_argument('--norm-feats', action='store_true')
 
 # Method
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
