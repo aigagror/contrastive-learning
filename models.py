@@ -7,12 +7,11 @@ from tensorflow.keras import applications, layers, metrics, losses
 
 
 class ContrastModel(keras.Model):
-    def __init__(self, args, nclass):
+    def __init__(self, args, nclass, input_shape):
         super().__init__()
         self.args = args
 
-        self.cnn = applications.ResNet50V2(weights=None, include_top=False,
-                                           input_shape=[None, args.imsize, args.imsize, 3])
+        self.cnn = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
 
         self.avg_pool = layers.GlobalAveragePooling2D()
         self.projection = layers.Dense(128, name='projection')
