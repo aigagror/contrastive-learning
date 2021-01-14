@@ -1,6 +1,5 @@
 import argparse
 
-import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import mixed_precision
 
@@ -39,7 +38,6 @@ parser.add_argument('--debug', action='store_true')
 def setup(args):
     # Logging
     tf.get_logger().setLevel('WARNING')
-    pd.options.display.float_format = '{:.3}'.format
 
     # Strategy
     if args.tpu:
