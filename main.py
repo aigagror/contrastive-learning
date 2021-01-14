@@ -21,12 +21,12 @@ def run(args):
     strategy = utils.setup(args)
 
     # Data
-    ds_train, ds_val, nclass = data.load_datasets(args)
+    ds_train, ds_val, info = data.load_datasets(args)
     plots.plot_img_samples(args, ds_train, ds_val)
 
     # Model and optimizer
     with strategy.scope():
-        model = models.ContrastModel(args, nclass)
+        model = models.ContrastModel(args, info['nclass'], info['input_shape'])
         model.compile(optimizers.SGD(args.lr, momentum=0.9), steps_per_execution=args.spe)
         model.cnn.summary()
 

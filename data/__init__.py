@@ -103,7 +103,8 @@ def load_imagenet(args):
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
-    return ds_train, ds_val, nclass
+    info = {'nclass': nclass, 'input_shape': [None, imsize, imsize, 3]}
+    return ds_train, ds_val, info
 
 
 def augment_cifar10_img(image):
@@ -146,15 +147,16 @@ def load_cifar10(args):
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
-    return ds_train, ds_val, nclass
+    info = {'nclass': nclass, 'input_shape': [None, imsize, imsize, 3]}
+    return ds_train, ds_val, info
 
 
 def load_datasets(args):
     if args.data == 'cifar10':
-        ds_train, ds_val, nclass = load_cifar10(args)
+        ds_train, ds_val, info = load_cifar10(args)
 
     elif args.data == 'imagenet':
-        ds_train, ds_val, nclass = load_imagenet(args)
+        ds_train, ds_val, info = load_imagenet(args)
 
     else:
         raise Exception(f'unknown data {args.data}')
@@ -163,4 +165,4 @@ def load_datasets(args):
     ds_train = ds_train.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
     ds_val = ds_val.batch(args.bsz, drop_remainder=True).prefetch(AUTOTUNE)
 
-    return ds_train, ds_val, nclass
+    return ds_train, ds_val, info
