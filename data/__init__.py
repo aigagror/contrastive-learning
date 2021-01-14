@@ -122,7 +122,7 @@ def augment_cifar10_img(image):
 
 
 def load_cifar10(args):
-    imsize, nclass = 128, 10
+    imsize, nclass = 224, 10
     (x_train, y_train), (x_val, y_val) = datasets.cifar10.load_data()
     y_train = y_train.astype(np.int32)
     y_val = y_val.astype(np.int32)

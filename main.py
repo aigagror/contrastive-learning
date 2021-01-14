@@ -37,9 +37,11 @@ def run(args):
     try:
         cbks = [
             callbacks.TensorBoard(log_dir, histogram_freq=1, write_images=True, update_freq='batch'),
-            callbacks.LearningRateScheduler(scheduler),
-            callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True)
+            callbacks.LearningRateScheduler(scheduler)
         ]
+        if not args.no_save:
+            cbks.append(callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True))
+
         model.fit(ds_train, validation_data=ds_val, validation_steps=args.val_steps,
                   initial_epoch=args.init_epoch, epochs=args.epochs, steps_per_epoch=args.train_steps,
                   callbacks=cbks)
