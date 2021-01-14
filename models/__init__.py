@@ -4,14 +4,19 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow import nn
 from tensorflow.keras import applications, layers, metrics, losses
-
+from models import small_resnet_v2
 
 class ContrastModel(keras.Model):
     def __init__(self, args, nclass, input_shape):
         super().__init__()
         self.args = args
 
-        self.cnn = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
+        if args.cnn == 'resnet50v2':
+            self.cnn = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
+        elif args.cnn == 'small-resnet50v2':
+            self.cnn = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape)
+        else:
+            raise Exception(f'unknown cnn model {args.cnn}')
 
         self.avg_pool = layers.GlobalAveragePooling2D()
         self.projection = layers.Dense(128, name='projection')
@@ -36,16 +41,14 @@ class ContrastModel(keras.Model):
         x = tf.cast(img, self.args.dtype) / 127.5 - 1
         x = self.cnn(x)
         x = self.avg_pool(x)
-        if self.args.norm_feats:
-            l2 = tf.stop_gradient(tf.linalg.norm(x, axis=-1, keepdims=True))
-            x = x / l2
+        l2 = tf.stop_gradient(tf.linalg.norm(x, axis=-1, keepdims=True))
+        x = x / l2
         return x
 
     def projection(self, feats):
         x = self.projection(feats)
-        if self.args.norm_feats:
-            l2 = tf.stop_gradient(tf.linalg.norm(x, axis=-1, keepdims=True))
-            x = x / l2
+        l2 = tf.stop_gradient(tf.linalg.norm(x, axis=-1, keepdims=True))
+        x = x / l2
         return x
 
     def call(self, input, **kwargs):
