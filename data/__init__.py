@@ -136,7 +136,7 @@ def load_cifar10(args):
     ds_val = ds_val.shuffle(len(ds_val))
 
     def resize(img):
-        return tf.image.resize(img, imsize, imsize)
+        return tf.image.resize(img, [imsize, imsize])
 
     # Preprocess
     def process_train(img, label):
