@@ -15,15 +15,15 @@ parser.add_argument('--cnn', choices=['small-resnet50v2', 'resnet50v2'])
 # Method
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
 
-# Training
+# Training hyperparameters
 parser.add_argument('--init-epoch', type=int, default=0)
 parser.add_argument('--epochs', type=int)
-parser.add_argument('--train-steps', type=int, help='train steps per epoch')
-parser.add_argument('--val-steps', type=int, help='val steps per epoch')
 parser.add_argument('--bsz', type=int)
 parser.add_argument('--lr', type=float)
 parser.add_argument('--l2_reg', type=float, default=1e-4)
 parser.add_argument('--spe', type=int, help='steps per execution')
+parser.add_argument('--train-steps', type=int, help='train steps per epoch')
+parser.add_argument('--val-steps', type=int, help='val steps per epoch')
 
 # Strategy
 parser.add_argument('--tpu', action='store_true')
@@ -32,8 +32,8 @@ parser.add_argument('--policy', choices=['mixed_bfloat16', 'float32'], default='
 # Other
 parser.add_argument('--load', action='store_true')
 parser.add_argument('--tsne', action='store_true')
-parser.add_argument('--debug', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
+parser.add_argument('--debug', action='store_true')
 
 
 def setup(args):
