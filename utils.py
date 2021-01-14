@@ -14,7 +14,6 @@ parser.add_argument('--cnn', choices=['small-resnet50v2', 'resnet50v2'])
 
 # Method
 parser.add_argument('--method', choices=['ce', 'supcon', 'supcon-pce'])
-parser.add_argument('--norm-feats', action='store_true')
 
 # Training
 parser.add_argument('--init-epoch', type=int, default=0)
