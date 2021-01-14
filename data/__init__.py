@@ -122,7 +122,7 @@ def augment_cifar10_img(image):
 
 
 def load_cifar10(args):
-    imsize, nclass = 224, 10
+    imsize, nclass = 32, 10
     (x_train, y_train), (x_val, y_val) = datasets.cifar10.load_data()
     y_train = y_train.astype(np.int32)
     y_val = y_val.astype(np.int32)
@@ -135,18 +135,15 @@ def load_cifar10(args):
     ds_train = ds_train.shuffle(len(ds_train))
     ds_val = ds_val.shuffle(len(ds_val))
 
-    def resize(img):
-        return tf.image.resize(img, [imsize, imsize])
-
     # Preprocess
     def process_train(img, label):
-        ret = {'imgs': resize(augment_cifar10_img(img)), 'labels': label}
+        ret = {'imgs': augment_cifar10_img(img), 'labels': label}
         if args.method.startswith('supcon'):
-            ret['imgs2'] = resize(augment_cifar10_img(img))
+            ret['imgs2'] = augment_cifar10_img(img)
         return ret
 
     def process_val(img, label):
-        return {'imgs': resize(img), 'imgs2': resize(augment_cifar10_img(img)), 'labels': label}
+        return {'imgs': img, 'imgs2': augment_cifar10_img(img), 'labels': label}
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
