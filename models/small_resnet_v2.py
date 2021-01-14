@@ -12,7 +12,7 @@ def SmallResNet50V2(
 
     def stack_fn(x):
         x = small_resnet.stack2(x, 16, 3, stride1=1, name='conv2')
-        x = small_resnet.stack2(x, 32, 4, stride1=1, name='conv3')
+        x = small_resnet.stack2(x, 32, 4, stride1=2, name='conv3')
         x = small_resnet.stack2(x, 64, 6, stride1=2, name='conv4')
         return small_resnet.stack2(x, 128, 3, stride1=2, name='conv5')
 
@@ -39,10 +39,10 @@ def SmallResNet101V2(
     """Instantiates the ResNet101V2 architecture."""
 
     def stack_fn(x):
-        x = small_resnet.stack2(x, 16, 3, name='conv2')
-        x = small_resnet.stack2(x, 32, 4, name='conv3')
-        x = small_resnet.stack2(x, 64, 23, name='conv4')
-        return small_resnet.stack2(x, 128, 3, stride1=1, name='conv5')
+        x = small_resnet.stack2(x, 16, 3, stride1=1, name='conv2')
+        x = small_resnet.stack2(x, 32, 4, stride1=2, name='conv3')
+        x = small_resnet.stack2(x, 64, 23, stride1=2, name='conv4')
+        return small_resnet.stack2(x, 128, 3, stride1=2, name='conv5')
 
     return small_resnet.SmallResNet(
         stack_fn,
@@ -67,10 +67,10 @@ def SmallResNet152V2(
     """Instantiates the ResNet152V2 architecture."""
 
     def stack_fn(x):
-        x = small_resnet.stack2(x, 16, 3, name='conv2')
-        x = small_resnet.stack2(x, 32, 8, name='conv3')
-        x = small_resnet.stack2(x, 64, 36, name='conv4')
-        return small_resnet.stack2(x, 128, 3, stride1=1, name='conv5')
+        x = small_resnet.stack2(x, 16, 3, stride1=1, name='conv2')
+        x = small_resnet.stack2(x, 32, 8, stride1=2, name='conv3')
+        x = small_resnet.stack2(x, 64, 36, stride1=2, name='conv4')
+        return small_resnet.stack2(x, 128, 3, stride1=2, name='conv5')
 
     return small_resnet.SmallResNet(
         stack_fn,
