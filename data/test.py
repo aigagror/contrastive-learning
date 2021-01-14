@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 import data
+import data.cifar10
+import data.imagenet
+import data.data_utils
 import utils
 
 
@@ -13,7 +16,7 @@ class TestData(unittest.TestCase):
         args = '--data=cifar10 --bsz=32 --method=ce'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
-        ds_train, ds_val, nclass = data.load_datasets(args)
+        ds_train, ds_val, info = data.load_datasets(args)
 
         for ds in [ds_train, ds_val]:
             input = next(iter(ds))
@@ -22,14 +25,14 @@ class TestData(unittest.TestCase):
             # Label
             tf.debugging.assert_shapes([(label, [None])])
             tf.debugging.assert_type(label, tf.int32, label.dtype)
-            tf.debugging.assert_less_equal(label, nclass - 1, label)
+            tf.debugging.assert_less_equal(label, info['nclass'] - 1, label)
             tf.debugging.assert_greater_equal(label, 0)
 
     def test_image_format(self):
         args = '--data=cifar10 --bsz=32 --method=ce'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
-        ds_train, ds_val, nclass = data.load_datasets(args)
+        ds_train, ds_val, _ = data.load_datasets(args)
 
         for ds in [ds_train, ds_val]:
             input = next(iter(ds))
@@ -52,7 +55,7 @@ class TestData(unittest.TestCase):
         ax[0].set_title('original')
         ax[0].imshow(img)
         for i in range(1, 9):
-            aug_img = data.augment_imagenet_img(img)
+            aug_img = data.imagenet.augment_imagenet_img(img)
             tf.debugging.assert_type(aug_img, tf.uint8)
             ax[i].set_title('augmentation')
             ax[i].imshow(aug_img)
@@ -67,7 +70,7 @@ class TestData(unittest.TestCase):
         ax[0].set_title('original')
         ax[0].imshow(img)
         for i in range(1, 9):
-            aug_img = data.augment_cifar10_img(img)
+            aug_img = data.cifar10.augment_cifar10_img(img)
             tf.debugging.assert_type(aug_img, tf.uint8)
             ax[i].set_title('augmentation')
             ax[i].imshow(aug_img)
@@ -78,7 +81,7 @@ class TestData(unittest.TestCase):
         img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'), channels=3)
         tf.debugging.assert_shapes([(img, [None, None, 3])])
 
-        for resize_fn in [data.min_scale_rand_crop, data.min_scale_center_crop]:
+        for resize_fn in [data.data_utils.min_scale_rand_crop, data.data_utils.min_scale_center_crop]:
             f, ax = plt.subplots(1, 9)
             f.set_size_inches(20, 5)
             ax[0].set_title('original')
@@ -95,3 +98,4 @@ class TestData(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    print("See 'data/images/' to view augmentations and resizings")

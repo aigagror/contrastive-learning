@@ -14,7 +14,7 @@ def SmallResNet50V2(
         x = small_resnet.stack2(x, 16, 3, stride1=1, name='conv2')
         x = small_resnet.stack2(x, 32, 4, stride1=2, name='conv3')
         x = small_resnet.stack2(x, 64, 6, stride1=2, name='conv4')
-        return small_resnet.stack2(x, 128, 3, stride1=2, name='conv5')
+        return small_resnet.stack2(x, 64, 3, stride1=2, name='conv5')
 
     return small_resnet.SmallResNet(
         stack_fn,
