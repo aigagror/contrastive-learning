@@ -33,7 +33,7 @@ class ContrastModel(keras.Model):
             print(f'starting with new model weights')
 
     def features(self, img):
-        x = tf.cast(img, tf.float32) / 127.5 - 1
+        x = tf.cast(img, self.args.dtype) / 127.5 - 1
         x = self.cnn(x)
         x = self.avg_pool(x)
         if self.args.norm_feats:
