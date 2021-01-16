@@ -15,7 +15,7 @@ class TestModel(unittest.TestCase):
 
     def test_l2_reg(self):
         args = '--data=cifar10 --cnn=small-resnet50v2 --l2-reg=1e-3 ' \
-               '--bsz=128 --init-epoch=90 --epochs=150 --lr=1e-3 --method=ce '
+               '--bsz=32 --lr=1e-3 --method=ce '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
 
