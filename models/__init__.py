@@ -24,10 +24,10 @@ class ContrastModel(keras.Model):
 
         # L2 regularization
         regularizer = keras.regularizers.l2(args.l2_reg)
-        for layer in self.layers:
+        for module in self.submodules:
             for attr in ['kernel_regularizer', 'bias_regularizer']:
-                if hasattr(layer, attr):
-                    setattr(layer, attr, regularizer)
+                if hasattr(module, attr):
+                    setattr(module, attr, regularizer)
 
         # Load weights?
         if args.load:
