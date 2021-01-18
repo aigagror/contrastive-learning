@@ -1,7 +1,9 @@
 import unittest
 
 import numpy as np
+import tensorflow as tf
 
+import data
 import models
 import utils
 from models import small_resnet_v2
@@ -30,6 +32,31 @@ class TestModel(unittest.TestCase):
 
         # Assert at least 40 modules were regularized
         self.assertGreaterEqual(count, 40)
+
+    def test_norm_feats(self):
+        args = '--data=cifar10 --cnn=small-resnet50v2 --method=supcon --norm-feats ' \
+               '--bsz=32 --lr=1e-1 --lr-decays 60 120 160 ' \
+               '--init-epoch=180 --epochs=180 '
+        args = utils.parser.parse_args(args.split())
+        utils.setup(args)
+
+        ds_train, ds_val, info = data.load_datasets(args)
+        model = models.ContrastModel(args, nclass=10, input_shape=[32, 32, 3])
+        input = next(iter(ds_val))
+        feats = model.features(input['imgs'])
+        proj_feats = model.projection(feats)
+
+        # Assert shapes
+        tf.debugging.assert_shapes([
+            (feats, ['N', 2048]),
+            (proj_feats, ['N', 128]),
+        ])
+
+        # Assert norm
+        feats_norm = tf.linalg.norm(feats, axis=1)
+        proj_norm = tf.linalg.norm(proj_feats, axis=1)
+        tf.debugging.assert_near(feats_norm, tf.ones_like(feats_norm))
+        tf.debugging.assert_near(proj_norm, tf.ones_like(proj_norm))
 
 
 if __name__ == '__main__':

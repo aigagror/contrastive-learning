@@ -12,15 +12,15 @@ class ContrastModel(keras.Model):
         self.args = args
 
         if args.cnn == 'resnet50v2':
-            self.cnn = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
+            self._cnn = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
         elif args.cnn == 'small-resnet50v2':
-            self.cnn = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape)
+            self._cnn = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape)
         else:
             raise Exception(f'unknown cnn model {args.cnn}')
 
-        self.avg_pool = layers.GlobalAveragePooling2D()
-        self.projection = layers.Dense(128, name='projection')
-        self.classifier = layers.Dense(nclass, name='classifier')
+        self._avg_pool = layers.GlobalAveragePooling2D()
+        self._projection = layers.Dense(128, name='projection')
+        self._classifier = layers.Dense(nclass, name='classifier')
 
         # L2 regularization
         regularizer = keras.regularizers.l2(args.l2_reg)
@@ -39,14 +39,14 @@ class ContrastModel(keras.Model):
 
     def features(self, img):
         x = tf.cast(img, self.args.dtype) / 127.5 - 1
-        x = self.cnn(x)
-        x = self.avg_pool(x)
+        x = self._cnn(x)
+        x = self._avg_pool(x)
         if self.args.norm_feats:
             x = tf.linalg.l2_normalize(x, axis=-1)
         return x
 
     def projection(self, feats):
-        x = self.projection(feats)
+        x = self._projection(feats)
         if self.args.norm_feats:
             x = tf.linalg.l2_normalize(x, axis=-1)
         return x
@@ -54,7 +54,7 @@ class ContrastModel(keras.Model):
     def call(self, input, **kwargs):
         if self.args.method == 'ce':
             feats = self.features(input['imgs'])
-            pred_logits = self.classifier(feats)
+            pred_logits = self._classifier(feats)
         else:
             assert self.args.method.startswith('supcon')
             partial = self.args.method.endswith('-pce')
@@ -70,7 +70,7 @@ class ContrastModel(keras.Model):
             self.add_loss(supcon_loss)
             self.add_metric(tf.cast(supcon_loss, tf.float32), 'supcon')
 
-            pred_logits = self.classifier(tf.stop_gradient(feats))
+            pred_logits = self._classifier(tf.stop_gradient(feats))
 
         # Cross entropy and accuracy
         pred_logits = tf.cast(pred_logits, tf.float32)
