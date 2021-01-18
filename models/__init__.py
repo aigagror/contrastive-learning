@@ -70,7 +70,7 @@ class ContrastModel(keras.Model):
             supcon_loss = self.compute_supcon_loss(input['labels'], proj_feats, proj_feats2, partial)
             supcon_loss = tf.reduce_mean(supcon_loss)
             self.add_loss(supcon_loss)
-            self.add_metric(supcon_loss, 'supcon')
+            self.add_metric(tf.cast(supcon_loss, tf.float32), 'supcon')
 
             pred_logits = self.classifier(tf.stop_gradient(feats))
 
@@ -80,8 +80,8 @@ class ContrastModel(keras.Model):
         acc = metrics.sparse_categorical_accuracy(input['labels'], pred_logits)
         acc = tf.reduce_mean(acc)
         self.add_loss(ce_loss)
-        self.add_metric(ce_loss, 'ce')
-        self.add_metric(acc, 'acc')
+        self.add_metric(tf.cast(ce_loss, tf.float32), 'ce')
+        self.add_metric(tf.cast(acc, tf.float32), 'acc')
 
         # Prediction
         pred = tf.argmax(pred_logits, axis=1)
