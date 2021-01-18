@@ -75,6 +75,7 @@ class ContrastModel(keras.Model):
             pred_logits = self.classifier(tf.stop_gradient(feats))
 
         # Cross entropy and accuracy
+        pred_logits = tf.cast(pred_logits, tf.float32)
         ce_loss = losses.sparse_categorical_crossentropy(input['labels'], pred_logits, from_logits=True)
         ce_loss = tf.reduce_mean(ce_loss)
         acc = metrics.sparse_categorical_accuracy(input['labels'], pred_logits)
