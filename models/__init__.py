@@ -42,15 +42,13 @@ class ContrastModel(keras.Model):
         x = self.cnn(x)
         x = self.avg_pool(x)
         if self.args.norm_feats:
-            l2 = tf.stop_gradient(tf.linalg.norm(x, axis=-1, keepdims=True))
-            x = x / l2
+            x = tf.linalg.l2_normalize(x, axis=-1)
         return x
 
     def projection(self, feats):
         x = self.projection(feats)
         if self.args.norm_feats:
-            l2 = tf.stop_gradient(tf.linalg.norm(x, axis=-1, keepdims=True))
-            x = x / l2
+            x = tf.linalg.l2_normalize(x, axis=-1)
         return x
 
     def call(self, input, **kwargs):
