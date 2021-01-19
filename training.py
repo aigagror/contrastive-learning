@@ -18,7 +18,8 @@ def train(args, model, ds_train, ds_val):
     try:
 
         cbks = [
-            callbacks.TensorBoard(log_dir, histogram_freq=1, write_images=True, update_freq=args.update_freq),
+            callbacks.TensorBoard(log_dir, histogram_freq=1, write_graph=False, write_images=True,
+                                  update_freq=args.update_freq),
             callbacks.LearningRateScheduler(scheduler, verbose=1),
             callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True)
         ]
