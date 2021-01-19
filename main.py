@@ -18,7 +18,7 @@ def run(args):
     # Model and optimizer
     with strategy.scope():
         model = models.ContrastModel(args, info['nclass'], info['input_shape'])
-        model.compile(optimizers.SGD(args.lr, momentum=0.9), steps_per_execution=args.spe)
+        model.compile(optimizers.SGD(args.lr, momentum=0.9), steps_per_execution=args.steps_exec)
         if args.debug:
             model.cnn.summary()
 

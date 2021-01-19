@@ -24,7 +24,7 @@ def train(args, model, ds_train, ds_val, ds_info):
         ]
 
         train_steps, val_steps = args.train_steps, args.val_steps
-        if args.spe is not None:
+        if args.steps_exec is not None:
             if args.train_steps is None:
                 train_steps = ds_info['train_size'] // args.bsz
                 print(f'steps per execution set and train_steps not specified. setting it to train_size // bsz = {train_steps}')
