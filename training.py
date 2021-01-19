@@ -16,7 +16,6 @@ def train(args, model, ds_train, ds_val, ds_info):
             return lr
 
     try:
-
         cbks = [
             callbacks.TensorBoard(log_dir, histogram_freq=1, update_freq=args.update_freq),
             callbacks.LearningRateScheduler(scheduler, verbose=1),
@@ -25,6 +24,7 @@ def train(args, model, ds_train, ds_val, ds_info):
 
         train_steps, val_steps = args.train_steps, args.val_steps
         if args.steps_exec is not None:
+            ds_train, ds_val = ds_train.repeat(), ds_val.repeat()
             if args.train_steps is None:
                 train_steps = ds_info['train_size'] // args.bsz
                 print(f'steps per execution set and train_steps not specified. setting it to train_size // bsz = {train_steps}')
