@@ -4,7 +4,7 @@ import shutil
 from tensorflow.keras import callbacks
 
 
-def train(args, model, ds_train, ds_val):
+def train(args, model, ds_train, ds_val, ds_info):
     log_dir = os.path.join(args.out, 'logs')
     if not args.load:
         shutil.rmtree(log_dir, ignore_errors=True)
@@ -23,8 +23,17 @@ def train(args, model, ds_train, ds_val):
             callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True)
         ]
 
-        model.fit(ds_train, validation_data=ds_val, validation_steps=args.val_steps,
-                  initial_epoch=args.init_epoch, epochs=args.epochs, steps_per_epoch=args.train_steps,
+        train_steps, val_steps = args.train_steps, args.val_steps
+        if args.spe is not None:
+            if args.train_steps is None:
+                train_steps = ds_info['train_size'] // args.bsz
+                print(f'steps per execution set and train_steps not specified. setting it to train_size // bsz = {train_steps}')
+            if args.val_steps is None:
+                val_steps = ds_info['val_size'] // args.bsz
+                print(f'steps per execution set and val_steps not specified. setting it to val_size // bsz = {val_steps}')
+
+        model.fit(ds_train, validation_data=ds_val, validation_steps=val_steps,
+                  initial_epoch=args.init_epoch, epochs=args.epochs, steps_per_epoch=train_steps,
                   callbacks=cbks)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')

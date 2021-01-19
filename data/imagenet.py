@@ -51,6 +51,7 @@ def augment_imagenet_img(image):
 
 def load_imagenet(args):
     imsize, nclass = 224, 1000
+    train_size, val_size = 1281167, 50000
     train_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/train*', shuffle=True)
     val_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/validation-*', shuffle=True)
     train_data = train_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE)
@@ -70,5 +71,5 @@ def load_imagenet(args):
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
-    info = {'nclass': nclass, 'input_shape': [imsize, imsize, 3]}
+    info = {'nclass': nclass, 'input_shape': [imsize, imsize, 3], 'train_size': train_size, 'val_size': val_size}
     return ds_train, ds_val, info
