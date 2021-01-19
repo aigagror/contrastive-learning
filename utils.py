@@ -2,7 +2,6 @@ import argparse
 
 import tensorflow as tf
 from tensorflow.keras import mixed_precision
-from tensorflow.python.tpu import tpu_function
 
 parser = argparse.ArgumentParser()
 
@@ -36,32 +35,6 @@ parser.add_argument('--load', action='store_true')
 parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
 parser.add_argument('--debug', action='store_true')
-
-def cross_replica_concat(tensor):
-  """A cross-replica concatenation of a single Tensor across TPU cores.
-  Input tensor is assumed to have batch dimension as the first dimension. The
-  concatenation is done along the batch dimension.
-  Args:
-    tensor: Input Tensor which should be concatenated across TPU cores.
-  Returns:
-    The concatenated Tensor with batch dimension multiplied by the number of
-      TPU cores.
-  """
-  num_tpu_replicas = tpu_function.get_tpu_context().number_of_shards
-
-  if num_tpu_replicas is not None:
-    # Scattered tensor has shape [num_replicas, local_batch_size, ...]
-    scattered_tensor = tf.scatter_nd(
-        indices=[[local_tpu_replica_id()]],
-        updates=[tensor],
-        shape=[num_tpu_replicas] + tensor.shape.as_list())
-    reduced_tensor = tf.tpu.cross_replica_sum(scattered_tensor)
-    # Returned tensor has shape [num_replicas * local_batch_size, ...]
-    return tf.reshape(reduced_tensor,
-                      [-1] + scattered_tensor.shape.as_list()[2:])
-  else:
-    # This is a no op if not running on TPU
-    return tensor
 
 
 def setup(args):
