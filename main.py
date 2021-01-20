@@ -20,7 +20,7 @@ def run(args):
         model = models.ContrastModel(args, ds_info['nclass'], ds_info['input_shape'])
         model.compile(optimizers.SGD(args.lr, momentum=0.9), steps_per_execution=args.steps_exec)
         if args.debug:
-            model.cnn.summary()
+            model._cnn.summary()
 
     # Train
     train(args, model, ds_train, ds_val, ds_info)

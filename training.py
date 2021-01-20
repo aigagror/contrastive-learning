@@ -32,7 +32,6 @@ def train(args, model, ds_train, ds_val, ds_info):
         print(f'{model.optimizer.lr:.3} lr')
 
     try:
-
         train_steps, val_steps = args.train_steps, args.val_steps
         if args.steps_exec is not None:
             ds_train, ds_val = ds_train.repeat(), ds_val.repeat()
