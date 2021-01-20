@@ -87,7 +87,6 @@ class ContrastModel(keras.Model):
         return pred
 
     def compute_supcon_loss(self, labels, feats1, feats2, partial):
-        bsz = len(labels)
         tf.debugging.assert_shapes([(labels, [None, 1])])
         dtype = feats1.dtype
 
@@ -96,6 +95,7 @@ class ContrastModel(keras.Model):
         labels = replica_context.all_gather(labels, axis=0)
         feats1 = replica_context.all_gather(feats1, axis=0)
         feats2 = replica_context.all_gather(feats2, axis=0)
+        bsz = len(labels)
 
         # Masks
         inst_mask = tf.eye(bsz, dtype=dtype)
