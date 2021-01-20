@@ -92,7 +92,7 @@ class ContrastModel(keras.Model):
         dtype = feats1.dtype
 
         # Gather everything
-        replica_context = self.distribute_strategy.get_replica_context()
+        replica_context = tf.distribute.get_replica_context()
         labels = replica_context.all_gather(labels, axis=0)
         feats1 = replica_context.all_gather(feats1, axis=0)
         feats2 = replica_context.all_gather(feats2, axis=0)
