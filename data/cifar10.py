@@ -39,13 +39,14 @@ def load_cifar10(args):
 
     # Preprocess
     def process_train(img, label):
-        ret = {'imgs': augment_cifar10_img(img), 'labels': label}
+        inputs = {'imgs': augment_cifar10_img(img)}
+        labels = {'labels': label}
         if args.method.startswith('supcon'):
-            ret['imgs2'] = augment_cifar10_img(img)
-        return ret
+            inputs['imgs2'] = augment_cifar10_img(img)
+        return inputs, labels
 
     def process_val(img, label):
-        return {'imgs': img, 'imgs2': augment_cifar10_img(img), 'labels': label}
+        return {'imgs': img, 'imgs2': augment_cifar10_img(img)}, {'labels': label}
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
