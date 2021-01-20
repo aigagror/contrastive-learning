@@ -7,7 +7,11 @@ from tensorflow.keras import callbacks
 def train(args, model, ds_train, ds_val, ds_info):
     log_dir = os.path.join(args.out, 'logs')
     if not args.load:
-        shutil.rmtree(log_dir, ignore_errors=True)
+        if args.out.startswith('gs://'):
+            os.system(f"gsutil -m rm {os.path.join(args.out, '**')}")
+        else:
+            shutil.rmtree(args.out)
+            os.mkdir(args.out)
 
     def scheduler(epoch, lr):
         if epoch in args.lr_decays:
