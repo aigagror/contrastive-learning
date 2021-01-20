@@ -91,6 +91,11 @@ class ContrastModel(keras.Model):
         tf.debugging.assert_shapes([(labels, [None, 1])])
         dtype = feats1.dtype
 
+        # Gather everything
+        labels = self.distribute_strategy.gather(labels, axis=0)
+        feats1 = self.distribute_strategy.gather(feats1, axis=0)
+        feats2 = self.distribute_strategy.gather(feats2, axis=0)
+
         # Masks
         inst_mask = tf.eye(bsz, dtype=dtype)
         class_mask = tf.cast(labels == tf.transpose(labels), dtype)
