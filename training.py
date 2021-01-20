@@ -29,7 +29,7 @@ def train(args, model, ds_train, ds_val, ds_info):
         cbks.append(callbacks.LearningRateScheduler(scheduler, verbose=1))
 
     if args.debug:
-        print(f'{model.optimizer.lr:.3} lr')
+        print(f'{model.optimizer.lr} lr')
 
     try:
         train_steps, val_steps = args.train_steps, args.val_steps
