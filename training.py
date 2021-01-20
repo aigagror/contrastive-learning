@@ -19,14 +19,13 @@ def train(args, model, ds_train, ds_val, ds_info):
     ]
 
     # Learning rate schedule
-    if args.lr_decays:
-        def scheduler(epoch, lr):
-            if epoch in args.lr_decays:
-                return lr * 0.1
-            else:
-                return lr
-
-        cbks.append(callbacks.LearningRateScheduler(scheduler, verbose=1))
+    def scheduler(epoch, _):
+        curr_lr = args.lr
+        for e in range(epoch):
+            if e in args.lr_decays:
+                curr_lr *= 0.1
+        return curr_lr
+    cbks.append(callbacks.LearningRateScheduler(scheduler, verbose=1))
 
     if args.debug:
         print(f'{model.optimizer.lr} lr')
