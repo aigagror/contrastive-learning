@@ -37,7 +37,14 @@ def make_model(args, nclass, input_shape):
 
     prediction = layers.Dense(nclass, name='classifier')(feats)
 
-    model = keras.Model({'imgs': input, 'imgs2': input2}, {'batch_sims': batch_sims, 'labels': prediction})
+    inputs = {'imgs': input}
+    targets = {'labels': prediction}
+
+    if args.method.startswith('supcon'):
+        inputs['imgs2'] = input2
+        targets['batch_sims'] = batch_sims
+
+    model = keras.Model(inputs, targets)
 
     # L2 regularization
     regularizer = keras.regularizers.l2(args.l2_reg)
