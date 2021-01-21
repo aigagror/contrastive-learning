@@ -39,7 +39,7 @@ def make_model(args, nclass, input_shape):
     if args.method.startswith('supcon'):
         feats = tf.stop_gradient(feats)
     prediction = layers.Dense(nclass)(feats)
-    prediction = tf.cast(prediction, tf.float32, name='labels')
+    prediction = layers.Lambda(lambda x: tf.cast(x, tf.float32), name='labels')(prediction)
 
     inputs = [input]
     outputs = {'labels': prediction}
