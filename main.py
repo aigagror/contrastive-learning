@@ -37,8 +37,11 @@ def run(args):
         elif args.method == 'supcon-pce':
             losses['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon]
 
+        # Metrics
+        metrics = {'labels': keras.metrics.SparseCategoricalAccuracy()}
+
         # Compile
-        model.compile(opt, losses, steps_per_execution=args.steps_exec)
+        model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)
         if args.debug:
             model.summary()
 
