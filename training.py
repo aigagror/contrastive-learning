@@ -6,7 +6,6 @@ from tensorflow.keras import callbacks
 
 def train(args, model, ds_train, ds_val, ds_info):
     # Output
-    log_dir = os.path.join(args.out, 'logs')
     if not args.load:
         if args.out.startswith('gs://'):
             os.system(f"gsutil -m rm {os.path.join(args.out, '**')}")
@@ -15,22 +14,7 @@ def train(args, model, ds_train, ds_val, ds_info):
             os.mkdir(args.out)
 
     # Callbacks
-    cbks = [
-        callbacks.TensorBoard(log_dir, histogram_freq=1, update_freq=args.update_freq),
-    ]
-
-    # Model checkpoint
-    if not args.no_checkpoint:
-        cbks.append(callbacks.ModelCheckpoint(os.path.join(args.out, 'model')))
-
-    # Learning rate schedule
-    def scheduler(epoch, _):
-        curr_lr = args.lr
-        for e in range(epoch):
-            if e in args.lr_decays:
-                curr_lr *= 0.1
-        return curr_lr
-    cbks.append(callbacks.LearningRateScheduler(scheduler, verbose=1))
+    cbks = get_callbacks(args)
 
     try:
         train_steps, val_steps = args.train_steps, args.val_steps
@@ -50,3 +34,23 @@ def train(args, model, ds_train, ds_val, ds_info):
                   callbacks=cbks)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
+
+
+def get_callbacks(args):
+    cbks = [
+        callbacks.TensorBoard(os.path.join(args.out, 'logs'), histogram_freq=1, update_freq=args.update_freq),
+    ]
+    # Model checkpoint
+    if not args.no_checkpoint:
+        cbks.append(callbacks.ModelCheckpoint(os.path.join(args.out, 'model')))
+
+    # Learning rate schedule
+    def scheduler(epoch, _):
+        curr_lr = args.lr
+        for e in range(epoch):
+            if e in args.lr_decays:
+                curr_lr *= 0.1
+        return curr_lr
+
+    cbks.append(callbacks.LearningRateScheduler(scheduler, verbose=1))
+    return cbks

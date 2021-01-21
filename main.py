@@ -31,7 +31,7 @@ def run(args):
         opt = optimizers.SGD(args.lr, momentum=0.9)
 
         # Loss
-        losses = {'labels': keras.losses.SparseCategoricalCrossentropy()}
+        losses = {'labels': keras.losses.SparseCategoricalCrossentropy(from_logits=True)}
         if args.method == 'supcon':
             losses['batch_sims'] = custom_losses.SupCon()
         elif args.method == 'supcon-pce':
