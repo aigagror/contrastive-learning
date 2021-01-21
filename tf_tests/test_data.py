@@ -13,7 +13,7 @@ import utils
 class TestData(unittest.TestCase):
 
     def test_targets_format(self):
-        args = '--data=cifar10 --bsz=8 --method=ce'
+        args = '--data=cifar10 --bsz=8 --method=supcon'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
         ds_train, ds_val, info = data.load_datasets(args)
@@ -23,7 +23,7 @@ class TestData(unittest.TestCase):
 
             # Label
             label = targets['labels']
-            tf.debugging.assert_shapes([(label, [32])])
+            tf.debugging.assert_shapes([(label, [8])])
             tf.debugging.assert_type(label, tf.int32, label.dtype)
             tf.debugging.assert_less_equal(label, info['nclass'] - 1, label)
             tf.debugging.assert_greater_equal(label, 0)
@@ -31,7 +31,7 @@ class TestData(unittest.TestCase):
             # Batch sims
             batch_sims = targets['batch_sims']
             tf.debugging.assert_shapes([
-                (batch_sims, [32, 32])
+                (batch_sims, [8, 8])
             ])
 
             tf.debugging.assert_type(batch_sims, tf.bool)
@@ -48,7 +48,7 @@ class TestData(unittest.TestCase):
 
             # Image
             tf.debugging.assert_shapes([
-                (img, [32, 32, 32, 3])
+                (img, [8, 32, 32, 3])
             ])
             tf.debugging.assert_type(img, tf.uint8, img.dtype)
             tf.debugging.assert_greater_equal(img, tf.zeros_like(img))
