@@ -5,7 +5,7 @@ from tensorflow.keras import losses
 
 class ConLoss(losses.Loss):
     def assert_inputs(self, y_true, y_pred):
-        tf.debugging.assert_type(y_true, tf.uint8)
+        tf.debugging.assert_type(y_true, tf.uint8, f'y_true is of type {y_true.dtype}')
         inst_mask = tf.cast((y_true == 2), tf.uint8)
         n_inst = tf.reduce_sum(inst_mask, axis=1)
         tf.debugging.assert_equal(n_inst, tf.ones_like(n_inst))
