@@ -65,6 +65,28 @@ class LossesTest(unittest.TestCase):
         loss = strategy.reduce('SUM', loss, axis=None)
         tf.debugging.assert_near(loss, tf.zeros_like(loss))
 
+    def test_simclr_distribute_equivalency(self):
+        strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
+        global_x = tf.random.normal([4, 4])
+        global_y = tf.random.uniform([4, 4])
+        def foo():
+            replica_context = tf.distribute.get_replica_context()
+            id = replica_context.replica_id_in_sync_group
+            if id == 0:
+                x = global_x[:2]
+                y = global_y[:2]
+            else:
+                x = global_x[2:]
+                y = global_y[2:]
+            loss = custom_losses.SimCLR(reduction=tf.keras.losses.Reduction.SUM)(y, x) / 2
+            return loss
+
+        distributed_loss = strategy.run(foo)
+        distributed_loss = strategy.reduce('SUM', distributed_loss, axis=None) / 2
+
+        global_loss = custom_losses.SimCLR()(global_y, global_x)
+        tf.debugging.assert_equal(global_loss, distributed_loss)
+
     # SupCon
     def test_supcon_eye(self):
         y = tf.eye(3)
