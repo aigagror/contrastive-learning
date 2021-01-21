@@ -99,16 +99,6 @@ def plot_hist_sims(args, strategy, model, ds_val):
         proj_class_sims = tf.boolean_mask(proj_sims, class_mask)
         proj_inst_sims = tf.boolean_mask(proj_sims, inst_mask)
 
-        # All gather
-        replica_context = tf.distribute.get_replica_context()
-        neg_sims = replica_context.all_gather(neg_sims, axis=0)
-        class_sims = replica_context.all_gather(class_sims, axis=0)
-        inst_sims = replica_context.all_gather(inst_sims, axis=0)
-
-        proj_neg_sims= replica_context.all_gather(proj_neg_sims, axis=0)
-        proj_class_sims = replica_context.all_gather(proj_class_sims, axis=0)
-        proj_inst_sims = replica_context.all_gather(proj_inst_sims, axis=0)
-
         return (neg_sims, class_sims, inst_sims), (proj_neg_sims, proj_class_sims, proj_inst_sims)
 
     neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
@@ -118,16 +108,26 @@ def plot_hist_sims(args, strategy, model, ds_val):
         sims, proj_sims = strategy.run(get_sims, (inputs, targets))
 
         # Similarity types
-        for n, c, i in zip(*sims):
-            neg_sims = np.append(neg_sims, n.numpy())
-            class_sims = np.append(class_sims, c.numpy())
-            inst_sims = np.append(inst_sims, i.numpy())
+        n, c, i = sims
+        # Gather
+        n = strategy.gather(n, axis=0)
+        c = strategy.gather(c, axis=0)
+        i = strategy.gather(i, axis=0)
+
+        neg_sims = np.append(neg_sims, n.numpy())
+        class_sims = np.append(class_sims, c.numpy())
+        inst_sims = np.append(inst_sims, i.numpy())
 
         # Projected similarity types
-        for n, c, i in zip(*proj_sims):
-            proj_neg_sims = np.append(proj_neg_sims, n.numpy())
-            proj_class_sims = np.append(proj_class_sims, c.numpy())
-            proj_inst_sims = np.append(proj_inst_sims, i.numpy())
+        n, c, i = proj_sims
+        # Gather
+        n = strategy.gather(n, axis=0)
+        c = strategy.gather(c, axis=0)
+        i = strategy.gather(i, axis=0)
+
+        proj_neg_sims = np.append(proj_neg_sims, n.numpy())
+        proj_class_sims = np.append(proj_class_sims, c.numpy())
+        proj_inst_sims = np.append(proj_inst_sims, i.numpy())
 
     # Plot
     f, ax = plt.subplots(1, 2)

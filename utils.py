@@ -61,9 +61,4 @@ def setup(args):
     policy = mixed_precision.Policy(args.policy)
     mixed_precision.set_global_policy(policy)
 
-    for dtype in ['bfloat16', 'float32']:
-        if dtype in args.policy:
-            args.dtype = dtype
-            break
-
     return strategy
