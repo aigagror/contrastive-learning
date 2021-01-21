@@ -103,10 +103,11 @@ def plot_hist_sims(args, strategy, model, ds_val):
         replica_context = tf.distribute.get_replica_context()
         neg_sims = replica_context.all_gather(neg_sims, axis=0)
         class_sims = replica_context.all_gather(class_sims, axis=0)
+        inst_sims = replica_context.all_gather(inst_sims, axis=0)
 
-        proj_proj_sims= replica_context.all_gather(proj_neg_sims, axis=0)
+        proj_neg_sims= replica_context.all_gather(proj_neg_sims, axis=0)
         proj_class_sims = replica_context.all_gather(proj_class_sims, axis=0)
-        proj_proj_sims = replica_context.all_gather(proj_proj_sims, axis=0)
+        proj_inst_sims = replica_context.all_gather(proj_inst_sims, axis=0)
 
         return (neg_sims, class_sims, inst_sims), (proj_neg_sims, proj_class_sims, proj_inst_sims)
 
