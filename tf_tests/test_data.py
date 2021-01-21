@@ -72,6 +72,7 @@ class TestData(unittest.TestCase):
             ax[i].imshow(aug_img)
         f.tight_layout()
         f.savefig('images/imagenet-sample-augmentations.jpg')
+        print("Test images saved to 'data/images/'")
 
     def test_cifar10_augmentation(self):
         img = tf.io.decode_image(tf.io.read_file('images/cifar10-sample.png'))
@@ -87,6 +88,7 @@ class TestData(unittest.TestCase):
             ax[i].imshow(aug_img)
         f.tight_layout()
         f.savefig('images/cifar10-sample-augmentations.jpg')
+        print("Test images saved to 'data/images/'")
 
     def test_min_scale_crops(self):
         img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'), channels=3)
@@ -105,8 +107,8 @@ class TestData(unittest.TestCase):
                 ax[i].imshow(resized_img)
             f.tight_layout()
             f.savefig(f'images/test-{resize_fn.__name__}.jpg')
+        print("Test images saved to 'data/images/'")
 
 
 if __name__ == '__main__':
     unittest.main()
-    print("See 'data/images/' to view augmentations and resizings")
