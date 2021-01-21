@@ -1,7 +1,10 @@
 import unittest
 
 import numpy as np
+import tensorflow as tf
+from tensorflow import keras
 
+import data
 import models
 import utils
 from models import small_resnet_v2
@@ -30,6 +33,28 @@ class TestModel(unittest.TestCase):
 
         # Assert at least 40 modules were regularized
         self.assertGreaterEqual(count, 40)
+
+    def test_no_grad_ce(self):
+        args = '--data=cifar10 --cnn=small-resnet50v2 ' \
+               '--bsz=32 --lr=1e-3 --method=supcon '
+        args = utils.parser.parse_args(args.split())
+        utils.setup(args)
+
+        ds_train, ds_val, ds_info = data.load_datasets(args)
+
+        model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
+        inputs, targets = next(iter(ds_train))
+        with tf.GradientTape() as tape:
+            pred = model(inputs)
+            loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)(targets['labels'], pred['labels'])
+        grad = tape.gradient(loss, model.trainable_weights)
+        num_grads = 0
+        for g in grad:
+            if g is not None:
+                num_grads += 1
+
+        # Only classifer weights and bias should have grads
+        self.assertEqual(num_grads, 2)
 
 
 if __name__ == '__main__':
