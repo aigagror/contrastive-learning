@@ -43,14 +43,17 @@ def run(args):
 def compile_model(args, model):
     # Optimizer
     opt = optimizers.SGD(args.lr, momentum=0.9)
-    # Loss
+
+    # Loss and metrics
     losses = {'labels': keras.losses.SparseCategoricalCrossentropy(from_logits=True)}
+    metrics = {'labels': keras.metrics.SparseCategoricalAccuracy()}
     if args.method == 'supcon':
         losses['batch_sims'] = custom_losses.SupCon()
+        metrics['batch_sims'] = custom_losses.SupCon()
     elif args.method == 'supcon-pce':
         losses['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
-    # Metrics
-    metrics = {'labels': keras.metrics.SparseCategoricalAccuracy()}
+        metrics['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
+
     # Compile
     model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)
 
