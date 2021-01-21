@@ -13,7 +13,7 @@ import utils
 class TestData(unittest.TestCase):
 
     def test_targets_format(self):
-        args = '--data=cifar10 --bsz=32 --method=ce'
+        args = '--data=cifar10 --bsz=8 --method=ce'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
         ds_train, ds_val, info = data.load_datasets(args)
@@ -37,7 +37,7 @@ class TestData(unittest.TestCase):
             tf.debugging.assert_type(batch_sims, tf.bool)
 
     def test_inputs_format(self):
-        args = '--data=cifar10 --bsz=32 --method=ce'
+        args = '--data=cifar10 --bsz=8 --method=ce'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
         ds_train, ds_val, _ = data.load_datasets(args)

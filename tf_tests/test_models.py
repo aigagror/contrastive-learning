@@ -7,7 +7,7 @@ from tensorflow import keras
 import data
 import models
 import utils
-from models import small_resnet_v2
+from models import small_resnet_v2, custom_losses
 
 
 class TestModel(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestModel(unittest.TestCase):
 
     def test_l2_reg(self):
         args = '--data=cifar10 --cnn=small-resnet50v2 --l2-reg=1e-3 ' \
-               '--bsz=32 --lr=1e-3 --method=ce '
+               '--bsz=8 --lr=1e-3 --method=ce '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
 
@@ -36,7 +36,7 @@ class TestModel(unittest.TestCase):
 
     def test_no_grad_ce(self):
         args = '--data=cifar10 --cnn=small-resnet50v2 ' \
-               '--bsz=32 --lr=1e-3 --method=supcon '
+               '--bsz=8 --lr=1e-3 --method=supcon '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
 
