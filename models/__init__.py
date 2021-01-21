@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import applications, layers
 
@@ -35,6 +36,8 @@ def make_model(args, nclass, input_shape):
 
     batch_sims = custom_layers.GlobalBatchSims()((proj_feats, proj_feats2))
 
+    if args.method.startswith('supcon'):
+        feats = tf.stop_gradient(feats)
     prediction = layers.Dense(nclass, name='classifier')(feats)
 
     inputs = {'imgs': input}

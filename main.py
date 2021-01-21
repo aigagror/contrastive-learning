@@ -2,6 +2,7 @@ import os
 
 from tensorflow import keras
 from tensorflow.keras import optimizers
+from models import custom_losses
 
 import data
 import models
@@ -18,13 +19,26 @@ def run(args):
     ds_train, ds_val, ds_info = data.load_datasets(args)
     plots.plot_img_samples(args, ds_train, ds_val)
 
-    # Model and optimizer
+    # Compile model
     with strategy.scope():
+        # Model
         if args.load:
             model = keras.models.load_model(os.path.join(args.out, 'model'))
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
-        model.compile(optimizers.SGD(args.lr, momentum=0.9), steps_per_execution=args.steps_exec)
+
+        # Optimizer
+        opt = optimizers.SGD(args.lr, momentum=0.9)
+
+        # Loss
+        losses = {'labels': keras.losses.SparseCategoricalCrossentropy()}
+        if args.method == 'supcon':
+            losses['batch_sims'] = custom_losses.SupCon()
+        elif args.method == 'supcon-pce':
+            losses['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon]
+
+        # Compile
+        model.compile(opt, losses, steps_per_execution=args.steps_exec)
         if args.debug:
             model.summary()
 
