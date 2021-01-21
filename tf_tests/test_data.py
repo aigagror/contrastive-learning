@@ -5,42 +5,18 @@ import tensorflow as tf
 
 import data
 import data.cifar10
-import data.imagenet
 import data.data_utils
+import data.imagenet
 import utils
 
 
 class TestData(unittest.TestCase):
 
-    def test_targets_format(self):
+    def test_data_format(self):
         args = '--data=cifar10 --bsz=8 --method=supcon'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
-        ds_train, ds_val, info = data.load_datasets(args)
-
-        for ds in [ds_train, ds_val]:
-            inputs, targets = next(iter(ds))
-
-            # Label
-            label = targets['labels']
-            tf.debugging.assert_shapes([(label, [8])])
-            tf.debugging.assert_type(label, tf.int32, label.dtype)
-            tf.debugging.assert_less_equal(label, info['nclass'] - 1, label)
-            tf.debugging.assert_greater_equal(label, 0)
-
-            # Batch sims
-            batch_sims = targets['batch_sims']
-            tf.debugging.assert_shapes([
-                (batch_sims, [8, 8])
-            ])
-
-            tf.debugging.assert_type(batch_sims, tf.uint8)
-
-    def test_inputs_format(self):
-        args = '--data=cifar10 --bsz=8 --method=ce'
-        args = utils.parser.parse_args(args.split())
-        _ = utils.setup(args)
-        ds_train, ds_val, _ = data.load_datasets(args)
+        ds_train, ds_val, ds_info = data.load_datasets(args)
 
         for ds in [ds_train, ds_val]:
             inputs, targets = next(iter(ds))
@@ -57,6 +33,21 @@ class TestData(unittest.TestCase):
             tf.debugging.assert_greater(max_val, tf.ones_like(max_val), 'although not necessary. it is highly unlikely '
                                                                         'that the largest pixel value of an image is at '
                                                                         'most 1.')
+
+            # Label
+            label = targets['labels']
+            tf.debugging.assert_shapes([(label, [8])])
+            tf.debugging.assert_type(label, tf.int32, label.dtype)
+            tf.debugging.assert_less_equal(label, ds_info['nclass'] - 1, label)
+            tf.debugging.assert_greater_equal(label, 0)
+
+            # Batch sims
+            batch_sims = targets['batch_sims']
+            tf.debugging.assert_shapes([
+                (batch_sims, [8, 8])
+            ])
+
+            tf.debugging.assert_type(batch_sims, tf.uint8)
 
     def test_imagenet_augmentation(self):
         img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'))
