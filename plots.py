@@ -24,11 +24,11 @@ def plot_tsne(args, strategy, model, ds_val):
 
         feats = strategy.gather(feats, axis=0)
         proj = strategy.gather(proj, axis=0)
+        labels = strategy.gather(labels, axis=0)
 
-        for f, p, l in zip(feats, proj, labels):
-            all_feats.append(f.numpy())
-            all_proj.append(p.numpy())
-            all_labels.append(l.numpy())
+        all_feats.append(feats.numpy())
+        all_proj.append(proj.numpy())
+        all_labels.append(labels.numpy())
 
     all_feats = np.concatenate(all_feats)
     all_proj = np.concatenate(all_proj)
