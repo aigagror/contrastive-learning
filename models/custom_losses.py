@@ -10,7 +10,7 @@ class SimCLR(losses.Loss):
         tf.debugging.assert_less_equal(y_true, tf.ones_like(y_true))
 
         dtype = y_pred.dtype
-        bsz, ncol = tf.shape(y_true)[:2]
+        bsz, ncol = tf.shape(y_true)[0], tf.shape(y_true)[1]
 
         # Masks
         inst_mask = tf.eye(bsz, ncol, dtype=dtype)
@@ -46,7 +46,7 @@ class PartialSupCon(losses.Loss):
         tf.debugging.assert_less_equal(y_true, tf.ones_like(y_true))
 
         dtype = y_pred.dtype
-        bsz, ncol = tf.shape(y_true)[:2]
+        bsz, ncol = tf.shape(y_true)[0], tf.shape(y_true)[1]
 
         # Masks
         inst_mask = tf.eye(bsz, ncol, dtype=dtype)
