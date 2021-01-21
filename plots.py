@@ -9,21 +9,21 @@ def plot_tsne(args, strategy, model, ds_val):
     print('plotting tsne of features')
     from sklearn import manifold
 
+    outputs = [model.get_layer(name=name).output for name in ['feats', 'projection']]
+    feat_model = tf.keras.Model(model.input, outputs)
+
     @tf.function
     def get_feats(imgs):
-        feats = model.features(imgs)
-        proj = model.projection(feats)
+        feats, proj = feat_model(imgs)
         return feats, proj
 
     all_feats, all_proj, all_labels = [], [], []
-    for inputs, targets in ds_val:
+    for inputs, targets in strategy.experimental_distribute_dataset(ds_val):
         imgs1, imgs2, labels = inputs['imgs'], inputs['imgs2'], targets['labels']
-        feats, proj = strategy.run(get_feats, (imgs1,))
+        feats, proj = strategy.run(get_feats, (inputs,))
 
-        if args.tpu:
-            feats, proj, labels = feats.values, proj.values, labels.values
-        else:
-            feats, proj, labels = [feats], [proj], [labels]
+        feats = strategy.gather(feats, axis=0)
+        proj = strategy.gather(proj, axis=0)
 
         for f, p, l in zip(feats, proj, labels):
             all_feats.append(f.numpy())
@@ -68,17 +68,23 @@ def plot_img_samples(args, ds_train, ds_val):
 def plot_hist_sims(args, strategy, model, ds_val):
     print('plotting similarities histograms')
 
+    outputs = [model.get_layer(name=name).output for name in ['feats', 'feats2', 'projection', 'projection2']]
+    feat_model = tf.keras.Model(model.input, outputs)
+
     @tf.function
-    def get_sims(imgs1, imgs2, labels):
+    def get_sims(inputs, targets):
         # Features and similarities
-        feats1, feats2 = model.features(imgs1), model.features(imgs2)
-        proj1, proj2 = model.projection(feats1), model.projection(feats2)
+        feats1, feats2, proj1, proj2 = feat_model(inputs)
         sims = tf.matmul(feats1, tf.transpose(feats2))
         proj_sims = tf.matmul(proj1, tf.transpose(proj2))
 
         # Masks
+        labels = targets['labels']
         bsz = len(labels)
         labels = tf.expand_dims(labels, 1)
+        tf.debugging.assert_shapes([
+            (labels, [None, 1])
+        ])
         inst_mask = tf.eye(bsz, dtype=tf.bool)
         class_mask = (labels == tf.transpose(labels))
         pos_mask = inst_mask | class_mask
@@ -93,20 +99,22 @@ def plot_hist_sims(args, strategy, model, ds_val):
         proj_class_sims = tf.boolean_mask(proj_sims, class_mask)
         proj_inst_sims = tf.boolean_mask(proj_sims, inst_mask)
 
+        # All gather
+        replica_context = tf.distribute.get_replica_context()
+        neg_sims = replica_context.all_gather(neg_sims, axis=0)
+        class_sims = replica_context.all_gather(class_sims, axis=0)
+
+        proj_proj_sims= replica_context.all_gather(proj_neg_sims, axis=0)
+        proj_class_sims = replica_context.all_gather(proj_class_sims, axis=0)
+        proj_proj_sims = replica_context.all_gather(proj_proj_sims, axis=0)
+
         return (neg_sims, class_sims, inst_sims), (proj_neg_sims, proj_class_sims, proj_inst_sims)
 
     neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
     proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
 
-    for inputs, targets in ds_val:
-        sims, proj_sims = strategy.run(get_sims, (inputs['imgs'], inputs['imgs2'], targets['labels']))
-
-        if args.tpu:
-            sims = [s.values for s in sims]
-            proj_sims = [p.values for p in proj_sims]
-        else:
-            sims = [[s] for s in sims]
-            proj_sims = [[p] for p in proj_sims]
+    for inputs, targets in strategy.experimental_distribute_dataset(ds_val):
+        sims, proj_sims = strategy.run(get_sims, (inputs, targets))
 
         # Similarity types
         for n, c, i in zip(*sims):

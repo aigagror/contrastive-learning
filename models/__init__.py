@@ -7,6 +7,8 @@ from models import small_resnet_v2
 
 
 def make_model(args, nclass, input_shape):
+
+    # Inputs
     input = keras.Input(input_shape, name='imgs')
     input2 = keras.Input(input_shape, name='imgs2')
 
@@ -18,35 +20,40 @@ def make_model(args, nclass, input_shape):
         raise Exception(f'unknown cnn model {args.cnn}')
 
     stand_img = custom_layers.StandardizeImage()
-    avg_pool = layers.GlobalAveragePooling2D()
 
-    feats = avg_pool(cnn(stand_img(input)))
-    feats2 = avg_pool(cnn(stand_img(input2)))
+    # Feature maps
+    feat_maps = cnn(stand_img(input))
+    feat_maps2 = cnn(stand_img(input2))
 
+    # Features
     if args.norm_feats:
-        feats = custom_layers.L2Normalize()(feats)
-        feats2 = custom_layers.L2Normalize()(feats2)
+        feats = custom_layers.L2Normalize(name='feats')(layers.GlobalAveragePooling2D()(feat_maps))
+        feats2 = custom_layers.L2Normalize(name='feats2')(layers.GlobalAveragePooling2D()(feat_maps2))
+    else:
+        feats = layers.GlobalAveragePooling2D(name='feats')(feat_maps)
+        feats2 = layers.GlobalAveragePooling2D(name='feats2')(feat_maps2)
 
-    proj_feats = layers.Dense(128, name='projection')(feats)
-    proj_feats2 = layers.Dense(128, name='projection2')(feats2)
-
+    # Projected Features
     if args.norm_feats:
-        proj_feats = custom_layers.L2Normalize()(proj_feats)
-        proj_feats2 = custom_layers.L2Normalize()(proj_feats2)
+        proj_feats = custom_layers.L2Normalize(name='projection')(layers.Dense(128)(feats))
+        proj_feats2 = custom_layers.L2Normalize(name='projection2')(layers.Dense(128)(feats2))
+    else:
+        proj_feats = layers.Dense(128, name='projection')(feats)
+        proj_feats2 = layers.Dense(128, name='projection2')(feats2)
 
+    # Batch similarities
     batch_sims = custom_layers.GlobalBatchSims(name='batch_sims')((proj_feats, proj_feats2))
 
+    # Stop gradient at features?
     if args.method.startswith('supcon'):
         feats = tf.stop_gradient(feats)
-    prediction = layers.Dense(nclass)(feats)
-    prediction = layers.Lambda(lambda x: tf.cast(x, tf.float32), name='labels')(prediction)
 
-    inputs = [input]
-    outputs = {'labels': prediction}
+    # Label logits
+    prediction = layers.Dense(nclass, name='labels')(feats)
 
-    if args.method.startswith('supcon'):
-        inputs.append(input2)
-        outputs['batch_sims'] = batch_sims
+    # Model
+    inputs = [input, input2]
+    outputs = [prediction, batch_sims]
 
     model = keras.Model(inputs, outputs)
 

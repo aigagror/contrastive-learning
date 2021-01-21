@@ -10,8 +10,8 @@ def add_batch_sims(inputs, targets):
     tf.debugging.assert_shapes([
         (labels, [None, 1])
     ])
-    class_sims = labels == tf.transpose(labels)
-    targets['batch_sims'] = tf.cast(class_sims, tf.uint8)
+    class_sims = tf.cast(labels == tf.transpose(labels), tf.uint8)
+    targets['batch_sims'] = class_sims
     return inputs, targets
 
 

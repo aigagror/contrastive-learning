@@ -5,8 +5,10 @@ import tensorflow as tf
 from tensorflow import keras
 
 import models
+import data
 import utils
 from models import small_resnet_v2
+import main
 
 
 class TestModel(unittest.TestCase):
@@ -44,10 +46,10 @@ class TestModel(unittest.TestCase):
             imgs = tf.random.uniform([8, 32, 32, 3])
             imgs2 = tf.random.uniform([8, 32, 32, 3])
             batch_sims = tf.random.uniform([8, 8])
-            pred = model({'imgs': imgs, 'imgs2': imgs2, 'batch_sims': batch_sims})
+            pred, _ = model({'imgs': imgs, 'imgs2': imgs2, 'batch_sims': batch_sims})
 
             labels = tf.random.uniform([8])
-            loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)(labels, pred['labels'])
+            loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)(labels, pred)
         grad = tape.gradient(loss, model.trainable_weights)
         num_grads = 0
         for g in grad:
@@ -56,6 +58,20 @@ class TestModel(unittest.TestCase):
 
         # Only classifer weights and bias should have grads
         self.assertEqual(num_grads, 2)
+
+    def test_partial_supcon_compile(self):
+        self.skipTest('takes too long')
+        args = '--data=cifar10 --cnn=small-resnet50v2 ' \
+               '--bsz=8 --lr=1e-3 ' \
+               '--method=supcon-pce --norm-feats'
+        args = utils.parser.parse_args(args.split())
+        utils.setup(args)
+
+        ds_train, _, _ = data.load_datasets(args)
+
+        model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
+        main.compile_model(args, model)
+        model.fit(ds_train, epochs=1, steps_per_epoch=1)
 
 
 if __name__ == '__main__':
