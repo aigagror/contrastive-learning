@@ -46,7 +46,7 @@ def compile_model(args, model):
 
     # Loss and metrics
     losses = {'labels': keras.losses.SparseCategoricalCrossentropy(from_logits=True)}
-    metrics = {'labels': keras.metrics.SparseCategoricalAccuracy()}
+    metrics = {'labels': 'acc'}
     if args.method == 'supcon':
         losses['batch_sims'] = custom_losses.SupCon()
         metrics['batch_sims'] = custom_losses.SupCon()
