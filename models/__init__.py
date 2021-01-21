@@ -9,8 +9,8 @@ from models import small_resnet_v2
 def make_model(args, nclass, input_shape):
 
     # Inputs
-    input = keras.Input(input_shape, args.bsz, name='imgs')
-    input2 = keras.Input(input_shape, args.bsz, name='imgs2')
+    input = keras.Input(input_shape, name='imgs')
+    input2 = keras.Input(input_shape, name='imgs2')
 
     if args.cnn == 'resnet50v2':
         cnn = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)

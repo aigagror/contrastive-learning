@@ -32,8 +32,8 @@ class LossesTest(unittest.TestCase):
     # Positive singular losses with various shapes
     def test_losses_format_and_output(self):
         for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
-            for _ in range(100):
-                n = tf.random.uniform([], minval=1, maxval=8, dtype=tf.int32)
+            for _ in range(200):
+                n = tf.random.uniform([], minval=2, maxval=8, dtype=tf.int32)
                 rand_shape = [n, n]
                 y = tf.random.uniform(rand_shape)
                 x = tf.random.normal(rand_shape)
@@ -53,7 +53,7 @@ class LossesTest(unittest.TestCase):
     def test_simclr_distribute_eye(self):
         strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
         def foo():
-            y = tf.random.uniform([4, 4])
+            y = tf.random.uniform([2, 4])
             x = 100 * tf.eye(4)
             loss = custom_losses.SimCLR(reduction=tf.keras.losses.Reduction.SUM)(y, x)
             return loss
