@@ -30,7 +30,7 @@ def load_datasets(args):
     ds_val = ds_val.batch(args.bsz, drop_remainder=True)
 
     # Add batch similarities (supcon labels)
-    if args.method.startswith('supcon'):
+    if args.method != 'ce':
         ds_train = ds_train.map(add_batch_sims, tf.data.AUTOTUNE)
         ds_val = ds_val.map(add_batch_sims, tf.data.AUTOTUNE)
 

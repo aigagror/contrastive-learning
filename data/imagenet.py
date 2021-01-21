@@ -63,7 +63,7 @@ def load_imagenet(args):
     def process_train(img, label):
         inputs = {'imgs': augment_imagenet_img(img)}
         labels = {'labels': label}
-        if args.method.startswith('supcon'):
+        if args.method != 'ce':
             inputs['imgs2'] = augment_imagenet_img(img)
         return inputs, labels
 

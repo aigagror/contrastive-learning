@@ -11,7 +11,7 @@ class TestPlots(unittest.TestCase):
     def setUp(self) -> None:
         args = '--data=cifar10 --cnn=small-resnet50v2 ' \
                '--bsz=8 --lr=1e-3 ' \
-               '--method=supcon-pce --norm-feats'
+               '--method=partial-supcon --norm-feats'
         self.args = utils.parser.parse_args(args.split())
         self.strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
 
@@ -21,9 +21,11 @@ class TestPlots(unittest.TestCase):
             self.model = models.make_model(self.args, nclass=10, input_shape=[32, 32, 3])
 
     def test_hist(self):
+        self.skipTest('takes too long')
         plots.plot_hist_sims(self.args, self.strategy, self.model, self.ds_val.take(1))
 
     def test_tsne(self):
+        self.skipTest('takes too long')
         plots.plot_tsne(self.args, self.strategy, self.model, self.ds_val.take(1))
 
 

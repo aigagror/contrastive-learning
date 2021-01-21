@@ -41,7 +41,7 @@ def load_cifar10(args):
     def process_train(img, label):
         inputs = {'imgs': augment_cifar10_img(img)}
         labels = {'labels': label}
-        if args.method.startswith('supcon'):
+        if args.method != 'ce':
             inputs['imgs2'] = augment_cifar10_img(img)
         return inputs, labels
 

@@ -45,7 +45,7 @@ def make_model(args, nclass, input_shape):
     batch_sims = custom_layers.GlobalBatchSims(name='batch_sims')((proj_feats, proj_feats2))
 
     # Stop gradient at features?
-    if args.method.startswith('supcon'):
+    if args.method != 'ce':
         feats = tf.stop_gradient(feats)
 
     # Label logits
