@@ -23,7 +23,7 @@ class TestData(unittest.TestCase):
 
             # Label
             label = targets['labels']
-            tf.debugging.assert_shapes([(label, [None])])
+            tf.debugging.assert_shapes([(label, [32])])
             tf.debugging.assert_type(label, tf.int32, label.dtype)
             tf.debugging.assert_less_equal(label, info['nclass'] - 1, label)
             tf.debugging.assert_greater_equal(label, 0)
@@ -47,6 +47,9 @@ class TestData(unittest.TestCase):
             img = inputs['imgs']
 
             # Image
+            tf.debugging.assert_shapes([
+                (img, [32, 32, 32, 3])
+            ])
             tf.debugging.assert_type(img, tf.uint8, img.dtype)
             tf.debugging.assert_greater_equal(img, tf.zeros_like(img))
             tf.debugging.assert_less_equal(img, 255 * tf.ones_like(img))
