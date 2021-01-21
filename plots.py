@@ -16,8 +16,8 @@ def plot_tsne(args, strategy, model, ds_val):
         return feats, proj
 
     all_feats, all_proj, all_labels = [], [], []
-    for input in ds_val:
-        imgs1, imgs2, labels = input['imgs'], input['imgs2'], input['labels']
+    for inputs, targets in ds_val:
+        imgs1, imgs2, labels = inputs['imgs'], inputs['imgs2'], targets['labels']
         feats, proj = strategy.run(get_feats, (imgs1,))
 
         if args.tpu:
@@ -56,10 +56,10 @@ def plot_img_samples(args, ds_train, ds_val):
     f, ax = plt.subplots(2, 8)
     f.set_size_inches(20, 6)
     for i, ds in enumerate([ds_train, ds_val]):
-        input = next(iter(ds))
+        inputs, _ = next(iter(ds))
         for j in range(8):
             ax[i, j].set_title('train' if i == 0 else 'val')
-            ax[i, j].imshow(tf.cast(input['imgs'][j], tf.uint8))
+            ax[i, j].imshow(tf.cast(inputs['imgs'][j], tf.uint8))
 
     f.tight_layout()
     f.savefig(os.path.join('out/', 'img-samples.jpg'))
@@ -98,8 +98,8 @@ def plot_hist_sims(args, strategy, model, ds_val):
     neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
     proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
 
-    for input in ds_val:
-        sims, proj_sims = strategy.run(get_sims, (input['imgs'], input['imgs2'], input['labels']))
+    for inputs, targets in ds_val:
+        sims, proj_sims = strategy.run(get_sims, (inputs['imgs'], inputs['imgs2'], targets['labels']))
 
         if args.tpu:
             sims = [s.values for s in sims]
