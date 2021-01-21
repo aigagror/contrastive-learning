@@ -7,8 +7,8 @@ from models import small_resnet_v2
 
 
 def make_model(args, nclass, input_shape):
-    input = keras.Input(input_shape)
-    input2 = keras.Input(input_shape)
+    input = keras.Input(input_shape, name='imgs')
+    input2 = keras.Input(input_shape, name='imgs2')
 
     if args.cnn == 'resnet50v2':
         cnn = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
@@ -34,21 +34,21 @@ def make_model(args, nclass, input_shape):
         proj_feats = custom_layers.L2Normalize()(proj_feats)
         proj_feats2 = custom_layers.L2Normalize()(proj_feats2)
 
-    batch_sims = custom_layers.GlobalBatchSims()((proj_feats, proj_feats2))
+    batch_sims = custom_layers.GlobalBatchSims(name='batch_sims')((proj_feats, proj_feats2))
 
     if args.method.startswith('supcon'):
         feats = tf.stop_gradient(feats)
-    prediction = layers.Dense(nclass, name='classifier')(feats)
+    prediction = layers.Dense(nclass, name='labels')(feats)
     prediction = tf.cast(prediction, tf.float32)
 
-    inputs = {'imgs': input}
-    targets = {'labels': prediction}
+    inputs = [input]
+    outputs = [prediction]
 
     if args.method.startswith('supcon'):
-        inputs['imgs2'] = input2
-        targets['batch_sims'] = batch_sims
+        inputs.append(input2)
+        outputs.append(batch_sims)
 
-    model = keras.Model(inputs, targets)
+    model = keras.Model(inputs, outputs)
 
     # L2 regularization
     regularizer = keras.regularizers.l2(args.l2_reg)
