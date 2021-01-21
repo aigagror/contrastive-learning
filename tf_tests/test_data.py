@@ -34,7 +34,7 @@ class TestData(unittest.TestCase):
                 (batch_sims, [8, 8])
             ])
 
-            tf.debugging.assert_type(batch_sims, tf.bool)
+            tf.debugging.assert_type(batch_sims, tf.uint8)
 
     def test_inputs_format(self):
         args = '--data=cifar10 --bsz=8 --method=ce'

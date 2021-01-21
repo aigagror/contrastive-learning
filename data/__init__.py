@@ -11,7 +11,7 @@ def add_batch_sims(inputs, targets):
         (labels, [None, 1])
     ])
     class_sims = labels == tf.transpose(labels)
-    targets['batch_sims'] = class_sims
+    targets['batch_sims'] = tf.cast(class_sims, tf.uint8)
     return inputs, targets
 
 
