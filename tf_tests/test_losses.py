@@ -8,17 +8,6 @@ from models import custom_losses
 class LossesTest(unittest.TestCase):
 
     # Error
-    def test_y_true_uint8(self):
-        for loss in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
-            x = tf.zeros([3, 3])
-            y = tf.eye(3, dtype=tf.int32)
-            with self.assertRaises(TypeError):
-                loss(y, x)
-
-            x = tf.zeros([3, 3])
-            y = 2 * tf.eye(3, dtype=tf.uint8)
-            loss(y, x)
-
     def test_y_true_greater_than_two_error(self):
         for loss in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
             x = tf.zeros([3, 3])
