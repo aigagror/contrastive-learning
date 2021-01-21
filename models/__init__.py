@@ -42,11 +42,11 @@ def make_model(args, nclass, input_shape):
     prediction = tf.cast(prediction, tf.float32)
 
     inputs = [input]
-    outputs = [prediction]
+    outputs = {'labels': prediction}
 
     if args.method.startswith('supcon'):
         inputs.append(input2)
-        outputs.append(batch_sims)
+        outputs['batch_sims'] = batch_sims
 
     model = keras.Model(inputs, outputs)
 
