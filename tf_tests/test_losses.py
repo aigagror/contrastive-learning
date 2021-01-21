@@ -26,7 +26,13 @@ class LossesTest(unittest.TestCase):
     def test_losses_format_and_output(self):
         for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
             for _ in range(100):
-                rand_shape = tf.random.uniform([2], minval=1, maxval=8, dtype=tf.int32)
+                if isinstance(loss_fn, custom_losses.SimCLR):
+                    # Random square shape
+                    n = tf.random.uniform([], minval=1, maxval=8, dtype=tf.int32)
+                    rand_shape = [n, n]
+                else:
+                    # Random rectangle shape
+                    rand_shape = tf.random.uniform([2], minval=1, maxval=8, dtype=tf.int32)
                 y = tf.random.uniform(rand_shape)
                 x = tf.random.normal(rand_shape)
                 loss = loss_fn(y, x)
@@ -40,6 +46,23 @@ class LossesTest(unittest.TestCase):
         y = tf.random.uniform([3, 3])
         x = 100 * tf.eye(3)
         loss = custom_losses.SimCLR()(y, x)
+        tf.debugging.assert_near(loss, tf.zeros_like(loss))
+
+    def test_simclr_distribute_eye(self):
+        strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
+        def foo():
+            y = tf.random.uniform([2, 4])
+            replica_context = tf.distribute.get_replica_context()
+            id = replica_context.replica_id_in_sync_group
+            if id == 0:
+                x = tf.constant([[100, 0, 0, 0], [0, 100, 0, 0]], tf.float32)
+            else:
+                x = tf.constant([[0, 0, 100, 0], [0, 0, 0, 100]], tf.float32)
+            loss = custom_losses.SimCLR(reduction=tf.keras.losses.Reduction.SUM)(y, x)
+            return loss
+
+        loss = strategy.run(foo)
+        loss = strategy.reduce('SUM', loss, axis=None)
         tf.debugging.assert_near(loss, tf.zeros_like(loss))
 
     # SupCon
