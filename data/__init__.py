@@ -11,7 +11,7 @@ def add_batch_sims(inputs, targets):
         (labels, [None, 1])
     ])
     class_sims = tf.cast(labels == tf.transpose(labels), tf.uint8)
-    targets['batch_sims'] = class_sims
+    targets['batch_sims'] = class_sims + tf.eye(tf.shape(labels)[0], dtype=tf.uint8)
     return inputs, targets
 
 
