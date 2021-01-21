@@ -17,8 +17,11 @@ def train(args, model, ds_train, ds_val, ds_info):
     # Callbacks
     cbks = [
         callbacks.TensorBoard(log_dir, histogram_freq=1, update_freq=args.update_freq),
-        callbacks.ModelCheckpoint(os.path.join(args.out, 'model'))
     ]
+
+    # Model checkpoint
+    if not args.no_checkpoint:
+        cbks.append(callbacks.ModelCheckpoint(os.path.join(args.out, 'model')))
 
     # Learning rate schedule
     def scheduler(epoch, _):

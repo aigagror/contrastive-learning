@@ -35,6 +35,7 @@ parser.add_argument('--load', action='store_true')
 parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
 parser.add_argument('--debug', action='store_true')
+parser.add_argument('--no-checkpoint', action='store_true')
 
 # Tensorboard
 parser.add_argument('--update-freq', type=str, default='epoch', help='tensorboard metrics update frequency')
