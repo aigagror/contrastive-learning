@@ -8,6 +8,7 @@ class SimCLR(losses.Loss):
     def call(self, y_true, y_pred):
         replica_context = tf.distribute.get_replica_context()
         num_replicas = replica_context.strategy.num_replicas_in_sync
+        y_true = replica_context.all_gather(y_true, axis=0)
 
         tf.debugging.assert_shapes([
             (y_true, ['N', 'N']),
@@ -33,6 +34,7 @@ class SupCon(losses.Loss):
     def call(self, y_true, y_pred):
         replica_context = tf.distribute.get_replica_context()
         num_replicas = replica_context.strategy.num_replicas_in_sync
+        y_true = replica_context.all_gather(y_true, axis=0)
 
         tf.debugging.assert_shapes([
             (y_true, ['N', 'N']),
@@ -58,6 +60,7 @@ class PartialSupCon(losses.Loss):
     def call(self, y_true, y_pred):
         replica_context = tf.distribute.get_replica_context()
         num_replicas = replica_context.strategy.num_replicas_in_sync
+        y_true = replica_context.all_gather(y_true, axis=0)
 
         tf.debugging.assert_shapes([
             (y_true, ['N', 'N']),
