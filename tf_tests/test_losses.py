@@ -22,12 +22,13 @@ class LossesTest(unittest.TestCase):
             with self.assertRaises(tf.errors.InvalidArgumentError):
                 loss(y, x)
 
-    # Positive singular losses
+    # Positive singular losses with various shapes
     def test_losses_format_and_output(self):
         for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
             for _ in range(100):
-                y = tf.random.uniform([3, 3])
-                x = tf.random.normal([3, 3])
+                rand_shape = tf.random.uniform([2], minval=1, maxval=8, dtype=tf.int32)
+                y = tf.random.uniform(rand_shape)
+                x = tf.random.normal(rand_shape)
                 loss = loss_fn(y, x)
                 tf.debugging.assert_greater_equal(loss, tf.zeros_like(loss), f'{loss_fn}\nx={x}\ny={y}')
                 tf.debugging.assert_shapes([

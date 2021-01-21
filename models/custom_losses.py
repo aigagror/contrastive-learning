@@ -10,10 +10,10 @@ class SimCLR(losses.Loss):
         tf.debugging.assert_less_equal(y_true, tf.ones_like(y_true))
 
         dtype = y_pred.dtype
-        bsz = tf.shape(y_true)[0]
+        bsz, ncol = tf.shape(y_true)[:2]
 
         # Masks
-        inst_mask = tf.linalg.set_diag(tf.zeros_like(y_true), tf.ones(bsz, dtype=dtype))
+        inst_mask = tf.eye(bsz, ncol, dtype=dtype)
 
         # Similarities
         sims = y_pred
@@ -46,13 +46,14 @@ class PartialSupCon(losses.Loss):
         tf.debugging.assert_less_equal(y_true, tf.ones_like(y_true))
 
         dtype = y_pred.dtype
-        bsz = tf.shape(y_true)[0]
+        bsz, ncol = tf.shape(y_true)[:2]
 
         # Masks
-        inst_mask = tf.eye(bsz, dtype=dtype)
+        inst_mask = tf.eye(bsz, ncol, dtype=dtype)
         class_mask = tf.cast(y_true, dtype)
 
-        non_inst_class_mask = tf.linalg.set_diag(class_mask, tf.zeros(bsz, dtype=dtype))
+        diag_part = tf.linalg.diag_part(class_mask)
+        non_inst_class_mask = tf.linalg.set_diag(class_mask, tf.zeros_like(diag_part))
         non_inst_class_sum = tf.math.reduce_sum(non_inst_class_mask, axis=1, keepdims=True)
 
         # Similarities
