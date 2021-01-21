@@ -34,6 +34,10 @@ class SupCon(losses.Loss):
         replica_context = tf.distribute.get_replica_context()
         num_replicas = replica_context.strategy.num_replicas_in_sync
 
+        tf.debugging.assert_shapes([
+            (y_true, ['N', 'N']),
+            (y_pred, ['N', 'N']),
+        ])
         tf.debugging.assert_greater_equal(y_true, tf.zeros_like(y_true))
         tf.debugging.assert_less_equal(y_true, tf.ones_like(y_true))
 
@@ -55,6 +59,10 @@ class PartialSupCon(losses.Loss):
         replica_context = tf.distribute.get_replica_context()
         num_replicas = replica_context.strategy.num_replicas_in_sync
 
+        tf.debugging.assert_shapes([
+            (y_true, ['N', 'N']),
+            (y_pred, ['N', 'N']),
+        ])
         tf.debugging.assert_greater_equal(y_true, tf.zeros_like(y_true))
         tf.debugging.assert_less_equal(y_true, tf.ones_like(y_true))
 

@@ -8,6 +8,13 @@ from models import custom_losses
 class LossesTest(unittest.TestCase):
 
     # Error
+    def test_y_true_nonsquare_error(self):
+        for loss in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
+            x = tf.zeros([3, 4])
+            y = -tf.random.uniform([3, 4])
+            with self.assertRaises(ValueError):
+                loss(y, x)
+
     def test_y_true_neg_error(self):
         for loss in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
             x = tf.zeros([3, 3])
