@@ -39,6 +39,7 @@ def make_model(args, nclass, input_shape):
     if args.method.startswith('supcon'):
         feats = tf.stop_gradient(feats)
     prediction = layers.Dense(nclass, name='classifier')(feats)
+    prediction = tf.cast(prediction, tf.float32)
 
     inputs = {'imgs': input}
     targets = {'labels': prediction}
