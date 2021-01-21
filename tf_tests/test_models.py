@@ -61,9 +61,9 @@ class TestModel(unittest.TestCase):
 
     def test_partial_supcon_compile(self):
         self.skipTest('takes too long')
-        args = '--data=cifar10 --cnn=small-resnet50v2 ' \
+        args = '--data=cifar10 --cnn=small-resnet50v2 --norm-feats ' \
                '--bsz=8 --lr=1e-3 ' \
-               '--method=partial-supcon --norm-feats'
+               '--method=partial-supcon '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
 
