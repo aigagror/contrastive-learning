@@ -4,10 +4,9 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-import data
 import models
 import utils
-from models import small_resnet_v2, custom_losses
+from models import small_resnet_v2
 
 
 class TestModel(unittest.TestCase):
@@ -40,13 +39,15 @@ class TestModel(unittest.TestCase):
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
 
-        ds_train, ds_val, ds_info = data.load_datasets(args)
-
         model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
-        inputs, targets = next(iter(ds_train))
         with tf.GradientTape() as tape:
-            pred = model(inputs)
-            loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)(targets['labels'], pred['labels'])
+            imgs = tf.random.uniform([8, 32, 32, 3])
+            imgs2 = tf.random.uniform([8, 32, 32, 3])
+            batch_sims = tf.random.uniform([8, 8])
+            pred = model({'imgs': imgs, 'imgs2': imgs2, 'batch_sims': batch_sims})
+
+            labels = tf.random.uniform([8])
+            loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)(labels, pred['labels'])
         grad = tape.gradient(loss, model.trainable_weights)
         num_grads = 0
         for g in grad:
