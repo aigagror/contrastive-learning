@@ -13,7 +13,7 @@ class SimCLR(losses.Loss):
         bsz = tf.shape(y_true)[0]
 
         # Masks
-        inst_mask = tf.eye(bsz, dtype=dtype)
+        inst_mask = tf.linalg.set_diag(tf.zeros_like(y_true), tf.ones(bsz, dtype=dtype))
 
         # Similarities
         sims = y_pred
