@@ -8,6 +8,7 @@ class SimCLR(losses.Loss):
     def call(self, y_true, y_pred):
         # Gather
         replica_context = tf.distribute.get_replica_context()
+        num_replicas = replica_context.strategy.num_replicas_in_sync
         y_true = replica_context.all_gather(y_true, axis=0)
         y_pred = replica_context.all_gather(y_pred, axis=0)
 
@@ -27,7 +28,7 @@ class SimCLR(losses.Loss):
         # Similarities
         sims = y_pred
         inst_loss = nn.softmax_cross_entropy_with_logits(inst_mask, sims * 10)
-        return inst_loss
+        return inst_loss / num_replicas
 
 
 class SupCon(losses.Loss):
