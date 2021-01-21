@@ -6,14 +6,23 @@ from tensorflow.keras import losses
 class SimCLR(losses.Loss):
 
     def call(self, y_true, y_pred):
+        # Gather
+        replica_context = tf.distribute.get_replica_context()
+        y_true = replica_context.all_gather(y_true, axis=0)
+        y_pred = replica_context.all_gather(y_pred, axis=0)
+
+        tf.debugging.assert_shapes([
+            (y_true, ['N', 'N']),
+            (y_pred, ['N', 'N']),
+        ])
         tf.debugging.assert_greater_equal(y_true, tf.zeros_like(y_true))
         tf.debugging.assert_less_equal(y_true, tf.ones_like(y_true))
 
         dtype = y_pred.dtype
-        bsz, ncol = tf.shape(y_true)[0], tf.shape(y_true)[1]
+        bsz = tf.shape(y_true)[0]
 
         # Masks
-        inst_mask = tf.eye(bsz, ncol, dtype=dtype)
+        inst_mask = tf.eye(bsz, dtype=dtype)
 
         # Similarities
         sims = y_pred
