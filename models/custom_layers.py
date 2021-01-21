@@ -13,11 +13,13 @@ class GlobalBatchSims(layers.Layer):
         feats1, feats2 = inputs
         replica_context = tf.distribute.get_replica_context()
         if replica_context is not None:
+            global_feats1 = replica_context.all_gather(feats1, axis=0)
             global_feats2 = replica_context.all_gather(feats2, axis=0)
         else:
             strategy = tf.distribute.get_strategy()
+            global_feats1 = strategy.gather(feats1, axis=0)
             global_feats2 = strategy.gather(feats2, axis=0)
-        feat_sims = tf.matmul(feats1, global_feats2, transpose_b=True)
+        feat_sims = tf.matmul(global_feats1, global_feats2, transpose_b=True)
         return feat_sims
 
 

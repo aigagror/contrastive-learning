@@ -6,11 +6,8 @@ from tensorflow.keras import losses
 class SimCLR(losses.Loss):
 
     def call(self, y_true, y_pred):
-        # Gather
         replica_context = tf.distribute.get_replica_context()
         num_replicas = replica_context.strategy.num_replicas_in_sync
-        y_true = replica_context.all_gather(y_true, axis=0)
-        y_pred = replica_context.all_gather(y_pred, axis=0)
 
         tf.debugging.assert_shapes([
             (y_true, ['N', 'N']),
@@ -34,6 +31,9 @@ class SimCLR(losses.Loss):
 class SupCon(losses.Loss):
 
     def call(self, y_true, y_pred):
+        replica_context = tf.distribute.get_replica_context()
+        num_replicas = replica_context.strategy.num_replicas_in_sync
+
         tf.debugging.assert_greater_equal(y_true, tf.zeros_like(y_true))
         tf.debugging.assert_less_equal(y_true, tf.ones_like(y_true))
 
@@ -46,12 +46,15 @@ class SupCon(losses.Loss):
         # Similarities
         sims = y_pred
         supcon_loss = nn.softmax_cross_entropy_with_logits(class_mask / class_sum, sims * 10)
-        return supcon_loss
+        return supcon_loss / num_replicas
 
 
 class PartialSupCon(losses.Loss):
 
     def call(self, y_true, y_pred):
+        replica_context = tf.distribute.get_replica_context()
+        num_replicas = replica_context.strategy.num_replicas_in_sync
+
         tf.debugging.assert_greater_equal(y_true, tf.zeros_like(y_true))
         tf.debugging.assert_less_equal(y_true, tf.ones_like(y_true))
 
@@ -79,4 +82,4 @@ class PartialSupCon(losses.Loss):
         class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob / (class_sum + 1e-3), axis=1)
         partial_supcon_loss = -class_partial_log_prob
 
-        return partial_supcon_loss
+        return partial_supcon_loss / num_replicas

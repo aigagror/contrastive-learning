@@ -26,7 +26,7 @@ class LayersTest(unittest.TestCase):
         sims = strategy.reduce('SUM', sims, axis=None)
 
         tf.debugging.assert_shapes([
-            (sims, [8, 16])
+            (sims, [16, 16])
         ])
 
     def test_stand_img(self):
