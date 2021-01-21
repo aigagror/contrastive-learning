@@ -1,3 +1,6 @@
+import os
+
+from tensorflow import keras
 from tensorflow.keras import optimizers
 
 import data
@@ -17,7 +20,10 @@ def run(args):
 
     # Model and optimizer
     with strategy.scope():
-        model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
+        if args.load:
+            model = keras.models.load_model(os.path.join(args.out, 'model'))
+        else:
+            model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
         model.compile(optimizers.SGD(args.lr, momentum=0.9), steps_per_execution=args.steps_exec)
         if args.debug:
             model._cnn.summary()
