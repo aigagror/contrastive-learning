@@ -16,8 +16,11 @@ def make_model(args, nclass, input_shape):
     else:
         raise Exception(f'unknown cnn model {args.cnn}')
 
-    feats = layers.GlobalAveragePooling2D()(cnn(input))
-    feats2 = layers.GlobalAveragePooling2D()(cnn(input2))
+    stand_img = custom_layers.StandardizeImage()
+    avg_pool = layers.GlobalAveragePooling2D()
+
+    feats = avg_pool(cnn(stand_img(input)))
+    feats2 = avg_pool(cnn(stand_img(input2)))
 
     if args.norm_feats:
         feats = custom_layers.L2Normalize()(feats)

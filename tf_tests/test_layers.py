@@ -29,6 +29,13 @@ class LayersTest(unittest.TestCase):
             (sims, [32, 64])
         ])
 
+    def test_stand_img(self):
+        x = tf.random.uniform([8, 32, 32, 3], maxval=255)
+        x = tf.cast(x, tf.uint8)
+        y = custom_layers.StandardizeImage()(x)
+        tf.debugging.assert_greater_equal(y, -tf.ones_like(y))
+        tf.debugging.assert_less_equal(y, tf.ones_like(y))
+
     def test_l2_normalize(self):
         x = tf.random.normal([32, 64])
         y = custom_layers.L2Normalize()(x)

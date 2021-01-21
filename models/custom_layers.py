@@ -1,6 +1,13 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
+
+class StandardizeImage(layers.Layer):
+
+    def call(self, inputs, **kwargs):
+        return tf.cast(inputs, self.dtype) / 127.5 - 1
+
+
 class GlobalBatchSims(layers.Layer):
     def call(self, inputs, **kwargs):
         feats1, feats2 = inputs
@@ -12,6 +19,7 @@ class GlobalBatchSims(layers.Layer):
             global_feats2 = strategy.gather(feats2, axis=0)
         feat_sims = tf.matmul(feats1, global_feats2, transpose_b=True)
         return feat_sims
+
 
 class L2Normalize(layers.Layer):
     def call(self, inputs, **kwargs):
