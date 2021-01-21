@@ -11,9 +11,9 @@ def make_model(args, nclass, input_shape):
     input2 = keras.Input(input_shape)
 
     if args.cnn == 'resnet50v2':
-        cnn = applications.ResNet50V2(weights=None, include_top=False)
+        cnn = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
     elif args.cnn == 'small-resnet50v2':
-        cnn = small_resnet_v2.SmallResNet50V2(include_top=False)
+        cnn = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape)
     else:
         raise Exception(f'unknown cnn model {args.cnn}')
 
