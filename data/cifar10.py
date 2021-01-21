@@ -50,5 +50,6 @@ def load_cifar10(args):
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
-    info = {'nclass': nclass, 'input_shape': [imsize, imsize, 3]}
+    info = {'nclass': nclass, 'input_shape': [imsize, imsize, 3],
+            'train_size': 50000, 'val_size': 10000}
     return ds_train, ds_val, info
