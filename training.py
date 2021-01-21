@@ -5,6 +5,7 @@ from tensorflow.keras import callbacks
 
 
 def train(args, model, ds_train, ds_val, ds_info):
+    # Output
     log_dir = os.path.join(args.out, 'logs')
     if not args.load:
         if args.out.startswith('gs://'):
@@ -13,9 +14,10 @@ def train(args, model, ds_train, ds_val, ds_info):
             shutil.rmtree(args.out)
             os.mkdir(args.out)
 
+    # Callbacks
     cbks = [
         callbacks.TensorBoard(log_dir, histogram_freq=1, update_freq=args.update_freq),
-        callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), save_weights_only=True)
+        callbacks.ModelCheckpoint(os.path.join(args.out, 'model'))
     ]
 
     # Learning rate schedule
@@ -26,9 +28,6 @@ def train(args, model, ds_train, ds_val, ds_info):
                 curr_lr *= 0.1
         return curr_lr
     cbks.append(callbacks.LearningRateScheduler(scheduler, verbose=1))
-
-    if args.debug:
-        print(f'{model.optimizer.lr} lr')
 
     try:
         train_steps, val_steps = args.train_steps, args.val_steps
@@ -43,8 +42,8 @@ def train(args, model, ds_train, ds_val, ds_info):
                 print(
                     f'steps per execution set and val_steps not specified. setting it to val_size // bsz = {val_steps}')
 
-        model.fit(ds_train, validation_data=ds_val, validation_steps=val_steps,
-                  initial_epoch=args.init_epoch, epochs=args.epochs, steps_per_epoch=train_steps,
+        model.fit(ds_train, initial_epoch=args.init_epoch, epochs=args.epochs,
+                  validation_data=ds_val, validation_steps=val_steps, steps_per_epoch=train_steps,
                   callbacks=cbks)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')

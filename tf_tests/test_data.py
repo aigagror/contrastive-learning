@@ -12,31 +12,39 @@ import utils
 
 class TestData(unittest.TestCase):
 
-    def test_label_format(self):
+    def test_targets_format(self):
         args = '--data=cifar10 --bsz=32 --method=ce'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
         ds_train, ds_val, info = data.load_datasets(args)
 
         for ds in [ds_train, ds_val]:
-            input = next(iter(ds))
-            label = input['labels']
+            inputs, targets = next(iter(ds))
 
             # Label
+            label = targets['labels']
             tf.debugging.assert_shapes([(label, [None])])
             tf.debugging.assert_type(label, tf.int32, label.dtype)
             tf.debugging.assert_less_equal(label, info['nclass'] - 1, label)
             tf.debugging.assert_greater_equal(label, 0)
 
-    def test_image_format(self):
+            # Batch sims
+            batch_sims = targets['batch_sims']
+            tf.debugging.assert_shapes([
+                (batch_sims, [32, 32])
+            ])
+
+            tf.debugging.assert_type(batch_sims, tf.bool)
+
+    def test_inputs_format(self):
         args = '--data=cifar10 --bsz=32 --method=ce'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
         ds_train, ds_val, _ = data.load_datasets(args)
 
         for ds in [ds_train, ds_val]:
-            input = next(iter(ds))
-            img = input['imgs']
+            inputs, targets = next(iter(ds))
+            img = inputs['imgs']
 
             # Image
             tf.debugging.assert_type(img, tf.uint8, img.dtype)
