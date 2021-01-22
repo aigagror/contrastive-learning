@@ -76,12 +76,12 @@ class LossesTest(unittest.TestCase):
         tf.debugging.assert_near(loss, tf.zeros_like(loss), atol=1e-2)
 
     # Partial SupCon
-    def test_partial_supcon_ignore_inst(self):
+    def test_partial_supcon_includes_inst(self):
         y = tf.constant([[2, 1], [1, 2]], tf.uint8)
         x = 2 * tf.constant([[0, 1], [1, 0]], tf.float32)
 
         loss = custom_losses.PartialSupCon()(y, x)
-        tf.debugging.assert_equal(loss, tf.zeros_like(loss))
+        tf.debugging.assert_none_equal(loss, tf.zeros_like(loss))
 
     def test_partial_supcon_eye(self):
         y = 2 * tf.eye(3, dtype=tf.uint8)
