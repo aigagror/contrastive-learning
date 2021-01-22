@@ -10,8 +10,8 @@ def add_contrast_data(inputs, targets):
     tf.debugging.assert_shapes([
         (labels, [None, 1])
     ])
-    class_sims = tf.cast(labels == tf.transpose(labels), tf.uint8)
-    targets['batch_sims'] = class_sims + tf.eye(tf.shape(labels)[0], dtype=tf.uint8)
+    # class_sims = tf.cast(labels == tf.transpose(labels), tf.uint8)
+    # targets['batch_sims'] = class_sims + tf.eye(tf.shape(labels)[0], dtype=tf.uint8)
     targets['contrast'] = labels
     return inputs, targets
 
