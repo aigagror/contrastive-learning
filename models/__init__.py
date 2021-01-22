@@ -58,11 +58,12 @@ def make_model(args, nclass, input_shape):
     model = keras.Model(inputs, outputs)
 
     # L2 regularization
-    regularizer = keras.regularizers.l2(args.l2_reg)
-    for module in model.submodules:
-        for attr in ['kernel_regularizer', 'bias_regularizer']:
-            if hasattr(module, attr):
-                setattr(module, attr, regularizer)
+    if args.l2_reg is not None:
+        regularizer = keras.regularizers.l2(args.l2_reg)
+        for module in model.submodules:
+            for attr in ['kernel_regularizer', 'bias_regularizer']:
+                if hasattr(module, attr):
+                    setattr(module, attr, regularizer)
 
     return model
 
