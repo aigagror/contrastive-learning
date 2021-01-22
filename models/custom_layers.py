@@ -11,8 +11,13 @@ class StandardizeImage(layers.Layer):
 class GlobalBatchSims(layers.Layer):
     def call(self, inputs, **kwargs):
         feats1, feats2 = inputs
-        replica_context = tf.distribute.get_replica_context()
-        global_feats2 = replica_context.all_gather(feats2, axis=0)
+
+        if tf.distribute.in_cross_replica_context():
+            replica_context = tf.distribute.get_replica_context()
+            global_feats2 = replica_context.all_gather(feats2, axis=0)
+        else:
+            strategy = tf.distribute.get_strategy()
+            global_feats2 = strategy.gather(feats2, axis=0)
         feat_sims = tf.matmul(feats1, global_feats2, transpose_b=True)
         return feat_sims
 
