@@ -65,6 +65,7 @@ class MseSupCon(ConLoss):
         sims = y_pred
         return losses.mean_squared_error(labels, sims)
 
+
 class BceSupCon(ConLoss):
 
     def call(self, y_true, y_pred):
@@ -90,10 +91,9 @@ class PartialSupCon(ConLoss):
         dtype = y_pred.dtype
 
         # Masks
-        inst_mask = tf.cast((y_true == 2), dtype)
-        class_mask = tf.cast((y_true >= 1), dtype)
+        partial_class_mask = tf.cast((y_true == 1), dtype)
+        partial_class_sum = tf.math.reduce_sum(partial_class_mask, axis=1, keepdims=True)
         neg_mask = tf.cast((y_true == 0), dtype)
-        class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
 
         # Similarities
         sims = y_pred * 10
@@ -105,8 +105,8 @@ class PartialSupCon(ConLoss):
         tf.debugging.assert_less_equal(partial_log_prob, tf.zeros_like(partial_log_prob))
 
         # Class positive pairs log prob (contains instance positive pairs too)
-        class_partial_log_prob = class_mask * partial_log_prob
-        class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob / (class_sum + 1e-3), axis=1)
+        class_partial_log_prob = partial_class_mask * partial_log_prob
+        class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob / (partial_class_sum + 1e-3), axis=1)
         partial_supcon_loss = -class_partial_log_prob
 
         return partial_supcon_loss
