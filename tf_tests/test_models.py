@@ -18,7 +18,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(out_shape, (None, 4, 4, 2048))
 
     def test_l2_reg(self):
-        args = '--data=cifar10 --cnn=small-resnet50v2 --l2-reg=1e-3 ' \
+        args = '--data=cifar10 --model=small-resnet50v2 --l2-reg=1e-3 ' \
                '--bsz=8 --lr=1e-3 --method=ce '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
@@ -36,7 +36,7 @@ class TestModel(unittest.TestCase):
         self.assertGreaterEqual(count, 40)
 
     def test_no_grad_ce(self):
-        args = '--data=cifar10 --cnn=small-resnet50v2 ' \
+        args = '--data=cifar10 --model=small-resnet50v2 ' \
                '--bsz=8 --lr=1e-3 --method=supcon '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
@@ -61,7 +61,7 @@ class TestModel(unittest.TestCase):
 
     def test_partial_supcon_compile(self):
         self.skipTest('takes too long')
-        args = '--data=cifar10 --cnn=small-resnet50v2 --norm-feats ' \
+        args = '--data=cifar10 --model=small-resnet50v2-norm ' \
                '--bsz=8 --lr=1e-3 ' \
                '--method=partial-supcon '
         args = utils.parser.parse_args(args.split())

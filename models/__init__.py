@@ -12,21 +12,21 @@ def make_model(args, nclass, input_shape):
     input = keras.Input(input_shape, name='imgs')
     input2 = keras.Input(input_shape, name='imgs2')
 
-    if args.cnn == 'resnet50v2':
-        cnn = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
-    elif args.cnn == 'small-resnet50v2':
-        cnn = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape)
+    if args.model.startswith('resnet50v2'):
+        resnet = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
+    elif args.model.startswith('small-resnet50v2'):
+        resnet = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape)
     else:
-        raise Exception(f'unknown cnn model {args.cnn}')
+        raise Exception(f'unknown model {args.model}')
 
     stand_img = custom_layers.StandardizeImage()
 
     # Feature maps
-    feat_maps = cnn(stand_img(input))
-    feat_maps2 = cnn(stand_img(input2))
+    feat_maps = resnet(stand_img(input))
+    feat_maps2 = resnet(stand_img(input2))
 
     # Features
-    if args.norm_feats:
+    if args.model.endswith('-norm'):
         feats = custom_layers.L2Normalize(name='feats')(layers.GlobalAveragePooling2D()(feat_maps))
         feats2 = custom_layers.L2Normalize(name='feats2')(layers.GlobalAveragePooling2D()(feat_maps2))
     else:
@@ -34,7 +34,7 @@ def make_model(args, nclass, input_shape):
         feats2 = layers.GlobalAveragePooling2D(name='feats2')(feat_maps2)
 
     # Projected Features
-    if args.norm_feats:
+    if args.model.endswith('-norm'):
         proj_feats = custom_layers.L2Normalize(name='projection')(layers.Dense(128)(feats))
         proj_feats2 = custom_layers.L2Normalize(name='projection2')(layers.Dense(128)(feats2))
     else:
