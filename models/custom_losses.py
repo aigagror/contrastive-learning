@@ -10,7 +10,9 @@ class ConLoss(losses.Loss):
         y_pred = replica_context.all_gather(y_pred, axis=0)
 
         # Label similarities
-        y_true = tf.cast((y_true == tf.transpose(y_true)), tf.uint8)
+        bsz = tf.shape(y_true)[0]
+        y_true = tf.expand_dims(y_true, axis=1)
+        y_true = tf.cast((y_true == tf.transpose(y_true)), tf.uint8) + tf.eye(bsz, dtype=tf.uint8)
 
         # Predicted similarities
         y_pred = tf.transpose(y_pred, [1, 0, 2])
@@ -129,6 +131,8 @@ class PartialSupCon(ConLoss):
         exp = tf.math.exp(sims)
         neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)
         partial_log_prob = sims - tf.math.log(neg_sum_exp + exp)
+        if not tf.reduce_all(tf.math.is_finite(partial_log_prob)):
+            print()
         tf.debugging.assert_less_equal(partial_log_prob, tf.zeros_like(partial_log_prob))
 
         # Partial class positive pairs log prob

@@ -26,70 +26,42 @@ class LossesTest(unittest.TestCase):
     def test_losses_format_and_output(self):
         for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
             for _ in range(500):
+                c = tf.random.uniform([], minval=2, maxval=10, dtype=tf.int32)
                 n = tf.random.uniform([], minval=1, maxval=3, dtype=tf.int32)
-                d = tf.random.uniform([], maxval=3, dtype=tf.int32)
-                rand_shape = [n, n + d]
-                y = 2 * tf.eye(rand_shape[0], rand_shape[1], dtype=tf.uint8)
-                x = tf.random.normal(rand_shape)
+                d = tf.random.uniform([], minval=1, maxval=32, dtype=tf.int32)
+
+                y = tf.random.uniform([n], maxval=c, dtype=tf.int32)
+                x = tf.random.uniform([n, 2, d], minval=-1, maxval=1)
                 loss = loss_fn(y, x)
                 tf.debugging.assert_greater_equal(loss, tf.zeros_like(loss), f'{loss_fn}\nx={x}\ny={y}')
                 tf.debugging.assert_shapes([
                     (loss, [])
                 ])
 
-    # SimCLR
-    def test_simclr_eye(self):
-        y = 2 * tf.eye(3, dtype=tf.uint8)
-        x = 100 * tf.eye(3)
-        loss = custom_losses.SimCLR()(y, x)
-        tf.debugging.assert_near(loss, tf.zeros_like(loss))
+    # Distribution equivalancy
+    def test_distribute_equivalent(self):
+        for LossClass in [custom_losses.SimCLR, custom_losses.SupCon, custom_losses.PartialSupCon]:
+            strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
+            global_x = tf.random.normal([4, 2, 32])
+            global_y = tf.random.uniform([4], maxval=10, dtype=tf.int32)
 
-    def test_simclr_distribute_eye(self):
-        strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
-        global_x = 2 * tf.eye(4, dtype=tf.float32)
-        global_y = 2 * tf.eye(4, dtype=tf.uint8)
+            def foo():
+                replica_context = tf.distribute.get_replica_context()
+                id = replica_context.replica_id_in_sync_group
+                if id == 0:
+                    y = global_y[:2]
+                    x = global_x[:2]
+                else:
+                    y = global_y[2:]
+                    x = global_x[2:]
+                loss = LossClass(reduction=tf.keras.losses.Reduction.SUM)(y, x) / 4
+                return loss
 
-        def foo():
-            replica_context = tf.distribute.get_replica_context()
-            id = replica_context.replica_id_in_sync_group
-            if id == 0:
-                y = global_y[:2]
-                x = global_x[:2]
-            else:
-                y = global_y[2:]
-                x = global_x[2:]
-            loss = custom_losses.SimCLR(reduction=tf.keras.losses.Reduction.SUM)(y, x) / 2
-            return loss
+            distributed_loss = strategy.run(foo)
+            distributed_loss = strategy.reduce('SUM', distributed_loss, axis=None) / 2
 
-        distributed_loss = strategy.run(foo)
-        distributed_loss = strategy.reduce('SUM', distributed_loss, axis=None)
-        tf.debugging.assert_near(distributed_loss, tf.zeros_like(distributed_loss))
-
-        global_loss = custom_losses.SimCLR()(global_y, global_x)
-        tf.debugging.assert_equal(global_loss, distributed_loss)
-
-    # SupCon
-    def test_supcon_eye(self):
-        y = 2 * tf.eye(3, dtype=tf.uint8)
-        x = 100 * tf.eye(3)
-        loss = custom_losses.SupCon()(y, x)
-        tf.debugging.assert_near(loss, tf.zeros_like(loss), atol=1e-2)
-
-    # Partial SupCon
-    def test_partial_supcon_includes_inst(self):
-        y = tf.constant([[2, 1], [1, 2]], tf.uint8)
-        x = 2 * tf.constant([[0, 1], [1, 0]], tf.float32)
-
-        loss = custom_losses.PartialSupCon()(y, x)
-        tf.debugging.assert_none_equal(loss, tf.zeros_like(loss))
-
-    def test_partial_supcon_eye(self):
-        y = 2 * tf.eye(3, dtype=tf.uint8)
-        for _ in range(100):
-            x = tf.random.normal([3, 3])
-            loss = custom_losses.PartialSupCon()(y, x)
-            tf.debugging.assert_all_finite(loss, 'loss not finite')
-            tf.debugging.assert_greater_equal(loss, tf.zeros_like(loss))
+            global_loss = LossClass()(global_y, global_x)
+            tf.debugging.assert_equal(global_loss, distributed_loss, f'{LossClass}')
 
 
 if __name__ == '__main__':
