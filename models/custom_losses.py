@@ -9,9 +9,15 @@ class ConLoss(losses.Loss):
         y_true = replica_context.all_gather(y_true, axis=0)
         y_pred = replica_context.all_gather(y_pred, axis=0)
 
+        # Label similarities
+        y_true = tf.expand_dims(y_true, axis=1)
+        y_true = tf.cast((y_true == tf.transpose(y_true)), tf.uint8)
+
+        # Predicted similarities
         y_pred = tf.transpose(y_pred, [1, 0, 2])
         feats1, feats2 = y_pred[0], y_pred[1]
         y_pred = tf.matmul(feats1, feats2, transpose_b=True)
+
         return y_true, y_pred
 
     def assert_inputs(self, y_true, y_pred):
