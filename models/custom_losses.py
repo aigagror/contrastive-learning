@@ -18,6 +18,11 @@ class ConLoss(losses.Loss):
         feats1, feats2 = y_pred[0], y_pred[1]
         y_pred = tf.matmul(feats1, feats2, transpose_b=True)
 
+        tf.debugging.assert_shapes([
+            (y_true, ['N', 'D']),
+            (y_pred, ['N', 'D']),
+        ])
+
         return y_true, y_pred
 
     def assert_inputs(self, y_true, y_pred):
