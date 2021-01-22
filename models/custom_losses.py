@@ -99,12 +99,13 @@ class PartialSupCon(ConLoss):
         sims = y_pred * 10
         sims = sims - tf.stop_gradient(tf.reduce_max(sims, axis=1, keepdims=True))
 
+        # Log probs
         exp = tf.math.exp(sims)
         neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)
         partial_log_prob = sims - tf.math.log(neg_sum_exp + exp)
         tf.debugging.assert_less_equal(partial_log_prob, tf.zeros_like(partial_log_prob))
 
-        # Class positive pairs log prob (contains instance positive pairs too)
+        # Partial class positive pairs log prob
         class_partial_log_prob = partial_class_mask * partial_log_prob
         class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob / (partial_class_sum + 1e-3), axis=1)
         partial_supcon_loss = -class_partial_log_prob
