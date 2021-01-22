@@ -13,7 +13,7 @@ parser.add_argument('--cnn', choices=['small-resnet50v2', 'resnet50v2'])
 parser.add_argument('--norm-feats', action='store_true')
 
 # Method
-parser.add_argument('--method', choices=['ce', 'supcon', 'mse-supcon', 'partial-supcon', 'simclr'])
+parser.add_argument('--method', choices=['ce', 'supcon', 'mse-supcon', 'bce-supcon', 'partial-supcon', 'simclr'])
 
 # Training hyperparameters
 parser.add_argument('--init-epoch', type=int, default=0)

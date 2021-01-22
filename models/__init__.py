@@ -76,13 +76,13 @@ def compile_model(args, model):
     metrics = {'labels': 'acc'}
     if args.method == 'supcon':
         losses['batch_sims'] = custom_losses.SupCon()
-        metrics['batch_sims'] = custom_losses.SupCon()
     elif args.method == 'partial-supcon':
         losses['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
         metrics['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
+    elif args.method == 'bce-supcon':
+        losses['batch_sims'] = custom_losses.BceSupCon()
     elif args.method == 'mse-supcon':
         losses['batch_sims'] = custom_losses.MseSupCon()
-        metrics['batch_sims'] = custom_losses.MseSupCon()
     elif args.method == 'simclr':
         losses['batch_sims'] = custom_losses.SimCLR()
     else:

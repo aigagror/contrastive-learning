@@ -65,6 +65,23 @@ class MseSupCon(ConLoss):
         sims = y_pred
         return losses.mean_squared_error(labels, sims)
 
+class BceSupCon(ConLoss):
+
+    def call(self, y_true, y_pred):
+        self.assert_inputs(y_true, y_pred)
+        dtype = y_pred.dtype
+
+        # Masks
+        inst_mask = tf.cast((y_true == 2), dtype)
+        partial_class_mask = tf.cast((y_true == 1), dtype)
+        neg_mask = tf.cast((y_true == 0), dtype)
+
+        labels = inst_mask + (0.75 * partial_class_mask) + (0 * neg_mask)
+
+        # Similarities
+        sims = y_pred
+        return losses.binary_crossentropy(labels, sims * 2 - 1, from_logits=False)
+
 
 class PartialSupCon(ConLoss):
 
