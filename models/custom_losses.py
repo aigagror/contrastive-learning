@@ -56,23 +56,25 @@ class PartialSupCon(ConLoss):
 
         # Masks
         inst_mask = tf.cast((y_true == 2), dtype)
-        partial_class_mask = tf.cast((y_true == 1), dtype)
-        partial_class_sum = tf.math.reduce_sum(partial_class_mask, axis=1, keepdims=True)
+        class_mask = tf.cast((y_true >= 1), dtype)
+        class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
 
         # Similarities
         sims = y_pred * 10
+        sims = sims - tf.stop_gradient(tf.reduce_max(sims, axis=1, keepdims=True))
 
         # Partial cross entropy on class similarities
-        pos_mask = tf.maximum(inst_mask, partial_class_mask)
+        pos_mask = tf.maximum(inst_mask, class_mask)
         neg_mask = 1 - pos_mask
 
         exp = tf.math.exp(sims)
         neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)
         partial_log_prob = sims - tf.math.log(neg_sum_exp + exp)
+        tf.debugging.assert_less_equal(partial_log_prob, tf.zeros_like(partial_log_prob))
 
         # Class positive pairs log prob (contains instance positive pairs too)
-        class_partial_log_prob = partial_class_mask * partial_log_prob
-        class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob / (partial_class_sum + 1e-3), axis=1)
+        class_partial_log_prob = class_mask * partial_log_prob
+        class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob / (class_sum + 1e-3), axis=1)
         partial_supcon_loss = -class_partial_log_prob
 
         return partial_supcon_loss
