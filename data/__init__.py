@@ -4,7 +4,7 @@ from data.cifar10 import load_cifar10
 from data.imagenet import load_imagenet
 
 
-def add_batch_sims(inputs, targets):
+def add_contrast_data(inputs, targets):
     labels = targets['labels']
     labels = tf.expand_dims(labels, axis=1)
     tf.debugging.assert_shapes([
@@ -12,6 +12,7 @@ def add_batch_sims(inputs, targets):
     ])
     class_sims = tf.cast(labels == tf.transpose(labels), tf.uint8)
     targets['batch_sims'] = class_sims + tf.eye(tf.shape(labels)[0], dtype=tf.uint8)
+    targets['contrast'] = labels
     return inputs, targets
 
 
@@ -31,8 +32,8 @@ def load_datasets(args):
 
     # Add batch similarities (supcon labels)
     if args.method != 'ce':
-        ds_train = ds_train.map(add_batch_sims, tf.data.AUTOTUNE)
-        ds_val = ds_val.map(add_batch_sims, tf.data.AUTOTUNE)
+        ds_train = ds_train.map(add_contrast_data, tf.data.AUTOTUNE)
+        ds_val = ds_val.map(add_contrast_data, tf.data.AUTOTUNE)
 
     # Prefetch
     ds_train = ds_train.prefetch(tf.data.AUTOTUNE)

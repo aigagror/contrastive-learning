@@ -41,8 +41,8 @@ def make_model(args, nclass, input_shape):
         proj_feats = layers.Dense(128, name='projection')(feats)
         proj_feats2 = layers.Dense(128, name='projection2')(feats2)
 
-    # Batch similarities
-    batch_sims = custom_layers.GlobalBatchSims(name='batch_sims')((proj_feats, proj_feats2))
+    # Feature views
+    proj_views = custom_layers.FeatViews(name='contrast')((proj_feats, proj_feats2))
 
     # Stop gradient at features?
     if args.method != 'ce':
@@ -53,7 +53,7 @@ def make_model(args, nclass, input_shape):
 
     # Model
     inputs = [input, input2]
-    outputs = [prediction, batch_sims]
+    outputs = [prediction, proj_views]
 
     model = keras.Model(inputs, outputs)
 
@@ -75,15 +75,15 @@ def compile_model(args, model):
     losses = {'labels': keras.losses.SparseCategoricalCrossentropy(from_logits=True)}
     metrics = {'labels': 'acc'}
 
-    batch_sims_dict = {
+    contrast_loss_dict = {
         'supcon': custom_losses.SupCon(),
         'partial-supcon': custom_losses.PartialSupCon(),
         'bce-supcon': custom_losses.BceSupCon(),
         'mse-supcon': custom_losses.MseSupCon(),
         'simclr': custom_losses.SimCLR()
     }
-    if args.method in batch_sims_dict:
-        losses['batch_sims'] = batch_sims_dict[args.method]
+    if args.method in contrast_loss_dict:
+        losses['contrast'] = contrast_loss_dict[args.method]
 
     # Compile
     model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)

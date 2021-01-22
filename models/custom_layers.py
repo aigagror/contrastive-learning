@@ -7,6 +7,13 @@ class StandardizeImage(layers.Layer):
     def call(self, inputs, **kwargs):
         return tf.cast(inputs, self.dtype) / 127.5 - 1
 
+class FeatViews(layers.Layer):
+    def call(self, inputs, **kwargs):
+        feats1, feats2 = inputs
+        feats1 = tf.expand_dims(feats1, axis=1)
+        feats2 = tf.expand_dims(feats2, axis=1)
+        feat_views = tf.concat([feats1, feats2], axis=1)
+        return feat_views
 
 class GlobalBatchSims(layers.Layer):
     def call(self, inputs, **kwargs):

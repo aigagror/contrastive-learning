@@ -4,6 +4,16 @@ from tensorflow.keras import losses
 
 
 class ConLoss(losses.Loss):
+    def process_y(self, y_true, y_pred):
+        replica_context = tf.distribute.get_replica_context()
+        y_true = replica_context.all_gather(y_true, axis=0)
+        y_pred = replica_context.all_gather(y_pred, axis=0)
+
+        y_pred = tf.transpose(y_pred, [1, 0, 2])
+        feats1, feats2 = y_pred[0], y_pred[1]
+        y_pred = tf.matmul(feats1, feats2)
+        return y_true, y_pred
+
     def assert_inputs(self, y_true, y_pred):
         inst_mask = tf.cast((y_true == 2), tf.uint8)
         n_inst = tf.reduce_sum(inst_mask, axis=1)
@@ -20,6 +30,7 @@ class ConLoss(losses.Loss):
 class SimCLR(ConLoss):
 
     def call(self, y_true, y_pred):
+        y_true, y_pred = self.process_y(y_true, y_pred)
         self.assert_inputs(y_true, y_pred)
         dtype = y_pred.dtype
 
@@ -35,6 +46,7 @@ class SimCLR(ConLoss):
 class SupCon(ConLoss):
 
     def call(self, y_true, y_pred):
+        y_true, y_pred = self.process_y(y_true, y_pred)
         self.assert_inputs(y_true, y_pred)
         dtype = y_pred.dtype
 
@@ -51,6 +63,7 @@ class SupCon(ConLoss):
 class MseSupCon(ConLoss):
 
     def call(self, y_true, y_pred):
+        y_true, y_pred = self.process_y(y_true, y_pred)
         self.assert_inputs(y_true, y_pred)
         dtype = y_pred.dtype
 
@@ -69,6 +82,7 @@ class MseSupCon(ConLoss):
 class BceSupCon(ConLoss):
 
     def call(self, y_true, y_pred):
+        y_true, y_pred = self.process_y(y_true, y_pred)
         self.assert_inputs(y_true, y_pred)
         dtype = y_pred.dtype
 
@@ -87,6 +101,7 @@ class BceSupCon(ConLoss):
 class PartialSupCon(ConLoss):
 
     def call(self, y_true, y_pred):
+        y_true, y_pred = self.process_y(y_true, y_pred)
         self.assert_inputs(y_true, y_pred)
         dtype = y_pred.dtype
 
