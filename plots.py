@@ -87,6 +87,7 @@ def plot_hist_sims(args, strategy, model, ds_val):
         ])
         inst_mask = tf.eye(bsz, dtype=tf.bool)
         class_mask = (labels == tf.transpose(labels))
+        class_mask = tf.linalg.set_diag(class_mask, tf.zeros(bsz, tf.bool))
         pos_mask = inst_mask | class_mask
         neg_mask = ~pos_mask
 
