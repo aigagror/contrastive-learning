@@ -48,6 +48,24 @@ class SupCon(ConLoss):
         return supcon_loss
 
 
+class BceSupCon(ConLoss):
+
+    def call(self, y_true, y_pred):
+        self.assert_inputs(y_true, y_pred)
+        dtype = y_pred.dtype
+
+        # Masks
+        inst_mask = tf.cast((y_true == 2), dtype)
+        partial_class_mask = tf.cast((y_true == 1), dtype)
+        neg_mask = tf.cast((y_true == 0), dtype)
+
+        labels = inst_mask + (0.5 * partial_class_mask) + (0 * neg_mask)
+
+        # Similarities
+        sims = y_pred * 10
+        return nn.sigmoid_cross_entropy_with_logits(labels, sims)
+
+
 class PartialSupCon(ConLoss):
 
     def call(self, y_true, y_pred):
@@ -57,15 +75,12 @@ class PartialSupCon(ConLoss):
         # Masks
         inst_mask = tf.cast((y_true == 2), dtype)
         class_mask = tf.cast((y_true >= 1), dtype)
+        neg_mask = tf.cast((y_true == 0), dtype)
         class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
 
         # Similarities
         sims = y_pred * 10
         sims = sims - tf.stop_gradient(tf.reduce_max(sims, axis=1, keepdims=True))
-
-        # Partial cross entropy on class similarities
-        pos_mask = tf.maximum(inst_mask, class_mask)
-        neg_mask = 1 - pos_mask
 
         exp = tf.math.exp(sims)
         neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)

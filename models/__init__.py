@@ -80,6 +80,9 @@ def compile_model(args, model):
     elif args.method == 'partial-supcon':
         losses['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
         metrics['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
+    elif args.method == 'bce-supcon':
+        losses['batch_sims'] = custom_losses.BceSupCon()
+        metrics['batch_sims'] = custom_losses.BceSupCon()
     elif args.method == 'simclr':
         losses['batch_sims'] = custom_losses.SimCLR()
     else:
