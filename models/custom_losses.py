@@ -48,7 +48,7 @@ class SupCon(ConLoss):
         return supcon_loss
 
 
-class BceSupCon(ConLoss):
+class MseSupCon(ConLoss):
 
     def call(self, y_true, y_pred):
         self.assert_inputs(y_true, y_pred)
@@ -62,8 +62,8 @@ class BceSupCon(ConLoss):
         labels = inst_mask + (0.5 * partial_class_mask) + (0 * neg_mask)
 
         # Similarities
-        sims = y_pred * 10
-        return nn.sigmoid_cross_entropy_with_logits(labels, sims)
+        sims = y_pred
+        return losses.mean_squared_error(labels, sims)
 
 
 class PartialSupCon(ConLoss):
