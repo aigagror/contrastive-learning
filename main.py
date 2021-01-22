@@ -22,8 +22,10 @@ def run(args):
         # Model
         if args.load:
             model = keras.models.load_model(os.path.join(args.out, 'model'))
+            print('loaded model')
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
+            print('starting with new model')
 
         models.compile_model(args, model)
         if args.debug:
