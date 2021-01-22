@@ -1,8 +1,8 @@
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import applications, layers
+from tensorflow.keras import applications, layers, optimizers
 
-from models import custom_layers
+from models import custom_layers, custom_losses
 from models import small_resnet_v2
 
 
@@ -65,3 +65,25 @@ def make_model(args, nclass, input_shape):
                 setattr(module, attr, regularizer)
 
     return model
+
+
+def compile_model(args, model):
+    # Optimizer
+    opt = optimizers.SGD(args.lr, momentum=0.9)
+
+    # Loss and metrics
+    losses = {'labels': keras.losses.SparseCategoricalCrossentropy(from_logits=True)}
+    metrics = {'labels': 'acc'}
+    if args.method == 'supcon':
+        losses['batch_sims'] = custom_losses.SupCon()
+        metrics['batch_sims'] = custom_losses.SupCon()
+    elif args.method == 'partial-supcon':
+        losses['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
+        metrics['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
+    elif args.method == 'simclr':
+        losses['batch_sims'] = custom_losses.SimCLR()
+    else:
+        assert args.method == 'ce'
+
+    # Compile
+    model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)
