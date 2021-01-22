@@ -38,4 +38,12 @@ def load_datasets(args):
     ds_train = ds_train.prefetch(tf.data.AUTOTUNE)
     ds_val = ds_val.prefetch(tf.data.AUTOTUNE)
 
+    if args.train_steps:
+        ds_train = ds_train.repeat()
+        print('repeating training dataset')
+    if args.val_steps:
+        ds_val = ds_val.repeat()
+        print('repeating validation dataset')
+
+
     return ds_train, ds_val, ds_info
