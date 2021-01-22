@@ -59,7 +59,7 @@ class MseSupCon(ConLoss):
         partial_class_mask = tf.cast((y_true == 1), dtype)
         neg_mask = tf.cast((y_true == 0), dtype)
 
-        labels = inst_mask + (0.5 * partial_class_mask) + (0 * neg_mask)
+        labels = inst_mask + (0.5 * partial_class_mask) + (-1 * neg_mask)
 
         # Similarities
         sims = y_pred
