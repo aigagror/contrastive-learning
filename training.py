@@ -47,7 +47,7 @@ def get_callbacks(args):
     # Learning rate schedule
     def scheduler(epoch, _):
         curr_lr = args.lr
-        for e in range(epoch):
+        for e in range(epoch + 1):
             if e in args.lr_decays:
                 curr_lr *= 0.1
         return curr_lr
