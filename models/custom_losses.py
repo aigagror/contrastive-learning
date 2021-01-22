@@ -11,10 +11,9 @@ class ConLoss(losses.Loss):
 
         # Label similarities
         tf.debugging.assert_shapes([
-            (y_true, [None])
+            (y_true, [None, 1])
         ])
         bsz = tf.shape(y_true)[0]
-        y_true = tf.expand_dims(y_true, axis=1)
         y_true = tf.cast((y_true == tf.transpose(y_true)), tf.uint8) + tf.eye(bsz, dtype=tf.uint8)
 
         # Predicted similarities
