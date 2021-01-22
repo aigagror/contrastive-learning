@@ -91,6 +91,7 @@ class PartialSupCon(ConLoss):
         dtype = y_pred.dtype
 
         # Masks
+        inst_mask = tf.cast((y_true == 2), dtype)
         partial_class_mask = tf.cast((y_true == 1), dtype)
         partial_class_sum = tf.math.reduce_sum(partial_class_mask, axis=1, keepdims=True)
         neg_mask = tf.cast((y_true == 0), dtype)
@@ -110,4 +111,4 @@ class PartialSupCon(ConLoss):
         class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob / (partial_class_sum + 1e-3), axis=1)
         partial_supcon_loss = -class_partial_log_prob
 
-        return partial_supcon_loss
+        return partial_supcon_loss + nn.softmax_cross_entropy_with_logits(inst_mask, sims)

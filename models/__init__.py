@@ -74,19 +74,16 @@ def compile_model(args, model):
     # Loss and metrics
     losses = {'labels': keras.losses.SparseCategoricalCrossentropy(from_logits=True)}
     metrics = {'labels': 'acc'}
-    if args.method == 'supcon':
-        losses['batch_sims'] = custom_losses.SupCon()
-    elif args.method == 'partial-supcon':
-        losses['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
-        metrics['batch_sims'] = [custom_losses.SimCLR(), custom_losses.PartialSupCon()]
-    elif args.method == 'bce-supcon':
-        losses['batch_sims'] = custom_losses.BceSupCon()
-    elif args.method == 'mse-supcon':
-        losses['batch_sims'] = custom_losses.MseSupCon()
-    elif args.method == 'simclr':
-        losses['batch_sims'] = custom_losses.SimCLR()
-    else:
-        assert args.method == 'ce'
+
+    batch_sims_dict = {
+        'supcon': custom_losses.SupCon(),
+        'partial-supcon': custom_losses.PartialSupCon(),
+        'bce-supcon': custom_losses.BceSupCon(),
+        'mse-supcon': custom_losses.MseSupCon(),
+        'simclr': custom_losses.SimCLR()
+    }
+    if args.method in batch_sims_dict:
+        losses['batch_sims'] = batch_sims_dict[args.method]
 
     # Compile
     model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)
