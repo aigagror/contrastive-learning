@@ -10,6 +10,9 @@ class ConLoss(losses.Loss):
         y_pred = replica_context.all_gather(y_pred, axis=0)
 
         # Label similarities
+        tf.debugging.assert_shapes([
+            (y_true, [None])
+        ])
         bsz = tf.shape(y_true)[0]
         y_true = tf.expand_dims(y_true, axis=1)
         y_true = tf.cast((y_true == tf.transpose(y_true)), tf.uint8) + tf.eye(bsz, dtype=tf.uint8)
