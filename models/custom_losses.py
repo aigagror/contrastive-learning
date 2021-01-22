@@ -11,7 +11,7 @@ class ConLoss(losses.Loss):
 
         y_pred = tf.transpose(y_pred, [1, 0, 2])
         feats1, feats2 = y_pred[0], y_pred[1]
-        y_pred = tf.matmul(feats1, feats2)
+        y_pred = tf.matmul(feats1, feats2, transpose_b=True)
         return y_true, y_pred
 
     def assert_inputs(self, y_true, y_pred):
