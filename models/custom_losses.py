@@ -59,51 +59,13 @@ class SupCon(ConLoss):
         dtype = y_pred.dtype
 
         # Masks
-        class_mask = tf.cast(y_true, dtype)
+        class_mask = tf.cast((y_true >= 1), dtype)
         class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
 
         # Similarities
         sims = y_pred
         supcon_loss = nn.softmax_cross_entropy_with_logits(class_mask / class_sum, sims * 10)
         return supcon_loss
-
-
-class MseSupCon(ConLoss):
-
-    def call(self, y_true, y_pred):
-        y_true, y_pred = self.process_y(y_true, y_pred)
-        self.assert_inputs(y_true, y_pred)
-        dtype = y_pred.dtype
-
-        # Masks
-        inst_mask = tf.cast((y_true == 2), dtype)
-        partial_class_mask = tf.cast((y_true == 1), dtype)
-        neg_mask = tf.cast((y_true == 0), dtype)
-
-        labels = inst_mask + (0.5 * partial_class_mask) + (-1 * neg_mask)
-
-        # Similarities
-        sims = y_pred
-        return losses.mean_squared_error(labels, sims)
-
-
-class BceSupCon(ConLoss):
-
-    def call(self, y_true, y_pred):
-        y_true, y_pred = self.process_y(y_true, y_pred)
-        self.assert_inputs(y_true, y_pred)
-        dtype = y_pred.dtype
-
-        # Masks
-        inst_mask = tf.cast((y_true == 2), dtype)
-        partial_class_mask = tf.cast((y_true == 1), dtype)
-        neg_mask = tf.cast((y_true == 0), dtype)
-
-        labels = inst_mask + (0.75 * partial_class_mask) + (0 * neg_mask)
-
-        # Similarities
-        sims = y_pred
-        return losses.binary_crossentropy(labels, sims * 2 - 1, from_logits=False)
 
 
 class PartialSupCon(ConLoss):
@@ -137,3 +99,41 @@ class PartialSupCon(ConLoss):
         partial_supcon_loss = -class_partial_log_prob
 
         return partial_supcon_loss + nn.softmax_cross_entropy_with_logits(inst_mask, sims)
+
+
+class BceSupCon(ConLoss):
+
+    def call(self, y_true, y_pred):
+        y_true, y_pred = self.process_y(y_true, y_pred)
+        self.assert_inputs(y_true, y_pred)
+        dtype = y_pred.dtype
+
+        # Masks
+        inst_mask = tf.cast((y_true == 2), dtype)
+        partial_class_mask = tf.cast((y_true == 1), dtype)
+        neg_mask = tf.cast((y_true == 0), dtype)
+
+        labels = inst_mask + (0.75 * partial_class_mask) + (0 * neg_mask)
+
+        # Similarities
+        sims = y_pred
+        return losses.binary_crossentropy(labels, sims * 2 - 1, from_logits=False)
+
+
+class MseSupCon(ConLoss):
+
+    def call(self, y_true, y_pred):
+        y_true, y_pred = self.process_y(y_true, y_pred)
+        self.assert_inputs(y_true, y_pred)
+        dtype = y_pred.dtype
+
+        # Masks
+        inst_mask = tf.cast((y_true == 2), dtype)
+        partial_class_mask = tf.cast((y_true == 1), dtype)
+        neg_mask = tf.cast((y_true == 0), dtype)
+
+        labels = inst_mask + (0.5 * partial_class_mask) + (-1 * neg_mask)
+
+        # Similarities
+        sims = y_pred
+        return losses.mean_squared_error(labels, sims)
