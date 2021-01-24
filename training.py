@@ -37,11 +37,12 @@ def train(args, model, ds_train, ds_val, ds_info):
 
 
 def get_callbacks(args):
-    cbks = [
-        callbacks.TensorBoard(os.path.join(args.out, 'logs'), histogram_freq=1, update_freq=args.update_freq),
-    ]
-    # Model checkpoint
-    if not args.no_checkpoint:
+    cbks = []
+
+    # Save work?
+    if not args.no_save:
+        cbks.append(callbacks.TensorBoard(os.path.join(args.out, 'logs'), histogram_freq=1,
+                                          update_freq=args.update_freq))
         cbks.append(callbacks.ModelCheckpoint(os.path.join(args.out, 'model')))
 
     # Learning rate schedule
