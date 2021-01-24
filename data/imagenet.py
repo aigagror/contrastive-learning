@@ -61,11 +61,9 @@ def load_imagenet(args):
 
     # Preprocess
     def process_train(img, label):
-        inputs = {'imgs': augment_imagenet_img(img)}
-        labels = {'labels': label}
-        if args.method != 'ce':
-            inputs['imgs2'] = augment_imagenet_img(img)
-        return inputs, labels
+        inputs = {'imgs': augment_imagenet_img(img), 'imgs2': augment_imagenet_img(img)}
+        targets = {'labels': label}
+        return inputs, targets
 
     def process_val(img, label):
         return {'imgs': min_scale_rand_crop(img, 224), 'imgs2': augment_imagenet_img(img)}, {'labels': label}
