@@ -60,11 +60,12 @@ class SupCon(ConLoss):
 
         # Masks
         class_mask = tf.cast((y_true >= 1), dtype)
-        labels, _ = tf.linalg.normalize(class_mask, ord=1, axis=1)
+        class_sum = tf.math.reduce_sum(class_mask, axis=1)
 
         # Similarities
         sims = y_pred
-        supcon_loss = nn.softmax_cross_entropy_with_logits(labels, sims * 10)
+        supcon_loss = nn.softmax_cross_entropy_with_logits(class_mask, sims * 10)
+        supcon_loss /= class_sum
         return supcon_loss
 
 
