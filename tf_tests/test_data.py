@@ -35,12 +35,18 @@ class TestData(unittest.TestCase):
                                                                         'most 1.')
 
             # Label
-            for key in ['labels', 'contrast']:
-                label = targets[key]
-                tf.debugging.assert_shapes([(label, [8])])
-                tf.debugging.assert_type(label, tf.int32, label.dtype)
-                tf.debugging.assert_less_equal(label, ds_info['nclass'] - 1, label)
-                tf.debugging.assert_greater_equal(label, 0)
+            label = targets['labels']
+            tf.debugging.assert_shapes([(label, [8])])
+            tf.debugging.assert_type(label, tf.int32, label.dtype)
+            tf.debugging.assert_less_equal(label, ds_info['nclass'] - 1, label)
+            tf.debugging.assert_greater_equal(label, 0)
+
+            # Contrast
+            contrast = targets['contrast']
+            tf.debugging.assert_shapes([(contrast, [8, 8])])
+            tf.debugging.assert_type(contrast, tf.uint8, contrast.dtype)
+            tf.debugging.assert_less_equal(contrast, 2 * tf.ones_like(contrast))
+            tf.debugging.assert_greater_equal(contrast, tf.zeros_like(contrast))
 
     def test_imagenet_augmentation(self):
         img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'))

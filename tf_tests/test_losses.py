@@ -26,11 +26,10 @@ class LossesTest(unittest.TestCase):
     def test_losses_format_and_output(self):
         for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
             for _ in range(500):
-                c = tf.random.uniform([], minval=2, maxval=10, dtype=tf.int32)
                 n = tf.random.uniform([], minval=1, maxval=3, dtype=tf.int32)
                 d = tf.random.uniform([], minval=1, maxval=32, dtype=tf.int32)
 
-                y = tf.random.uniform([n], maxval=c, dtype=tf.int32)
+                y = 2 * tf.eye(n, dtype=tf.int32)
                 x = tf.random.uniform([n, 2, d], minval=-1, maxval=1)
                 loss = loss_fn(y, x)
                 tf.debugging.assert_greater_equal(loss, tf.zeros_like(loss), f'{loss_fn}\nx={x}\ny={y}')
@@ -43,7 +42,7 @@ class LossesTest(unittest.TestCase):
         for LossClass in [custom_losses.SimCLR, custom_losses.SupCon, custom_losses.PartialSupCon]:
             strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
             global_x = tf.random.normal([4, 2, 32])
-            global_y = tf.random.uniform([4], maxval=10, dtype=tf.int32)
+            global_y = 2 * tf.eye(4, dtype=tf.int32)
 
             def foo():
                 replica_context = tf.distribute.get_replica_context()
@@ -58,10 +57,10 @@ class LossesTest(unittest.TestCase):
                 return loss
 
             distributed_loss = strategy.run(foo)
-            distributed_loss = strategy.reduce('SUM', distributed_loss, axis=None) / 2
+            distributed_loss = strategy.reduce('SUM', distributed_loss, axis=None)
 
             global_loss = LossClass()(global_y, global_x)
-            tf.debugging.assert_equal(global_loss, distributed_loss, f'{LossClass}')
+            tf.debugging.assert_near(global_loss, distributed_loss, atol=1e-4, message=f'{LossClass}')
 
 
 if __name__ == '__main__':

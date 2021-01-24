@@ -6,21 +6,15 @@ from tensorflow.keras import losses
 class ConLoss(losses.Loss):
     def process_y(self, y_true, y_pred):
         replica_context = tf.distribute.get_replica_context()
-        y_true = replica_context.all_gather(y_true, axis=0)
-        y_pred = replica_context.all_gather(y_pred, axis=0)
-
-        # Label similarities
-        tf.debugging.assert_shapes([
-            (y_true, [None, 1])
-        ])
-        bsz = tf.shape(y_true)[0]
-        y_true = tf.cast((y_true == tf.transpose(y_true)), tf.uint8) + tf.eye(bsz, dtype=tf.uint8)
+        all_y_pred = replica_context.all_gather(y_pred, axis=0)
 
         # Predicted similarities
         y_pred = tf.transpose(y_pred, [1, 0, 2])
-        feats1, feats2 = y_pred[0], y_pred[1]
-        y_pred = tf.matmul(feats1, feats2, transpose_b=True)
+        all_y_pred = tf.transpose(all_y_pred, [1, 0, 2])
+        feats1, all_feats2 = y_pred[0], all_y_pred[1]
+        y_pred = tf.matmul(feats1, all_feats2, transpose_b=True)
 
+        # Assert equal shapes
         tf.debugging.assert_shapes([
             (y_true, ['N', 'D']),
             (y_pred, ['N', 'D']),
