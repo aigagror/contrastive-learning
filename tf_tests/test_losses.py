@@ -37,6 +37,18 @@ class LossesTest(unittest.TestCase):
                     (loss, [])
                 ])
 
+    # Test cross entropy correctness
+    def test_zero_loss(self):
+        for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon()]:
+            y = 2 * tf.eye(3)
+            x = tf.eye(3)
+            x = tf.repeat(x, 2, axis=0)
+            x = tf.reshape(x, [3, 2, 3])
+            tf.debugging.assert_equal(x[:, 0, :], tf.eye(3))
+            loss = loss_fn(y, x)
+            tf.debugging.assert_near(loss, tf.zeros_like(loss), atol=1e-4)
+
+
     # Distribution equivalancy
     def test_all_gather_same_order(self):
         for _ in range(100):
