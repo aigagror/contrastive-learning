@@ -11,7 +11,11 @@ def add_contrast_data(inputs, targets):
         (labels, [None, 1])
     ])
     class_sims = tf.cast(labels == tf.transpose(labels), tf.uint8)
-    targets['contrast'] = class_sims + tf.eye(tf.shape(labels)[0], dtype=tf.uint8)
+    contrast = class_sims + tf.eye(tf.shape(labels)[0], dtype=tf.uint8)
+    tf.debugging.assert_shapes([
+        (contrast, ('N', 'N'))
+    ])
+    targets['contrast'] = contrast
     return inputs, targets
 
 
