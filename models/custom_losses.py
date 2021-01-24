@@ -12,7 +12,7 @@ class ConLoss(losses.Loss):
         y_pred = tf.transpose(y_pred, [1, 0, 2])
         all_y_pred = tf.transpose(all_y_pred, [1, 0, 2])
         feats1, all_feats2 = y_pred[0], all_y_pred[1]
-        y_pred = tf.matmul(feats1, all_feats2, transpose_b=True)
+        y_pred = tf.matmul(feats1, tf.stop_gradient(all_feats2), transpose_b=True)
 
         # Assert equal shapes
         tf.debugging.assert_shapes([
@@ -60,11 +60,11 @@ class SupCon(ConLoss):
 
         # Masks
         class_mask = tf.cast((y_true >= 1), dtype)
-        class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
+        labels, _ = tf.linalg.normalize(class_mask, ord=1, axis=1)
 
         # Similarities
         sims = y_pred
-        supcon_loss = nn.softmax_cross_entropy_with_logits(class_mask / class_sum, sims * 10)
+        supcon_loss = nn.softmax_cross_entropy_with_logits(labels, sims * 10)
         return supcon_loss
 
 
