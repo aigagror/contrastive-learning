@@ -38,6 +38,21 @@ class LossesTest(unittest.TestCase):
                 ])
 
     # Distribution equivalancy
+    def test_all_gather_same_order(self):
+        for _ in range(100):
+            strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1', 'CPU:2', 'CPU:4'])
+
+            def foo():
+                replica_context = tf.distribute.get_replica_context()
+                id = replica_context.replica_id_in_sync_group
+                id = tf.constant(id)
+                return replica_context.all_gather(id, axis=0)
+
+            all_ids = strategy.run(foo)
+            ref_order = all_ids.values[0]
+            for order in all_ids.values:
+                tf.debugging.assert_equal(ref_order, order)
+
     def test_distribute_equivalent(self):
         for LossClass in [custom_losses.SimCLR, custom_losses.SupCon, custom_losses.PartialSupCon]:
             strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
