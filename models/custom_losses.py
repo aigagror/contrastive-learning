@@ -12,7 +12,7 @@ class ConLoss(losses.Loss):
         y_pred = tf.transpose(y_pred, [1, 0, 2])
         all_y_pred = tf.transpose(all_y_pred, [1, 0, 2])
         feats1, all_feats2 = y_pred[0], all_y_pred[1]
-        y_pred = tf.matmul(feats1, tf.stop_gradient(all_feats2), transpose_b=True)
+        y_pred = tf.matmul(feats1, all_feats2, transpose_b=True)
 
         # Assert equal shapes
         tf.debugging.assert_shapes([
