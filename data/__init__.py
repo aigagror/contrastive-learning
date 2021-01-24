@@ -6,8 +6,9 @@ from data.imagenet import load_imagenet
 
 def add_contrast_data(inputs, targets):
     labels = targets['labels']
+    labels = tf.expand_dims(labels, axis=1)
     tf.debugging.assert_shapes([
-        (labels, [None])
+        (labels, [None, 1])
     ])
     class_sims = tf.cast(labels == tf.transpose(labels), tf.uint8)
     targets['contrast'] = class_sims + tf.eye(tf.shape(labels)[0], dtype=tf.uint8)
