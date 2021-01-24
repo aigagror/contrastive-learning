@@ -48,6 +48,12 @@ class LossesTest(unittest.TestCase):
             loss = loss_fn(y, x)
             tf.debugging.assert_near(loss, tf.zeros_like(loss), atol=1e-4)
 
+    def test_non_zero_loss(self):
+        for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
+            y = 2 * tf.eye(3)
+            x = tf.ones([3, 2, 32])
+            loss = loss_fn(y, x)
+            tf.debugging.assert_greater(loss, tf.ones_like(loss))
 
     # Distribution equivalancy
     def test_all_gather_same_order(self):
