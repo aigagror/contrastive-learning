@@ -101,7 +101,7 @@ def compile_model(args, model):
     else:
         regularizer = None
         print('no l2 regularization')
-    add_regularization(model, regularizer)
+    model = add_regularization(model, regularizer)
 
     # Optimizer
     opt = optimizers.SGD(args.lr, momentum=0.9)
