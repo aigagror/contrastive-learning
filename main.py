@@ -27,8 +27,8 @@ def run(args):
             print('loaded model')
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
-            print('starting with new model')
             model = models.compile_model(args, model)
+            print('starting with new model')
 
         if args.debug:
             model.summary()
