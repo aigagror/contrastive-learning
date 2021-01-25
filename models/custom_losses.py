@@ -107,7 +107,7 @@ class PartialSupCon(ConLoss):
 
         loss = partial_supcon_loss + nn.softmax_cross_entropy_with_logits(inst_mask, sims)
         print('computed loss', loss.shape)
-        return tf.reduce_mean(loss)
+        return loss
 
 
 class BceSupCon(ConLoss):
