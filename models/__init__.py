@@ -27,7 +27,7 @@ def add_regularization(model, regularizer):
     model.save_weights(tmp_weights_path)
 
     # load the model from the config
-    model = tf.keras.models.model_from_json(model_json)
+    model = tf.keras.models.model_from_json(model_json, custom_objects=custom_layers.custom_objects)
 
     # Reload the model weights
     model.load_weights(tmp_weights_path, by_name=True)

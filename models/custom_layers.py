@@ -55,3 +55,12 @@ class CastFloat32(layers.Layer):
 
     def get_config(self):
         return {}
+
+
+custom_objects = {
+    'StandardizeImage': StandardizeImage,
+    'FeatViews': FeatViews,
+    'GlobalBatchSims': GlobalBatchSims,
+    'L2Normalize': L2Normalize,
+    'CastFloat32': CastFloat32
+}
