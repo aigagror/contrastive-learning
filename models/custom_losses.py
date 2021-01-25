@@ -5,7 +5,7 @@ from tensorflow.keras import losses
 
 class NoOp(losses.Loss):
     def call(self, y_true, y_pred):
-        return 0
+        return tf.constant(0, dtype=self.dtype)
 
 
 class ConLoss(losses.Loss):
