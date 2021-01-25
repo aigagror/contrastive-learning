@@ -26,8 +26,8 @@ def run(args):
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
             print('starting with new model')
+            model = models.compile_model(args, model)
 
-        model = models.compile_model(args, model)
         if args.debug:
             model.summary()
 
