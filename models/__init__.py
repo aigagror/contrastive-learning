@@ -121,3 +121,5 @@ def compile_model(args, model):
 
     # Compile
     model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)
+
+    return model

@@ -72,7 +72,7 @@ class TestModel(unittest.TestCase):
         strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
         with strategy.scope():
             model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
-            models.compile_model(args, model)
+            model = models.compile_model(args, model)
         model.summary()
         model.fit(ds_train, epochs=1, steps_per_epoch=1)
 
