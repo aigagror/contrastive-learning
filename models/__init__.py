@@ -88,7 +88,8 @@ def compile_model(args, model):
         'partial-supcon': custom_losses.PartialSupCon(),
         'bce-supcon': custom_losses.BceSupCon(),
         'mse-supcon': custom_losses.MseSupCon(),
-        'simclr': custom_losses.SimCLR()
+        'simclr': custom_losses.SimCLR(),
+        'no-op': custom_losses.NoOp()
     }
     if args.method in contrast_loss_dict:
         losses['contrast'] = contrast_loss_dict[args.method]
