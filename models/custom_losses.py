@@ -79,7 +79,7 @@ class PartialSupCon(ConLoss):
         y_true, y_pred = self.process_y(y_true, y_pred)
         print('processed inputs')
         self.assert_inputs(y_true, y_pred)
-        print('assessed inputs')
+        print('assessed inputs', y_true.shape, y_pred.shape)
         dtype = y_pred.dtype
 
         # Masks
