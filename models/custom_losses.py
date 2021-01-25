@@ -77,7 +77,9 @@ class PartialSupCon(ConLoss):
 
     def call(self, y_true, y_pred):
         y_true, y_pred = self.process_y(y_true, y_pred)
+        print('processed inputs')
         self.assert_inputs(y_true, y_pred)
+        print('assessed inputs')
         dtype = y_pred.dtype
 
         # Masks
@@ -103,6 +105,7 @@ class PartialSupCon(ConLoss):
         class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob / (partial_class_sum + 1e-3), axis=1)
         partial_supcon_loss = -class_partial_log_prob
 
+        print('computed loss')
         return partial_supcon_loss + nn.softmax_cross_entropy_with_logits(inst_mask, sims)
 
 
