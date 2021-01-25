@@ -105,8 +105,9 @@ class PartialSupCon(ConLoss):
         class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob / (partial_class_sum + 1e-3), axis=1)
         partial_supcon_loss = -class_partial_log_prob
 
-        print('computed loss')
-        return partial_supcon_loss + nn.softmax_cross_entropy_with_logits(inst_mask, sims)
+        loss = partial_supcon_loss + nn.softmax_cross_entropy_with_logits(inst_mask, sims)
+        print('computed loss', loss.shape)
+        return loss
 
 
 class BceSupCon(ConLoss):
