@@ -33,3 +33,7 @@ class L2Normalize(layers.Layer):
     def call(self, inputs, **kwargs):
         tf.debugging.assert_rank(inputs, 2)
         return tf.nn.l2_normalize(inputs, axis=1)
+
+class CastFloat32(layers.Layer):
+    def call(self, inputs, **kwargs):
+        return tf.cast(inputs, tf.float32)

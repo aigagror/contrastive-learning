@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import applications, layers, optimizers
@@ -6,8 +9,32 @@ from models import custom_layers, custom_losses
 from models import small_resnet_v2
 
 
-def make_model(args, nclass, input_shape):
+def add_regularization(model, regularizer):
+    if not isinstance(regularizer, tf.keras.regularizers.Regularizer):
+        print("Regularizer must be a subclass of tf.keras.regularizers.Regularizer")
+        return model
 
+    for layer in model.layers:
+        for attr in ['kernel_regularizer']:
+            if hasattr(layer, attr):
+                setattr(layer, attr, regularizer)
+
+    # When we change the layers attributes, the change only happens in the model config file
+    model_json = model.to_json()
+
+    # Save the weights before reloading the model.
+    tmp_weights_path = os.path.join(tempfile.gettempdir(), 'tmp_weights.h5')
+    model.save_weights(tmp_weights_path)
+
+    # load the model from the config
+    model = tf.keras.models.model_from_json(model_json)
+
+    # Reload the model weights
+    model.load_weights(tmp_weights_path, by_name=True)
+    return model
+
+
+def make_model(args, nclass, input_shape):
     # Inputs
     input = keras.Input(input_shape, name='imgs')
     input2 = keras.Input(input_shape, name='imgs2')
@@ -46,14 +73,16 @@ def make_model(args, nclass, input_shape):
         proj_feats2 = layers.Dense(128, name='projection2')(feats2)
 
     # Feature views
-    proj_views = custom_layers.FeatViews(name='contrast')((proj_feats, proj_feats2))
+    proj_views = custom_layers.FeatViews()((proj_feats, proj_feats2))
+    proj_views = custom_layers.CastFloat32(name='contrast')(proj_views)
 
     # Stop gradient at features?
     if args.method != 'ce':
         feats = tf.stop_gradient(feats)
 
     # Label logits
-    prediction = layers.Dense(nclass, name='labels')(feats)
+    prediction = layers.Dense(nclass)(feats)
+    prediction = custom_layers.CastFloat32(name='labels')(prediction)
 
     # Model
     inputs = [input, input2]
@@ -72,10 +101,7 @@ def compile_model(args, model):
     else:
         regularizer = None
         print('no l2 regularization')
-    for module in model.submodules:
-        for attr in ['kernel_regularizer', 'bias_regularizer']:
-            if hasattr(module, attr):
-                setattr(module, attr, regularizer)
+    add_regularization(model, regularizer)
 
     # Optimizer
     opt = optimizers.SGD(args.lr, momentum=0.9)
