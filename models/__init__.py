@@ -14,6 +14,8 @@ def make_model(args, nclass, input_shape):
 
     if args.model.startswith('resnet50v2'):
         resnet = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
+        if args.data.startswith('cifar'):
+            print('WARNING: Using standard resnet on small dataset')
     elif args.model.startswith('small-resnet50v2'):
         resnet = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape)
     else:
