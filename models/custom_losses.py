@@ -5,15 +5,11 @@ from tensorflow.keras import losses
 
 class ConLoss(losses.Loss):
     def process_y(self, y_true, y_pred):
-        print('processsing inputs')
         replica_context = tf.distribute.get_replica_context()
-        print('got replica context')
 
         # Feat views
         local_feat_views = tf.transpose(y_pred, [1, 0, 2])
-        print('gathering feat views')
         global_feat_views = replica_context.all_gather(local_feat_views, axis=1)
-        print('gathered feat views')
 
         # Predicted similarities
         feats1, all_feats2 = local_feat_views[0], global_feat_views[1]
@@ -77,9 +73,7 @@ class PartialSupCon(ConLoss):
 
     def call(self, y_true, y_pred):
         y_true, y_pred = self.process_y(y_true, y_pred)
-        print('processed inputs')
         self.assert_inputs(y_true, y_pred)
-        print('assessed inputs', y_true.shape, y_pred.shape)
         dtype = y_pred.dtype
 
         # Masks
@@ -96,8 +90,6 @@ class PartialSupCon(ConLoss):
         exp = tf.math.exp(sims)
         neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)
         partial_log_prob = sims - tf.math.log(neg_sum_exp + exp)
-        if not tf.reduce_all(tf.math.is_finite(partial_log_prob)):
-            print()
         tf.debugging.assert_less_equal(partial_log_prob, tf.zeros_like(partial_log_prob))
 
         # Partial class positive pairs log prob
@@ -106,7 +98,6 @@ class PartialSupCon(ConLoss):
         partial_supcon_loss = -class_partial_log_prob
 
         loss = partial_supcon_loss + nn.softmax_cross_entropy_with_logits(inst_mask, sims)
-        print('computed loss', loss.shape)
         return loss
 
 
