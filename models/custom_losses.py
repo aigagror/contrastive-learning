@@ -3,17 +3,12 @@ from tensorflow import nn
 from tensorflow.keras import losses
 
 
-class NoOp(losses.Loss):
-    def call(self, y_true, y_pred):
-        return tf.constant(0, dtype=y_pred.dtype)
-
-
 class ConLoss(losses.Loss):
     def process_y(self, y_true, y_pred):
-        replica_context = tf.distribute.get_replica_context()
 
         # Feat views
         local_feat_views = tf.transpose(y_pred, [1, 0, 2])
+        replica_context = tf.distribute.get_replica_context()
         global_feat_views = replica_context.all_gather(local_feat_views, axis=1)
 
         # Predicted similarities
@@ -39,6 +34,12 @@ class ConLoss(losses.Loss):
         ])
         tf.debugging.assert_greater_equal(y_true, tf.zeros_like(y_true))
         tf.debugging.assert_less_equal(y_true, 2 * tf.ones_like(y_true))
+
+
+class NoOp(ConLoss):
+    def call(self, y_true, y_pred):
+        self.process_y(y_true, y_pred)
+        return tf.constant(0, dtype=y_pred.dtype)
 
 
 class SimCLR(ConLoss):
