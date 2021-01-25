@@ -12,7 +12,7 @@ parser.add_argument('--data', choices=['cifar10', 'imagenet'])
 parser.add_argument('--model', choices=['small-resnet50v2', 'resnet50v2', 'small-resnet50v2-norm', 'resnet50v2-norm'])
 
 # Method
-parser.add_argument('--method', choices=['ce', 'supcon', 'mse-supcon', 'bce-supcon', 'partial-supcon', 'simclr', 'no-op'])
+parser.add_argument('--method', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
 
 # Training hyperparameters
 parser.add_argument('--init-epoch', type=int, default=0)
