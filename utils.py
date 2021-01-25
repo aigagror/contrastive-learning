@@ -42,7 +42,7 @@ parser.add_argument('--update-freq', type=str, default='epoch', help='tensorboar
 
 def setup(args):
     # Logging
-    tf.get_logger().setLevel('WARNING')
+    tf.get_logger().setLevel('WARNING' if args.debug else 'DEBUG')
 
     # Strategy
     if args.tpu:
