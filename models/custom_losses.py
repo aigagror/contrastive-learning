@@ -14,15 +14,15 @@ class ConLoss(losses.Loss):
 
         # Predicted similarities
         feats1, all_feats2 = local_feat_views[0], global_feat_views[1]
-        local_feat_views = tf.matmul(feats1, tf.stop_gradient(all_feats2), transpose_b=True)
+        sims = tf.matmul(feats1, tf.stop_gradient(all_feats2), transpose_b=True)
 
         # Assert equal shapes
         tf.debugging.assert_shapes([
             (y_true, ['N', 'D']),
-            (local_feat_views, ['N', 'D']),
+            (sims, ['N', 'D']),
         ])
 
-        return y_true, local_feat_views
+        return y_true, sims
 
     def assert_inputs(self, y_true, y_pred):
         inst_mask = tf.cast((y_true == 2), tf.uint8)
