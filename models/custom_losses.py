@@ -9,7 +9,7 @@ class ConLoss(losses.Loss):
 
         # Feat views
         local_feat_views = tf.transpose(y_pred, [1, 0, 2])
-        global_feat_views = replica_context.all_gather(local_feat_views, axis=0)
+        global_feat_views = replica_context.all_gather(local_feat_views, axis=1)
 
         # Predicted similarities
         feats1, all_feats2 = local_feat_views[0], global_feat_views[1]
