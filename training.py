@@ -42,7 +42,7 @@ def get_callbacks(args):
     # Save work?
     if not args.no_save:
         cbks.append(callbacks.TensorBoard(os.path.join(args.out, 'logs'), histogram_freq=1,
-                                          update_freq=args.update_freq))
+                                          update_freq=args.update_freq, write_graph=False))
         cbks.append(callbacks.ModelCheckpoint(os.path.join(args.out, 'model')))
 
     # Learning rate schedule
