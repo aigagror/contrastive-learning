@@ -5,11 +5,11 @@ from tensorflow.keras import losses
 
 class ConLoss(losses.Loss):
     def process_y(self, y_true, y_pred):
-
         # Feat views
-        local_feat_views = tf.transpose(y_pred, [1, 0, 2])
         replica_context = tf.distribute.get_replica_context()
-        global_feat_views = replica_context.all_gather(local_feat_views, axis=1)
+        all_y_pred = replica_context.all_gather(y_pred, axis=0)
+        local_feat_views = tf.transpose(y_pred, [1, 0, 2])
+        global_feat_views = tf.transpose(all_y_pred, [1, 0, 2])
 
         # Predicted similarities
         feats1, all_feats2 = local_feat_views[0], global_feat_views[1]
