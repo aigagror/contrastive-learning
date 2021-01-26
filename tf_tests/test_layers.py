@@ -30,11 +30,23 @@ class LayersTest(unittest.TestCase):
         ])
 
     def test_stand_img(self):
-        x = tf.random.uniform([8, 32, 32, 3], maxval=255)
-        x = tf.cast(x, tf.uint8)
-        y = custom_layers.StandardizeImage()(x)
-        tf.debugging.assert_greater_equal(y, -tf.ones_like(y))
-        tf.debugging.assert_less_equal(y, tf.ones_like(y))
+        img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'))
+        img = tf.expand_dims(img, 0)
+        tf.debugging.assert_shapes([
+            (img, [1, None, None, 3])
+        ])
+        out = custom_layers.StandardizeImage()(img)
+
+        mean = tf.reduce_mean(out, axis=[0, 1, 2])
+        var = tf.math.reduce_std(out, axis=[0, 1, 2])
+
+        tf.debugging.assert_shapes([
+            (mean, [3]),
+            (var, [3]),
+        ])
+
+        tf.debugging.assert_near(mean, tf.zeros_like(mean), atol=0.5)
+        tf.debugging.assert_near(var, tf.ones_like(mean), atol=0.5)
 
     def test_l2_normalize(self):
         x = tf.random.normal([8, 32])

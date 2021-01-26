@@ -9,6 +9,7 @@ class StandardizeImage(layers.Layer):
 
         MEAN_RGB = [0.485 * 255, 0.456 * 255, 0.406 * 255]
         STDDEV_RGB = [0.229 * 255, 0.224 * 255, 0.225 * 255]
+        inputs = tf.cast(inputs, self.dtype)
         inputs -= tf.constant(MEAN_RGB, shape=[1, 1, 1, 3], dtype=self.dtype)
         inputs /= tf.constant(STDDEV_RGB, shape=[1, 1, 1, 3], dtype=self.dtype)
         return inputs
