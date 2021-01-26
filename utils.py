@@ -15,15 +15,19 @@ parser.add_argument('--model', choices=['small-resnet50v2', 'resnet50v2', 'small
 parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
 
 # Training hyperparameters
+parser.add_argument('--bsz', type=int)
+
 parser.add_argument('--init-epoch', type=int, default=0)
 parser.add_argument('--epochs', type=int)
-parser.add_argument('--bsz', type=int)
-parser.add_argument('--lr', type=float)
-parser.add_argument('--lr-decays', type=int, nargs='+', help='decays learning rate at the specified epochs')
-parser.add_argument('--l2-reg', type=float)
 parser.add_argument('--steps-exec', type=int, help='steps per execution')
 parser.add_argument('--train-steps', type=int, help='train steps per epoch')
 parser.add_argument('--val-steps', type=int, help='val steps per epoch')
+
+parser.add_argument('--lr', type=float)
+parser.add_argument('--lr-decays', type=int, nargs='+', help='decays learning rate at the specified epochs')
+
+parser.add_argument('--l2-reg', type=float)
+
 parser.add_argument('--recompile', action='store_true')
 
 # Strategy
