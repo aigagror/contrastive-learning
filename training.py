@@ -1,10 +1,31 @@
 import os
 import shutil
 
-from tensorflow.keras import callbacks
 import tensorflow_addons as tfa
+from tensorflow.keras import callbacks
 
 from models import custom_losses
+
+global_base_lr = None
+global_lr_decays = None
+curr_lr = None
+
+
+# Learning rate schedule
+def lr_scheduler(epoch, _):
+    global curr_lr
+    curr_lr = global_base_lr
+    for e in range(epoch + 1):
+        if e in global_lr_decays:
+            curr_lr *= 0.1
+    return curr_lr
+
+
+global_base_wd = None
+
+
+def wd_scheduler():
+    return curr_lr * global_base_wd
 
 
 def train(args, model, ds_train, ds_val, ds_info):
@@ -40,6 +61,7 @@ def train(args, model, ds_train, ds_val, ds_info):
 
 
 def get_callbacks(args):
+    global global_base_lr, global_lr_decays
     cbks = []
 
     # Save work?
@@ -48,21 +70,18 @@ def get_callbacks(args):
                                           update_freq=args.update_freq, write_graph=False))
         cbks.append(callbacks.ModelCheckpoint(os.path.join(args.out, 'model')))
 
-    # Learning rate schedule
-    def scheduler(epoch, _):
-        curr_lr = args.lr
-        for e in range(epoch + 1):
-            if e in args.lr_decays:
-                curr_lr *= 0.1
-        return curr_lr
-
-    cbks.append(callbacks.LearningRateScheduler(scheduler, verbose=1))
+    # Learning rate scheduler
+    global_base_lr = args.lr
+    global_lr_decays = args.lr_decays
+    cbks.append(callbacks.LearningRateScheduler(lr_scheduler, verbose=1))
     return cbks
 
 
 def compile_model(args, model):
+    global global_base_wd
     # Optimizer
-    opt = tfa.optimizers.SGDW(args.wd, args.lr, momentum=0.9)
+    global_base_wd = args.wd
+    opt = tfa.optimizers.SGDW(wd_scheduler, args.lr, momentum=0.9)
 
     # Loss and metrics
     losses = {'labels': custom_losses.Float32SparseCategoricalCrossentropy(from_logits=True)}
