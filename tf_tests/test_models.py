@@ -19,7 +19,7 @@ class TestModel(unittest.TestCase):
 
     def test_l2_reg(self):
         args = '--data=cifar10 --model=small-resnet50v2 --l2-reg=1e-3 ' \
-               '--bsz=8 --lr=1e-3 --method=ce '
+               '--bsz=8 --lr=1e-3 --loss=ce '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
 
@@ -39,7 +39,7 @@ class TestModel(unittest.TestCase):
 
     def test_no_grad_ce(self):
         args = '--data=cifar10 --model=small-resnet50v2 ' \
-               '--bsz=8 --lr=1e-3 --method=supcon '
+               '--bsz=8 --lr=1e-3 --loss=supcon '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
 
@@ -65,7 +65,7 @@ class TestModel(unittest.TestCase):
         self.skipTest('takes too long')
         args = '--data=cifar10 --model=small-resnet50v2-norm ' \
                '--bsz=8 --lr=1e-3 ' \
-               '--method=partial-supcon '
+               '--loss=partial-supcon '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
 

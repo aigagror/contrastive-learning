@@ -48,7 +48,7 @@ def make_model(args, nclass, input_shape):
     proj_views = custom_layers.FeatViews(name='contrast')((proj_feats, proj_feats2))
 
     # Stop gradient at features?
-    if args.method != 'ce':
+    if args.loss != 'ce':
         feats = tf.stop_gradient(feats)
 
     # Label logits

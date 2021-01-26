@@ -11,7 +11,7 @@ class TestPlots(unittest.TestCase):
     def basic_usage(self):
         args = '--data=cifar10 --model=small-resnet50v2-norm ' \
                '--bsz=8 --lr=1e-3 ' \
-               '--method=partial-supcon '
+               '--loss=partial-supcon '
         args = utils.parser.parse_args(args.split())
         strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
 

@@ -110,8 +110,8 @@ def compile_model(args, model):
         'simclr': custom_losses.SimCLR(),
         'no-op': custom_losses.NoOp()
     }
-    if args.method in contrast_loss_dict:
-        losses['contrast'] = contrast_loss_dict[args.method]
+    if args.loss in contrast_loss_dict:
+        losses['contrast'] = contrast_loss_dict[args.loss]
 
     # Compile
     model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)

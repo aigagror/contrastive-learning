@@ -13,7 +13,7 @@ import utils
 class TestData(unittest.TestCase):
 
     def test_data_format(self):
-        args = '--data=cifar10 --bsz=8 --method=supcon'
+        args = '--data=cifar10 --bsz=8 --loss=supcon'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
         ds_train, ds_val, ds_info = data.load_datasets(args)

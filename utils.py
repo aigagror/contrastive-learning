@@ -11,8 +11,8 @@ parser.add_argument('--data', choices=['cifar10', 'imagenet'])
 # Model
 parser.add_argument('--model', choices=['small-resnet50v2', 'resnet50v2', 'small-resnet50v2-norm', 'resnet50v2-norm'])
 
-# Method
-parser.add_argument('--method', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
+# Loss objective
+parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
 
 # Training hyperparameters
 parser.add_argument('--init-epoch', type=int, default=0)
