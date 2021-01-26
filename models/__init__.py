@@ -14,10 +14,10 @@ def add_regularization(model, regularizer):
         print("Regularizer must be a subclass of tf.keras.regularizers.Regularizer")
         return model
 
-    for layer in model.layers:
+    for module in model.submodules:
         for attr in ['kernel_regularizer']:
-            if hasattr(layer, attr):
-                setattr(layer, attr, regularizer)
+            if hasattr(module, attr):
+                setattr(module, attr, regularizer)
 
     # When we change the layers attributes, the change only happens in the model config file
     model_json = model.to_json()
