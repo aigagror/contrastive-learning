@@ -90,7 +90,7 @@ def compile_model(args, model):
         raise Exception(f'unknown optimizer {args.optimizer}')
 
     # Loss and metrics
-    losses = {'labels': custom_losses.Float32SparseCategoricalCrossentropy(from_logits=True)}
+    losses = {'labels': tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)}
     metrics = {'labels': 'acc'}
 
     contrast_loss_dict = {

@@ -12,15 +12,15 @@ def make_model(args, nclass, input_shape):
     input2 = keras.Input(input_shape, name='imgs2')
 
     if args.model.startswith('resnet50v2'):
-        backbone = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape)
+        backbone = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape, pooling='avg')
         if args.data.startswith('cifar'):
             print('WARNING: Using standard resnet on small dataset')
     elif args.model.startswith('small-resnet50v2'):
-        backbone = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape)
+        backbone = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape, pooling='avg')
         if args.data == 'imagenet':
             print('WARNING: Using small resnet on large dataset')
     elif args.model == 'affine':
-        backbone = layers.Conv2D(128, 3)
+        backbone = keras.Sequential([layers.Conv2D(128, 3), layers.GlobalAveragePooling2D()])
     else:
         raise Exception(f'unknown model {args.model}')
 
@@ -32,11 +32,11 @@ def make_model(args, nclass, input_shape):
 
     # Features
     if args.model.endswith('-norm'):
-        feats = custom_layers.L2Normalize(name='feats')(layers.GlobalAveragePooling2D()(feat_maps))
-        feats2 = custom_layers.L2Normalize(name='feats2')(layers.GlobalAveragePooling2D()(feat_maps2))
+        feats = custom_layers.L2Normalize(name='feats')(feat_maps)
+        feats2 = custom_layers.L2Normalize(name='feats2')(feat_maps2)
     else:
-        feats = layers.GlobalAveragePooling2D(name='feats')(feat_maps)
-        feats2 = layers.GlobalAveragePooling2D(name='feats2')(feat_maps2)
+        feats = layers.Activation('linear', name='feats')(feat_maps)
+        feats2 = layers.Activation('linear', name='feats2')(feat_maps2)
 
     # Projected Features
     if args.model.endswith('-norm'):
@@ -47,14 +47,14 @@ def make_model(args, nclass, input_shape):
         proj_feats2 = layers.Dense(128, name='projection2')(feats2)
 
     # Feature views
-    proj_views = custom_layers.FeatViews(name='contrast')((proj_feats, proj_feats2))
+    proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))
 
     # Stop gradient at features?
     if args.loss != 'ce':
         feats = tf.stop_gradient(feats)
 
     # Label logits
-    prediction = layers.Dense(nclass, name='labels')(feats)
+    prediction = layers.Dense(nclass, name='labels', dtype=tf.float32)(feats)
 
     # Model
     inputs = [input, input2]
