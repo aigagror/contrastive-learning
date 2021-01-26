@@ -28,7 +28,7 @@ def run(args):
             if args.recompile:
                 training.compile_model(args, model)
                 print('recompiled model')
-                print('WARNING. Recompilation may stack regularization losses')
+                print('WARNING. Recompilation stacks regularization losses')
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
             training.compile_model(args, model)
