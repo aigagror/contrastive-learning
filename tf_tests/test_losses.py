@@ -25,7 +25,7 @@ class LossesTest(unittest.TestCase):
     # Positive singular losses with various shapes
     def test_losses_format_and_output(self):
         for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
-            for _ in range(100):
+            for _ in range(500):
                 n = tf.random.uniform([], minval=1, maxval=3, dtype=tf.int32)
                 d = tf.random.uniform([], minval=1, maxval=32, dtype=tf.int32)
 

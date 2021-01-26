@@ -1,9 +1,12 @@
 import os
 import shutil
+import tempfile
 
-from tensorflow.keras import callbacks
-import tensorflow_addons as tfa
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import callbacks, optimizers
 
+import models
 from models import custom_losses
 
 
@@ -60,9 +63,35 @@ def get_callbacks(args):
     return cbks
 
 
+def add_regularization(model, regularizer):
+    if not isinstance(regularizer, tf.keras.regularizers.Regularizer):
+        print("Regularizer must be a subclass of tf.keras.regularizers.Regularizer")
+        return model
+
+    for module in model.submodules:
+        for attr in ['kernel_regularizer', 'bias_regularizer']:
+            if hasattr(module, attr):
+                setattr(module, attr, regularizer)
+
+    # When we change the layers attributes, the change only happens in the model config file
+    tmp_model_path = os.path.join(tempfile.gettempdir(), 'tmp_model')
+    model.save(tmp_model_path)
+    model = keras.models.load_model(tmp_model_path, custom_objects=models.all_custom_objects)
+    return model
+
+
 def compile_model(args, model):
+    # L2 regularization
+    if args.l2_reg is not None:
+        regularizer = keras.regularizers.l2(args.l2_reg)
+        print(f'{args.l2_reg:.3} l2 reg')
+    else:
+        regularizer = None
+        print('no l2 regularization')
+    model = add_regularization(model, regularizer)
+
     # Optimizer
-    opt = tfa.optimizers.SGDW(args.wd, args.lr, momentum=0.9)
+    opt = optimizers.SGD(args.lr, momentum=0.9)
 
     # Loss and metrics
     losses = {'labels': custom_losses.Float32SparseCategoricalCrossentropy(from_logits=True)}
