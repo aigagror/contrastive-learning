@@ -7,7 +7,6 @@ import models
 import plots
 import training
 import utils
-from models import custom_layers, custom_losses
 from training import train
 
 
@@ -23,8 +22,7 @@ def run(args):
     with strategy.scope():
         # Model
         if args.load:
-            all_custom_objects = {**custom_layers.custom_objects, **custom_losses.custom_objects}
-            model = keras.models.load_model(os.path.join(args.out, 'model'), custom_objects=all_custom_objects)
+            model = keras.models.load_model(os.path.join(args.out, 'model'), custom_objects=models.all_custom_objects)
             print('loaded model')
             if args.recompile:
                 model = training.compile_model(args, model)

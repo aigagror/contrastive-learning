@@ -6,7 +6,8 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import callbacks, optimizers
 
-from models import custom_layers, custom_losses
+import models
+from models import custom_losses
 
 
 def train(args, model, ds_train, ds_val, ds_info):
@@ -73,17 +74,9 @@ def add_regularization(model, regularizer):
                 setattr(module, attr, regularizer)
 
     # When we change the layers attributes, the change only happens in the model config file
-    model_json = model.to_json()
-
-    # Save the weights before reloading the model.
-    tmp_weights_path = os.path.join(tempfile.gettempdir(), 'tmp_weights')
-    model.save_weights(tmp_weights_path)
-
-    # load the model from the config
-    model = tf.keras.models.model_from_json(model_json, custom_objects=custom_layers.custom_objects)
-
-    # Reload the model weights
-    model.load_weights(tmp_weights_path)
+    tmp_model_path = os.path.join(tempfile.gettempdir(), 'tmp_model')
+    model.save(tmp_model_path)
+    model = keras.models.load_model(tmp_model_path, custom_objects=models.all_custom_objects)
     return model
 
 
