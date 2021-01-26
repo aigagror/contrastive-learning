@@ -39,7 +39,9 @@ def load_cifar10(args):
 
     # Preprocess
     def process_train(img, label):
-        inputs = {'imgs': augment_cifar10_img(img), 'imgs2': augment_cifar10_img(img)}
+        inputs = {'imgs': augment_cifar10_img(img)}
+        if args.loss != 'ce':
+            inputs['imgs2']: augment_cifar10_img(img)
         targets = {'labels': label}
         return inputs, targets
 

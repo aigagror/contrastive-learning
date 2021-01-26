@@ -61,7 +61,9 @@ def load_imagenet(args):
 
     # Preprocess
     def process_train(img, label):
-        inputs = {'imgs': augment_imagenet_img(img), 'imgs2': augment_imagenet_img(img)}
+        inputs = {'imgs': augment_imagenet_img(img)}
+        if args.loss != 'ce':
+            inputs['imgs2']: augment_imagenet_img(img)
         targets = {'labels': label}
         return inputs, targets
 
