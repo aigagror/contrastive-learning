@@ -5,7 +5,13 @@ from tensorflow.keras import layers
 class StandardizeImage(layers.Layer):
 
     def call(self, inputs, **kwargs):
-        return tf.cast(inputs, self.dtype) / 127.5 - 1
+        tf.debugging.assert_rank(inputs, 4)
+
+        MEAN_RGB = [0.485 * 255, 0.456 * 255, 0.406 * 255]
+        STDDEV_RGB = [0.229 * 255, 0.224 * 255, 0.225 * 255]
+        inputs -= tf.constant(MEAN_RGB, shape=[1, 1, 1, 3], dtype=self.dtype)
+        inputs /= tf.constant(STDDEV_RGB, shape=[1, 1, 1, 3], dtype=self.dtype)
+        return inputs
 
 
 class FeatViews(layers.Layer):
