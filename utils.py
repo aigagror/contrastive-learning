@@ -24,6 +24,7 @@ parser.add_argument('--l2-reg', type=float)
 parser.add_argument('--steps-exec', type=int, help='steps per execution')
 parser.add_argument('--train-steps', type=int, help='train steps per epoch')
 parser.add_argument('--val-steps', type=int, help='val steps per epoch')
+parser.add_argument('--recompile', action='store_true')
 
 # Strategy
 parser.add_argument('--tpu', action='store_true')
