@@ -24,8 +24,8 @@ class TestModel(unittest.TestCase):
         with tf.GradientTape() as tape:
             imgs = tf.random.uniform([8, 32, 32, 3])
             imgs2 = tf.random.uniform([8, 32, 32, 3])
-            batch_sims = tf.random.uniform([8, 8])
-            pred, _ = model({'imgs': imgs, 'imgs2': imgs2, 'batch_sims': batch_sims})
+            contrast = tf.random.uniform([8, 8])
+            pred, _ = model({'imgs': imgs, 'imgs2': imgs2, 'contrast': contrast})
 
             labels = tf.random.uniform([8])
             loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)(labels, pred)
@@ -37,6 +37,28 @@ class TestModel(unittest.TestCase):
 
         # Only classifer weights and bias should have grads
         self.assertEqual(num_grads, 2)
+
+    def test_l2_reg(self):
+        args = '--data=cifar10 --model=resnet50v2 --weight-decay=1e-3 ' \
+               '--bsz=8 --lr=1e-3 --loss=ce '
+        args = utils.parser.parse_args(args.split())
+        utils.setup(args)
+
+        model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
+
+        # Assert regularization on at least 40 modules
+        self.assertGreaterEqual(len(model.losses), 40)
+
+    def test_no_l2_reg(self):
+        args = '--data=cifar10 --model=affine --weight-decay=0 ' \
+               '--bsz=8 --lr=1e-3 --loss=ce '
+        args = utils.parser.parse_args(args.split())
+        utils.setup(args)
+
+        model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
+
+        # Assert regularization
+        self.assertGreaterEqual(len(model.losses), 0)
 
 
 if __name__ == '__main__':

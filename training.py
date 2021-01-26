@@ -61,29 +61,7 @@ def get_callbacks(args):
     return cbks
 
 
-def add_regularization(args, model):
-    def compute_l2_loss():
-        l2_layer_losses = [
-            tf.nn.l2_loss(w) for w in model.trainable_weights
-            if 'gamma' not in w.name and 'beta' not in w.name
-        ]
-        l2_loss = args.weight_decay * tf.add_n(l2_layer_losses)
-        return l2_loss
-
-    return compute_l2_loss
-
-
 def compile_model(args, model):
-    # L2 regularization
-    if args.weight_decay is not None and args.weight_decay > 0:
-        if len(model.losses) >= 1:
-            print('skipped adding weight decay. model already has a regularization loss')
-        else:
-            model.add_loss(add_regularization(args, model))
-            print('added l2 regularization')
-    else:
-        print('no l2 regularization added')
-
     # Optimizer
     if args.optimizer == 'sgd':
         opt = optimizers.SGD(args.lr, momentum=0.9)
