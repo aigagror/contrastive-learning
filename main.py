@@ -26,12 +26,12 @@ def run(args):
                                             custom_objects=models.all_custom_objects)
             print('loaded model')
             if args.recompile:
-                model = training.compile_model(args, model)
+                training.compile_model(args, model)
                 print('recompiled model')
                 print('WARNING. Recompilation may stack regularization losses')
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
-            model = training.compile_model(args, model)
+            training.compile_model(args, model)
             print('starting with new model')
 
         if args.debug:
