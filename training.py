@@ -82,7 +82,12 @@ def compile_model(args, model):
             print('added l2 regularization')
 
     # Optimizer
-    opt = optimizers.SGD(args.lr, momentum=0.9)
+    if args.optimizer == 'sgd':
+        opt = optimizers.SGD(args.lr, momentum=0.9)
+    elif args.optimizer == 'adam':
+        opt = optimizers.Adam(args.lr)
+    else:
+        raise Exception(f'unknown optimizer {args.optimizer}')
 
     # Loss and metrics
     losses = {'labels': custom_losses.Float32SparseCategoricalCrossentropy(from_logits=True)}
