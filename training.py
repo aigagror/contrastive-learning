@@ -75,7 +75,7 @@ def add_regularization(args, model):
 
 def compile_model(args, model):
     # L2 regularization
-    if args.weight_decay is not None:
+    if args.weight_decay is not None and args.weight_decay > 0:
         if len(model.losses) >= 1:
             print('skipped adding weight decay. model already has a regularization loss')
         else:
