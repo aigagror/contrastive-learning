@@ -38,12 +38,16 @@ def load_cifar10(args):
     ds_val = ds_val.shuffle(len(ds_val))
 
     # Preprocess
-    def process_train(img, label):
-        inputs = {'imgs': augment_cifar10_img(img)}
-        if args.loss != 'ce':
-            inputs['imgs2']: augment_cifar10_img(img)
-        targets = {'labels': label}
-        return inputs, targets
+    if args.loss == 'ce':
+        def process_train(img, label):
+            inputs = {'imgs': augment_cifar10_img(img)}
+            targets = {'labels': label}
+            return inputs, targets
+    else:
+        def process_train(img, label):
+            inputs = {'imgs': augment_cifar10_img(img), 'imgs2': augment_cifar10_img(img)}
+            targets = {'labels': label}
+            return inputs, targets
 
     def process_val(img, label):
         return {'imgs': img, 'imgs2': augment_cifar10_img(img)}, {'labels': label}

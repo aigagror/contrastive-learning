@@ -60,12 +60,16 @@ def load_imagenet(args):
     ds_val = val_data.map(parse_imagenet_example, AUTOTUNE)
 
     # Preprocess
-    def process_train(img, label):
-        inputs = {'imgs': augment_imagenet_img(img)}
-        if args.loss != 'ce':
-            inputs['imgs2']: augment_imagenet_img(img)
-        targets = {'labels': label}
-        return inputs, targets
+    if args.loss == 'ce':
+        def process_train(img, label):
+            inputs = {'imgs': augment_imagenet_img(img)}
+            targets = {'labels': label}
+            return inputs, targets
+    else:
+        def process_train(img, label):
+            inputs = {'imgs': augment_imagenet_img(img), 'imgs2': augment_imagenet_img(img)}
+            targets = {'labels': label}
+            return inputs, targets
 
     def process_val(img, label):
         return {'imgs': min_scale_rand_crop(img, 224), 'imgs2': augment_imagenet_img(img)}, {'labels': label}
