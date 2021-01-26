@@ -76,14 +76,14 @@ def add_regularization(model, regularizer):
     model_json = model.to_json()
 
     # Save the weights before reloading the model.
-    tmp_weights_path = os.path.join(tempfile.gettempdir(), 'tmp_weights.h5')
+    tmp_weights_path = os.path.join(tempfile.gettempdir(), 'tmp_weights')
     model.save_weights(tmp_weights_path)
 
     # load the model from the config
     model = tf.keras.models.model_from_json(model_json, custom_objects=custom_layers.custom_objects)
 
     # Reload the model weights
-    model.load_weights(tmp_weights_path, by_name=True)
+    model.load_weights(tmp_weights_path)
     return model
 
 
