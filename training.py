@@ -4,7 +4,6 @@ import tempfile
 
 import tensorflow as tf
 from tensorflow import keras
-
 from tensorflow.keras import callbacks, optimizers
 
 from models import custom_layers, custom_losses
@@ -28,7 +27,7 @@ def train(args, model, ds_train, ds_val, ds_info):
             ds_train, ds_val = ds_train.repeat(), ds_val.repeat()
             if args.train_steps is None:
                 train_steps = ds_info['train_size'] // args.bsz
-                print('steps per execution set and train_steps not specified. ' 
+                print('steps per execution set and train_steps not specified. '
                       f'setting it to train_size // bsz = {train_steps}')
             if args.val_steps is None:
                 val_steps = ds_info['val_size'] // args.bsz

@@ -4,12 +4,11 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-import models
 import data
+import models
 import training
 import utils
 from models import small_resnet_v2
-import main
 
 
 class TestModel(unittest.TestCase):

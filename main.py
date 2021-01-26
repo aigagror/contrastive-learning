@@ -7,8 +7,8 @@ import models
 import plots
 import training
 import utils
-from training import train
 from models import custom_layers, custom_losses
+from training import train
 
 
 def run(args):
