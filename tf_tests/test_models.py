@@ -6,6 +6,7 @@ from tensorflow import keras
 
 import models
 import data
+import training
 import utils
 from models import small_resnet_v2
 import main
@@ -24,6 +25,7 @@ class TestModel(unittest.TestCase):
         utils.setup(args)
 
         model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
+        model = training.compile_model(args, model)
         count = 0
         for module in model.submodules:
             for attr in ['kernel_regularizer', 'bias_regularizer']:
@@ -34,6 +36,7 @@ class TestModel(unittest.TestCase):
 
         # Assert at least 40 modules were regularized
         self.assertGreaterEqual(count, 40)
+        self.assertGreaterEqual(len(model.losses), 40)
 
     def test_no_grad_ce(self):
         args = '--data=cifar10 --model=small-resnet50v2 ' \
@@ -72,7 +75,7 @@ class TestModel(unittest.TestCase):
         strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
         with strategy.scope():
             model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
-            model = models.compile_model(args, model)
+            model = training.compile_model(args, model)
         model.summary()
         model.fit(ds_train, epochs=1, steps_per_epoch=1)
 

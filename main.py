@@ -5,6 +5,7 @@ from tensorflow import keras
 import data
 import models
 import plots
+import training
 import utils
 from training import train
 from models import custom_layers, custom_losses
@@ -25,9 +26,12 @@ def run(args):
             all_custom_objects = {**custom_layers.custom_objects, **custom_losses.custom_objects}
             model = keras.models.load_model(os.path.join(args.out, 'model'), custom_objects=all_custom_objects)
             print('loaded model')
+            if args.recompile:
+                model = training.compile_model(args, model)
+                print('recompiled model')
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
-            model = models.compile_model(args, model)
+            model = training.compile_model(args, model)
             print('starting with new model')
 
         if args.debug:

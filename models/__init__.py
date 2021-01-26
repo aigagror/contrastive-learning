@@ -1,37 +1,9 @@
-import os
-import tempfile
-
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import applications, layers, optimizers
+from tensorflow.keras import applications, layers
 
 from models import custom_layers, custom_losses
 from models import small_resnet_v2
-
-
-def add_regularization(model, regularizer):
-    if not isinstance(regularizer, tf.keras.regularizers.Regularizer):
-        print("Regularizer must be a subclass of tf.keras.regularizers.Regularizer")
-        return model
-
-    for module in model.submodules:
-        for attr in ['kernel_regularizer']:
-            if hasattr(module, attr):
-                setattr(module, attr, regularizer)
-
-    # When we change the layers attributes, the change only happens in the model config file
-    model_json = model.to_json()
-
-    # Save the weights before reloading the model.
-    tmp_weights_path = os.path.join(tempfile.gettempdir(), 'tmp_weights.h5')
-    model.save_weights(tmp_weights_path)
-
-    # load the model from the config
-    model = tf.keras.models.model_from_json(model_json, custom_objects=custom_layers.custom_objects)
-
-    # Reload the model weights
-    model.load_weights(tmp_weights_path, by_name=True)
-    return model
 
 
 def make_model(args, nclass, input_shape):
@@ -73,16 +45,14 @@ def make_model(args, nclass, input_shape):
         proj_feats2 = layers.Dense(128, name='projection2')(feats2)
 
     # Feature views
-    proj_views = custom_layers.FeatViews()((proj_feats, proj_feats2))
-    proj_views = custom_layers.CastFloat32(name='contrast')(proj_views)
+    proj_views = custom_layers.FeatViews(name='contrast')((proj_feats, proj_feats2))
 
     # Stop gradient at features?
     if args.method != 'ce':
         feats = tf.stop_gradient(feats)
 
     # Label logits
-    prediction = layers.Dense(nclass)(feats)
-    prediction = custom_layers.CastFloat32(name='labels')(prediction)
+    prediction = layers.Dense(nclass, name='labels')(feats)
 
     # Model
     inputs = [input, input2]
@@ -93,33 +63,3 @@ def make_model(args, nclass, input_shape):
     return model
 
 
-def compile_model(args, model):
-    # L2 regularization
-    if args.l2_reg is not None:
-        regularizer = keras.regularizers.l2(args.l2_reg)
-        print(f'{args.l2_reg:.3} l2 reg')
-    else:
-        regularizer = None
-        print('no l2 regularization')
-    model = add_regularization(model, regularizer)
-
-    # Optimizer
-    opt = optimizers.SGD(args.lr, momentum=0.9)
-
-    # Loss and metrics
-    losses = {'labels': keras.losses.SparseCategoricalCrossentropy(from_logits=True)}
-    metrics = {'labels': 'acc'}
-
-    contrast_loss_dict = {
-        'supcon': custom_losses.SupCon(),
-        'partial-supcon': custom_losses.PartialSupCon(),
-        'simclr': custom_losses.SimCLR(),
-        'no-op': custom_losses.NoOp()
-    }
-    if args.method in contrast_loss_dict:
-        losses['contrast'] = contrast_loss_dict[args.method]
-
-    # Compile
-    model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)
-
-    return model
