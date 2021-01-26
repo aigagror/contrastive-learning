@@ -22,11 +22,13 @@ def run(args):
     with strategy.scope():
         # Model
         if args.load:
-            model = keras.models.load_model(os.path.join(args.out, 'model'), custom_objects=models.all_custom_objects)
+            model = keras.models.load_model(os.path.join(args.out, 'model'), compile=(not args.recompile),
+                                            custom_objects=models.all_custom_objects)
             print('loaded model')
             if args.recompile:
                 model = training.compile_model(args, model)
                 print('recompiled model')
+                print('WARNING. Recompilation may stack regularization losses')
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
             model = training.compile_model(args, model)

@@ -109,15 +109,18 @@ class PartialSupCon(ConLoss):
         loss = partial_supcon_loss + nn.softmax_cross_entropy_with_logits(inst_mask, sims)
         return loss
 
+
 class Float32SparseCategoricalCrossentropy(tf.keras.losses.SparseCategoricalCrossentropy):
     def call(self, y_true, y_pred):
         y_true = tf.cast(y_true, tf.float32)
         y_pred = tf.cast(y_pred, tf.float32)
         return super().call(y_true, y_pred)
 
+
 custom_objects = {
     'NoOp': NoOp,
     'SimCLR': SimCLR,
     'SupCon': SupCon,
-    'PartialSupCon': PartialSupCon
+    'PartialSupCon': PartialSupCon,
+    'Float32SparseCategoricalCrossentropy': Float32SparseCategoricalCrossentropy
 }

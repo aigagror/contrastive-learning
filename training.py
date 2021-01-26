@@ -1,12 +1,9 @@
 import os
 import shutil
-import tempfile
 
 import tensorflow as tf
-from tensorflow import keras
 from tensorflow.keras import callbacks, optimizers
 
-import models
 from models import custom_losses
 
 
@@ -63,32 +60,22 @@ def get_callbacks(args):
     return cbks
 
 
-def add_regularization(model, regularizer):
-    if not isinstance(regularizer, tf.keras.regularizers.Regularizer):
-        print("Regularizer must be a subclass of tf.keras.regularizers.Regularizer")
-        return model
+def add_regularization(args, model):
+    def compute_l2_loss():
+        l2_layer_losses = [
+            tf.nn.l2_loss(w) for w in model.trainable_weights
+            if 'gamma' not in w.name and 'beta' not in w.name
+        ]
+        l2_loss = args.weight_decay * tf.add_n(l2_layer_losses)
+        return l2_loss
 
-    for module in model.submodules:
-        for attr in ['kernel_regularizer', 'bias_regularizer']:
-            if hasattr(module, attr):
-                setattr(module, attr, regularizer)
-
-    # When we change the layers attributes, the change only happens in the model config file
-    tmp_model_path = os.path.join(tempfile.gettempdir(), 'tmp_model')
-    model.save(tmp_model_path)
-    model = keras.models.load_model(tmp_model_path, custom_objects=models.all_custom_objects)
-    return model
+    return compute_l2_loss
 
 
 def compile_model(args, model):
     # L2 regularization
-    if args.l2_reg is not None:
-        regularizer = keras.regularizers.l2(args.l2_reg)
-        print(f'{args.l2_reg:.3} l2 reg')
-    else:
-        regularizer = None
-        print('no l2 regularization')
-    model = add_regularization(model, regularizer)
+    if args.weight_decay is not None:
+        model.add_loss(add_regularization(args, model))
 
     # Optimizer
     opt = optimizers.SGD(args.lr, momentum=0.9)
@@ -108,5 +95,3 @@ def compile_model(args, model):
 
     # Compile
     model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)
-
-    return model

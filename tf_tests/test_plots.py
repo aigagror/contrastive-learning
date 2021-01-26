@@ -1,15 +1,16 @@
 import unittest
 
+import tensorflow as tf
+
 import data
 import models
 import plots
 import utils
-import tensorflow as tf
 
 
 class TestPlots(unittest.TestCase):
     def basic_usage(self):
-        args = '--data=cifar10 --model=small-resnet50v2-norm ' \
+        args = '--data=cifar10 --model=affine ' \
                '--bsz=8 --lr=1e-3 ' \
                '--loss=partial-supcon '
         args = utils.parser.parse_args(args.split())
@@ -23,14 +24,14 @@ class TestPlots(unittest.TestCase):
         return args, strategy, model, ds_val
 
     def test_hist(self):
-        self.skipTest('takes too long')
         args, strategy, model, ds_val = self.basic_usage()
         plots.plot_hist_sims(args, strategy, model, ds_val.take(1))
+        print(f'hist saved to {args.out}')
 
     def test_tsne(self):
-        self.skipTest('takes too long')
         args, strategy, model, ds_val = self.basic_usage()
         plots.plot_tsne(args, strategy, model, ds_val.take(1))
+        print(f'tsne saved to {args.out}')
 
 
 if __name__ == '__main__':

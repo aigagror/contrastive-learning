@@ -9,7 +9,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--data', choices=['cifar10', 'imagenet'])
 
 # Model
-parser.add_argument('--model', choices=['small-resnet50v2', 'resnet50v2', 'small-resnet50v2-norm', 'resnet50v2-norm'])
+parser.add_argument('--model', choices=['small-resnet50v2', 'resnet50v2',
+                                        'small-resnet50v2-norm', 'resnet50v2-norm',
+                                        'affine'])
 
 # Loss objective
 parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
@@ -26,7 +28,7 @@ parser.add_argument('--val-steps', type=int, help='val steps per epoch')
 parser.add_argument('--lr', type=float)
 parser.add_argument('--lr-decays', type=int, nargs='+', help='decays learning rate at the specified epochs')
 
-parser.add_argument('--l2-reg', type=float)
+parser.add_argument('--weight-decay', type=float, default=1e-4)
 
 parser.add_argument('--recompile', action='store_true')
 
