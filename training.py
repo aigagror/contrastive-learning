@@ -75,7 +75,11 @@ def add_regularization(args, model):
 def compile_model(args, model):
     # L2 regularization
     if args.weight_decay is not None:
-        model.add_loss(add_regularization(args, model))
+        if len(model.losses) >= 1:
+            print('model already has a regularization loss')
+        else:
+            model.add_loss(add_regularization(args, model))
+            print('added l2 regularization')
 
     # Optimizer
     opt = optimizers.SGD(args.lr, momentum=0.9)
