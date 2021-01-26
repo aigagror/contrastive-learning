@@ -80,6 +80,8 @@ def compile_model(args, model):
         else:
             model.add_loss(add_regularization(args, model))
             print('added l2 regularization')
+    else:
+        print('no l2 regularization added')
 
     # Optimizer
     if args.optimizer == 'sgd':
