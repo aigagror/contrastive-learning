@@ -64,6 +64,7 @@ def plot_img_samples(args, ds_train, ds_val):
 
     f.tight_layout()
     f.savefig(os.path.join('out/', 'img-samples.jpg'))
+    plt.show()
 
 
 def get_all_sims(labels, feats1, feats2, proj1, proj2):

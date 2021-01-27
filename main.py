@@ -37,6 +37,8 @@ def run(args):
         print(f'{len(model.losses)} regularization losses in this model')
 
     model.summary()
+    if args.debug:
+        keras.utils.plot_model(model)
 
     # Train
     train(args, model, ds_train, ds_val, ds_info)
