@@ -69,10 +69,11 @@ def compile_model(args, model):
         print(f'{opt.__class__.__name__} optimizer')
 
     # Loss and metrics
-    ce_loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-    ce_acc = tf.keras.metrics.SparseCategoricalAccuracy()
+    ce_loss = tf.keras.losses.SparseCategoricalCrossentropy(name='ce', from_logits=True)
+    acc_metric = tf.keras.metrics.SparseCategoricalAccuracy(name='acc')
+    ce_metric = tf.keras.metrics.SparseCategoricalCrossentropy(name='ce', from_logits=True)
     losses = {'labels': ce_loss}
-    metrics = {'labels': [ce_acc, ce_loss]}
+    metrics = {'labels': [acc_metric, ce_metric]}
 
     contrast_loss_dict = {
         'supcon': custom_losses.SupCon(),
