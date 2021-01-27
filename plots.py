@@ -57,6 +57,8 @@ def plot_img_samples(args, ds_train, ds_val):
     for i, ds in enumerate([ds_train, ds_val]):
         inputs, _ = next(iter(ds))
         for j, img in enumerate(inputs['imgs']):
+            if j >= 8:
+                break
             ax[i, j].set_title('train' if i == 0 else 'val')
             ax[i, j].imshow(img)
 
