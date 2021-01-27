@@ -34,6 +34,9 @@ def run(args):
             training.compile_model(args, model)
             print('starting with new model')
 
+        if len(model.losses) <= 0:
+            print('WARNING: No regularization in this model')
+
     if args.debug:
         model.summary()
 
