@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.keras import callbacks, optimizers
 
 from models import custom_losses
-
+import tensorflow_addons as tfa
 
 def train(args, model, ds_train, ds_val, ds_info):
     # Callbacks
@@ -61,10 +61,12 @@ def compile_model(args, model):
         opt = optimizers.SGD(args.lr, momentum=0.9)
     elif args.optimizer == 'adam':
         opt = optimizers.Adam(args.lr)
+    elif args.optimizer == 'lamb':
+        opt = tfa.optimizers.LAMB(args.lr)
     else:
         raise Exception(f'unknown optimizer {args.optimizer}')
     if args.debug:
-        print(f'{opt} optimizer')
+        print(f'{opt.__class__.__name__} optimizer')
 
     # Loss and metrics
     ce_loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)

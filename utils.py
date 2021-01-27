@@ -19,7 +19,7 @@ parser.add_argument('--model', choices=['small-resnet50v2', 'small-resnet50v2-no
 parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
 
 # Training hyperparameters
-parser.add_argument('--optimizer', choices=['sgd', 'adam'], default='sgd')
+parser.add_argument('--optimizer', choices=['sgd', 'adam', 'lamb'], default='sgd')
 
 parser.add_argument('--init-epoch', type=int, default=0)
 parser.add_argument('--epochs', type=int)
