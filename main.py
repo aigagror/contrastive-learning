@@ -36,8 +36,7 @@ def run(args):
 
         print(f'{len(model.losses)} regularization losses in this model')
 
-    if args.debug:
-        model.summary()
+    model.summary()
 
     # Train
     train(args, model, ds_train, ds_val, ds_info)
