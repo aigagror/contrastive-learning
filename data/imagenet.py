@@ -65,14 +65,17 @@ def load_imagenet(args):
             inputs = {'imgs': augment_imagenet_img(img)}
             targets = {'labels': label}
             return inputs, targets
+
+        def process_val(img, label):
+            return {'imgs': min_scale_rand_crop(img, 224)}, {'labels': label}
     else:
         def process_train(img, label):
             inputs = {'imgs': augment_imagenet_img(img), 'imgs2': augment_imagenet_img(img)}
             targets = {'labels': label}
             return inputs, targets
 
-    def process_val(img, label):
-        return {'imgs': min_scale_rand_crop(img, 224), 'imgs2': augment_imagenet_img(img)}, {'labels': label}
+        def process_val(img, label):
+            return {'imgs': min_scale_rand_crop(img, 224), 'imgs2': augment_imagenet_img(img)}, {'labels': label}
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)

@@ -43,14 +43,17 @@ def load_cifar10(args):
             inputs = {'imgs': augment_cifar10_img(img)}
             targets = {'labels': label}
             return inputs, targets
+
+        def process_val(img, label):
+            return {'imgs': img}, {'labels': label}
     else:
         def process_train(img, label):
             inputs = {'imgs': augment_cifar10_img(img), 'imgs2': augment_cifar10_img(img)}
             targets = {'labels': label}
             return inputs, targets
 
-    def process_val(img, label):
-        return {'imgs': img, 'imgs2': augment_cifar10_img(img)}, {'labels': label}
+        def process_val(img, label):
+            return {'imgs': img, 'imgs2': augment_cifar10_img(img)}, {'labels': label}
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
