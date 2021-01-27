@@ -12,7 +12,7 @@ class TestMain(unittest.TestCase):
     def test_train_ce_load(self):
         args = '--data=fake-cifar10 --model=affine ' \
                '--bsz=2 --lr=1e-3 --loss=ce ' \
-               '--epochs=1 '
+               '--epochs=1 --debug '
         args = utils.parser.parse_args(args.split())
         main.run(args)
 
@@ -23,9 +23,9 @@ class TestMain(unittest.TestCase):
         main.run(args)
 
     def test_distributed_partial_supcon_from_load(self):
-        args = '--data=fake-cifar10 --model=affine ' \
+        args = '--data=fake-cifar10 --model=affine-norm ' \
                '--bsz=2 --lr=1e-3 --loss=partial-supcon ' \
-               '--epochs=1 --multi-cpu '
+               '--epochs=1 --multi-cpu --debug '
         args = utils.parser.parse_args(args.split())
         main.run(args)
 

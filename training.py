@@ -1,5 +1,4 @@
 import os
-import shutil
 
 import tensorflow as tf
 from tensorflow.keras import callbacks, optimizers
@@ -8,14 +7,6 @@ from models import custom_losses
 
 
 def train(args, model, ds_train, ds_val, ds_info):
-    # Output
-    if not args.load:
-        if args.out.startswith('gs://'):
-            os.system(f"gsutil -m rm {os.path.join(args.out, '**')}")
-        else:
-            shutil.rmtree(args.out)
-            os.mkdir(args.out)
-
     # Callbacks
     cbks = get_callbacks(args)
 

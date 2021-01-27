@@ -1,4 +1,6 @@
 import argparse
+import os
+import shutil
 
 import tensorflow as tf
 from tensorflow.keras import mixed_precision
@@ -9,9 +11,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--data', choices=['imagenet', 'cifar10', 'fake-cifar10'])
 
 # Model
-parser.add_argument('--model', choices=['small-resnet50v2', 'resnet50v2',
-                                        'small-resnet50v2-norm', 'resnet50v2-norm',
-                                        'affine'])
+parser.add_argument('--model', choices=['small-resnet50v2', 'small-resnet50v2-norm',
+                                        'resnet50v2', 'resnet50v2-norm',
+                                        'affine', 'affine-norm'])
 
 # Loss objective
 parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
@@ -52,6 +54,14 @@ parser.add_argument('--update-freq', type=str, default='epoch', help='tensorboar
 def setup(args):
     # Logging
     tf.get_logger().setLevel('DEBUG' if args.debug else 'WARNING')
+
+    # Output
+    if not args.load:
+        if args.out.startswith('gs://'):
+            os.system(f"gsutil -m rm {os.path.join(args.out, '**')}")
+        else:
+            shutil.rmtree(args.out)
+            os.mkdir(args.out)
 
     # Strategy
     if args.tpu:

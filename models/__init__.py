@@ -28,9 +28,6 @@ def make_model(args, nclass, input_shape):
     else:
         regularizer = None
 
-    # L2 normalizer
-    l2_norm = custom_layers.L2Normalize()
-
     # Inputs
     input = keras.Input(input_shape, name='imgs')
     input2 = keras.Input(input_shape, name='imgs2')
@@ -43,7 +40,7 @@ def make_model(args, nclass, input_shape):
         backbone = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape, pooling='avg')
         if args.data == 'imagenet':
             print('WARNING: Using small resnet on large dataset')
-    elif args.model == 'affine':
+    elif args.model.startswith('affine'):
         backbone = keras.Sequential([
             layers.Conv2D(128, 3, kernel_regularizer=regularizer, bias_regularizer=regularizer),
             layers.GlobalAveragePooling2D()
@@ -63,26 +60,26 @@ def make_model(args, nclass, input_shape):
 
     # Normalize?
     if args.model.endswith('-norm'):
-        feats = l2_norm(feats)
-        feats2 = l2_norm(feats2)
+        feats = custom_layers.L2Normalize()(feats)
+        feats2 = custom_layers.L2Normalize()(feats2)
 
     # Name the features
     feats = layers.Activation('linear', name='feats')(feats)
     feats2 = layers.Activation('linear', name='feats2')(feats2)
 
     # Projected features
-    projection = layers.Dense(128, kernel_regularizer=regularizer, bias_regularizer=regularizer)
+    projection = layers.Dense(128, name='projection', kernel_regularizer=regularizer, bias_regularizer=regularizer)
     proj_feats = projection(feats)
     proj_feats2 = projection(feats2)
 
     # Normalize?
     if args.model.endswith('-norm'):
-        proj_feats = l2_norm(proj_feats)
-        proj_feats2 = l2_norm(proj_feats2)
+        proj_feats = custom_layers.L2Normalize()(proj_feats)
+        proj_feats2 = custom_layers.L2Normalize()(proj_feats2)
 
     # Name the projected features
-    proj_feats = layers.Activation('linear', name='projection')(proj_feats)
-    proj_feats2 = layers.Activation('linear', name='projection2')(proj_feats2)
+    proj_feats = layers.Activation('linear', name='proj_feats')(proj_feats)
+    proj_feats2 = layers.Activation('linear', name='proj_feats2')(proj_feats2)
 
     # Feature views
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))

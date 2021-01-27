@@ -46,7 +46,7 @@ class TestModel(unittest.TestCase):
 
         model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
 
-        proj_outs = [model.get_layer(name='projection').output, model.get_layer(name='projection2').output]
+        proj_outs = [model.get_layer(name='proj_feats').output, model.get_layer(name='proj_feats2').output]
 
         proj_model = keras.Model(model.inputs, proj_outs)
 

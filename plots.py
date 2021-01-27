@@ -9,7 +9,7 @@ def plot_tsne(args, strategy, model, ds_val):
     print('plotting tsne of features')
     from sklearn import manifold
 
-    outputs = [model.get_layer(name=name).output for name in ['feats', 'projection']]
+    outputs = [model.get_layer(name=name).output for name in ['feats', 'proj_feats']]
     feat_model = tf.keras.Model(model.input, outputs)
 
     @tf.function
@@ -97,7 +97,7 @@ def get_all_sims(labels, feats1, feats2, proj1, proj2):
 def plot_hist_sims(args, strategy, model, ds_val):
     print('plotting similarities histograms')
 
-    outputs = [model.get_layer(name=name).output for name in ['feats', 'feats2', 'projection', 'projection2']]
+    outputs = [model.get_layer(name=name).output for name in ['feats', 'feats2', 'proj_feats', 'proj_feats2']]
     feat_model = tf.keras.Model(model.input, outputs)
 
     @tf.function
