@@ -1,4 +1,4 @@
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 
 CROP_PADDING = 32
 
@@ -8,8 +8,7 @@ def distorted_bounding_box_crop(image_bytes,
                                 min_object_covered=0.1,
                                 aspect_ratio_range=(0.75, 1.33),
                                 area_range=(0.05, 1.0),
-                                max_attempts=100,
-                                scope=None):
+                                max_attempts=100):
     """Generates cropped_image using one of the bboxes randomly distorted.
 
     See `tf.image.sample_distorted_bounding_box` for more documentation.
@@ -30,11 +29,10 @@ def distorted_bounding_box_crop(image_bytes,
       max_attempts: An optional `int`. Number of attempts at generating a cropped
           region of the image of the specified constraints. After `max_attempts`
           failures, return the entire image.
-      scope: Optional `str` for name scope.
     Returns:
       cropped image `Tensor`
     """
-    with tf.name_scope(scope, 'distorted_bounding_box_crop', [image_bytes, bbox]):
+    with tf.name_scope('distorted_bounding_box_crop'):
         shape = tf.image.extract_jpeg_shape(image_bytes)
         sample_distorted_bounding_box = tf.image.sample_distorted_bounding_box(
             shape,
@@ -71,16 +69,14 @@ def _decode_and_random_crop(image_bytes, image_size):
         min_object_covered=0.1,
         aspect_ratio_range=(3. / 4, 4. / 3.),
         area_range=(0.08, 1.0),
-        max_attempts=10,
-        scope=None)
+        max_attempts=10)
     original_shape = tf.image.extract_jpeg_shape(image_bytes)
     bad = _at_least_x_are_equal(original_shape, tf.shape(image), 3)
 
     image = tf.cond(
         bad,
         lambda: _decode_and_center_crop(image_bytes, image_size),
-        lambda: tf.image.resize_bicubic([image],  # pylint: disable=g-long-lambda
-                                        [image_size, image_size])[0])
+        lambda: tf.image.resize([image], [image_size, image_size], method='bicubic')[0])
 
     return image
 
@@ -101,7 +97,7 @@ def _decode_and_center_crop(image_bytes, image_size):
     crop_window = tf.stack([offset_height, offset_width,
                             padded_center_crop_size, padded_center_crop_size])
     image = tf.image.decode_and_crop_jpeg(image_bytes, crop_window, channels=3)
-    image = tf.image.resize_bicubic([image], [image_size, image_size])[0]
+    image = tf.image.resize([image], [image_size, image_size], method='bicubic')[0]
 
     return image
 
