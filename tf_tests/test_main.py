@@ -7,8 +7,9 @@ import utils
 class TestMain(unittest.TestCase):
     def setUp(self) -> None:
         self.skipTest('takes too long')
+        pass
 
-    def test_train_from_load(self):
+    def test_train_ce_load(self):
         args = '--data=fake-cifar10 --model=affine ' \
                '--bsz=2 --lr=1e-3 --loss=ce ' \
                '--epochs=1 '
@@ -21,15 +22,15 @@ class TestMain(unittest.TestCase):
         args = utils.parser.parse_args(args.split())
         main.run(args)
 
-    def test_distributed_train_from_load(self):
+    def test_distributed_partial_supcon_from_load(self):
         args = '--data=fake-cifar10 --model=affine ' \
-               '--bsz=2 --lr=1e-3 --loss=ce ' \
+               '--bsz=2 --lr=1e-3 --loss=partial-supcon ' \
                '--epochs=1 --multi-cpu '
         args = utils.parser.parse_args(args.split())
         main.run(args)
 
         args = '--data=fake-cifar10 --load ' \
-               '--bsz=2 --lr=1e-3 --loss=ce ' \
+               '--bsz=2 --lr=1e-3 --loss=partial-supcon ' \
                '--epochs=1 --multi-cpu '
         args = utils.parser.parse_args(args.split())
         main.run(args)
