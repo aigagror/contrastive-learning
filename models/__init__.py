@@ -81,10 +81,6 @@ def make_model(args, nclass, input_shape):
     # Feature views
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))
 
-    # Stop gradient at features?
-    if args.loss != 'ce':
-        feats = tf.stop_gradient(feats)
-
     # Label logits
     prediction = layers.Dense(nclass, name='labels', kernel_regularizer=regularizer, bias_regularizer=regularizer,
                               dtype=tf.float32)(feats)
