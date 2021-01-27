@@ -36,6 +36,7 @@ def run(args):
 
         print(f'{len(model.losses)} regularization losses in this model')
 
+    # Print model information
     model.summary()
     if args.debug:
         keras.utils.plot_model(model, 'out/model.png')
