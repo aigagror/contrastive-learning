@@ -25,12 +25,13 @@ class LossesTest(unittest.TestCase):
     # Positive singular losses with various shapes
     def test_losses_format_and_output(self):
         for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
-            for _ in range(500):
+            for _ in range(100):
                 n = tf.random.uniform([], minval=1, maxval=3, dtype=tf.int32)
                 d = tf.random.uniform([], minval=1, maxval=32, dtype=tf.int32)
 
                 y = 2 * tf.eye(n, dtype=tf.int32)
                 x = tf.random.uniform([n, 2, d], minval=-1, maxval=1)
+                x = tf.linalg.l2_normalize(x, axis=2)
                 loss = loss_fn(y, x)
                 tf.debugging.assert_greater_equal(loss, tf.zeros_like(loss), f'{loss_fn}\nx={x}\ny={y}')
                 tf.debugging.assert_shapes([

@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow.keras import datasets
 from tensorflow.python.data import AUTOTUNE
 
-from data.data_utils import color_augment
+from data.preprocess import color_augment
 
 
 def augment_cifar10_img(image):

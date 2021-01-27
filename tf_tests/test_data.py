@@ -5,12 +5,30 @@ import tensorflow as tf
 
 import data
 import data.cifar10
-import data.data_utils
 import data.imagenet
+import data.preprocess
 import utils
 
 
 class TestData(unittest.TestCase):
+
+    def test_preprocess_for_train_and_eval(self):
+        image_bytes = tf.io.read_file('images/imagenet-sample.jpg')
+
+        for name, preprocess_fn in [('preprocess-for-train', data.preprocess.preprocess_for_train),
+                                    ('preprocess-for-eval', data.preprocess.preprocess_for_eval)]:
+            f, ax = plt.subplots(1, 9)
+            f.set_size_inches(20, 5)
+            ax[0].set_title('original')
+            ax[0].imshow(tf.image.decode_image(image_bytes))
+            for i in range(1, 9):
+                new_img = preprocess_fn(image_bytes, 224)
+                tf.debugging.assert_type(new_img, tf.uint8)
+                ax[i].set_title('augmentation')
+                ax[i].imshow(new_img)
+            f.tight_layout()
+            f.savefig(f'images/{name}.jpg')
+        print("Test images saved to 'data/images/'")
 
     def test_data_format(self):
         args = '--data=cifar10 --bsz=8 --loss=supcon'
@@ -48,22 +66,6 @@ class TestData(unittest.TestCase):
             tf.debugging.assert_less_equal(contrast, 2 * tf.ones_like(contrast))
             tf.debugging.assert_greater_equal(contrast, tf.zeros_like(contrast))
 
-    def test_imagenet_augmentation(self):
-        img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'))
-
-        f, ax = plt.subplots(1, 9)
-        f.set_size_inches(20, 5)
-        ax[0].set_title('original')
-        ax[0].imshow(img)
-        for i in range(1, 9):
-            aug_img = data.imagenet.augment_imagenet_img(img)
-            tf.debugging.assert_type(aug_img, tf.uint8)
-            ax[i].set_title('augmentation')
-            ax[i].imshow(aug_img)
-        f.tight_layout()
-        f.savefig('images/imagenet-sample-augmentations.jpg')
-        print("Test images saved to 'data/images/'")
-
     def test_cifar10_augmentation(self):
         img = tf.io.decode_image(tf.io.read_file('images/cifar10-sample.png'))
 
@@ -78,25 +80,6 @@ class TestData(unittest.TestCase):
             ax[i].imshow(aug_img)
         f.tight_layout()
         f.savefig('images/cifar10-sample-augmentations.jpg')
-        print("Test images saved to 'data/images/'")
-
-    def test_min_scale_crops(self):
-        img = tf.io.decode_image(tf.io.read_file('images/imagenet-sample.jpg'), channels=3)
-        tf.debugging.assert_shapes([(img, [None, None, 3])])
-
-        for resize_fn in [data.data_utils.min_scale_rand_crop, data.data_utils.min_scale_center_crop]:
-            f, ax = plt.subplots(1, 9)
-            f.set_size_inches(20, 5)
-            ax[0].set_title('original')
-            ax[0].imshow(img)
-
-            for i in range(1, 9):
-                resized_img = resize_fn(img, 224)
-                tf.debugging.assert_type(resized_img, tf.uint8)
-                ax[i].set_title('resize')
-                ax[i].imshow(resized_img)
-            f.tight_layout()
-            f.savefig(f'images/test-{resize_fn.__name__}.jpg')
         print("Test images saved to 'data/images/'")
 
 

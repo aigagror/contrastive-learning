@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.python.data import AUTOTUNE
 
-from data.data_utils import scale_min_dim, color_augment, min_scale_rand_crop
+from data.preprocess import preprocess_for_train, preprocess_for_eval
 
 
 def parse_imagenet_example(serial):
@@ -17,36 +17,8 @@ def parse_imagenet_example(serial):
         'image/encoded': tf.io.FixedLenFeature([], tf.string),
     }
     example = tf.io.parse_example(serial, features)
-    img = tf.io.decode_image(example['image/encoded'], channels=3, expand_animations=False)
     label = example['image/class/label'] - 1
-    return img, label
-
-
-def augment_imagenet_img(image):
-    """
-    From original resnet paper
-    https://arxiv.org/pdf/1512.03385.pdf
-    :param image:
-    :return:
-    """
-
-    # Random scale
-    rand_size = tf.random.uniform([], 256, 481, tf.int32)
-    image = scale_min_dim(image, rand_size)
-
-    # Random crop
-    image = tf.image.random_crop(image, [224, 224, 3])
-
-    # Random flip
-    image = tf.image.random_flip_left_right(image)
-
-    # Color augment
-    image = color_augment(image)
-
-    # Clip
-    image = tf.clip_by_value(image, 0, 255)
-    image = tf.cast(image, tf.uint8)
-    return image
+    return example['image/encoded'], label
 
 
 def load_imagenet(args):
@@ -61,21 +33,22 @@ def load_imagenet(args):
 
     # Preprocess
     if args.loss == 'ce':
-        def process_train(img, label):
-            inputs = {'imgs': augment_imagenet_img(img)}
+        def process_train(img_bytes, label):
+            inputs = {'imgs': preprocess_for_train(img_bytes, 224)}
             targets = {'labels': label}
             return inputs, targets
 
-        def process_val(img, label):
-            return {'imgs': min_scale_rand_crop(img, 224)}, {'labels': label}
+        def process_val(img_bytes, label):
+            return {'imgs': preprocess_for_eval(img_bytes, 224)}, {'labels': label}
     else:
-        def process_train(img, label):
-            inputs = {'imgs': augment_imagenet_img(img), 'imgs2': augment_imagenet_img(img)}
+        def process_train(img_bytes, label):
+            inputs = {'imgs': preprocess_for_train(img_bytes, 224), 'imgs2': preprocess_for_train(img_bytes, 224)}
             targets = {'labels': label}
             return inputs, targets
 
-        def process_val(img, label):
-            return {'imgs': min_scale_rand_crop(img, 224), 'imgs2': augment_imagenet_img(img)}, {'labels': label}
+        def process_val(img_bytes, label):
+            return {'imgs': preprocess_for_eval(img_bytes, 224), 'imgs2': preprocess_for_train(img_bytes, 224)}, {
+                'labels': label}
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)
