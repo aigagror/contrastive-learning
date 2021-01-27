@@ -82,7 +82,7 @@ def compile_model(args, model):
     }
     if args.loss in contrast_loss_dict:
         losses['contrast'] = contrast_loss_dict[args.loss]
-        if not args.model.endswith('-norm'):
+        if args.model is not None and not args.model.endswith('-norm'):
             print('WARNING: Optimizing over contrastive loss without l2 normalization')
 
     # Compile
