@@ -6,7 +6,7 @@ from tensorflow.keras import mixed_precision
 parser = argparse.ArgumentParser()
 
 # Data
-parser.add_argument('--data', choices=['cifar10', 'imagenet'])
+parser.add_argument('--data', choices=['imagenet', 'cifar10', 'fake-cifar10'])
 
 # Model
 parser.add_argument('--model', choices=['small-resnet50v2', 'resnet50v2',
@@ -35,6 +35,7 @@ parser.add_argument('--recompile', action='store_true')
 
 # Strategy
 parser.add_argument('--tpu', action='store_true')
+parser.add_argument('--multi-cpu', action='store_true')
 parser.add_argument('--policy', choices=['mixed_bfloat16', 'float32'], default='float32')
 
 # Other
@@ -61,6 +62,8 @@ def setup(args):
         strategy = tf.distribute.TPUStrategy(resolver)
     elif len(tf.config.list_physical_devices('GPU')) > 1:
         strategy = tf.distribute.MirroredStrategy()
+    elif args.multi_cpu:
+        strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
     else:
         strategy = tf.distribute.get_strategy()
 

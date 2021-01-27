@@ -33,9 +33,6 @@ def run(args):
             training.compile_model(args, model)
             print('starting with new model')
 
-        if len(model.losses) > 1:
-            print('WARNING: model has more than 1 regularization loss')
-
     if args.debug:
         model.summary()
 
@@ -43,7 +40,8 @@ def run(args):
     train(args, model, ds_train, ds_val, ds_info)
 
     # Plot
-    plots.plot_hist_sims(args, strategy, model, ds_val)
+    if args.loss != 'ce':
+        plots.plot_hist_sims(args, strategy, model, ds_val)
     if args.tsne:
         plots.plot_tsne(args, strategy, model, ds_val)
 
