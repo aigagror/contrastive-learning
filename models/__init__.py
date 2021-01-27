@@ -28,6 +28,9 @@ def make_model(args, nclass, input_shape):
     else:
         regularizer = None
 
+    # L2 normalizer
+    l2_norm = custom_layers.L2Normalize()
+
     # Inputs
     input = keras.Input(input_shape, name='imgs')
     input2 = keras.Input(input_shape, name='imgs2')
@@ -54,29 +57,32 @@ def make_model(args, nclass, input_shape):
     # Standardize input
     stand_img = custom_layers.StandardizeImage()
 
-    # Feature maps
-    feat_maps = backbone(stand_img(input))
-    feat_maps2 = backbone(stand_img(input2))
-
     # Features
-    if args.model.endswith('-norm'):
-        feats = custom_layers.L2Normalize(name='feats')(feat_maps)
-        feats2 = custom_layers.L2Normalize(name='feats2')(feat_maps2)
-    else:
-        feats = layers.Activation('linear', name='feats')(feat_maps)
-        feats2 = layers.Activation('linear', name='feats2')(feat_maps2)
+    feats = backbone(stand_img(input))
+    feats2 = backbone(stand_img(input2))
 
-    # Projected Features
+    # Normalize?
     if args.model.endswith('-norm'):
-        proj_feats = layers.Dense(128, kernel_regularizer=regularizer, bias_regularizer=regularizer)(feats)
-        proj_feats2 = layers.Dense(128, kernel_regularizer=regularizer, bias_regularizer=regularizer)(feats2)
-        proj_feats = custom_layers.L2Normalize(name='projection')(proj_feats)
-        proj_feats2 = custom_layers.L2Normalize(name='projection2')(proj_feats2)
-    else:
-        proj_feats = layers.Dense(128, name='projection', kernel_regularizer=regularizer,
-                                  bias_regularizer=regularizer)(feats)
-        proj_feats2 = layers.Dense(128, name='projection2', kernel_regularizer=regularizer,
-                                   bias_regularizer=regularizer)(feats2)
+        feats = l2_norm(feats)
+        feats2 = l2_norm(feats2)
+
+    # Name the features
+    feats = layers.Activation('linear', name='feats')(feats)
+    feats2 = layers.Activation('linear', name='feats2')(feats2)
+
+    # Projected features
+    projection = layers.Dense(128, kernel_regularizer=regularizer, bias_regularizer=regularizer)
+    proj_feats = projection(feats)
+    proj_feats2 = projection(feats2)
+
+    # Normalize?
+    if args.model.endswith('-norm'):
+        proj_feats = l2_norm(proj_feats)
+        proj_feats2 = l2_norm(proj_feats2)
+
+    # Name the projected features
+    proj_feats = layers.Activation('linear', name='projection')(proj_feats)
+    proj_feats2 = layers.Activation('linear', name='projection2')(proj_feats2)
 
     # Feature views
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))

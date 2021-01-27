@@ -39,6 +39,27 @@ class TestModel(unittest.TestCase):
         # Only classifer weights and bias should have grads
         self.assertEqual(num_grads, 2)
 
+    def test_equal_proj(self):
+        args = '--model=affine --loss=supcon '
+        args = utils.parser.parse_args(args.split())
+        utils.setup(args)
+
+        model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
+
+        proj_outs = [model.get_layer(name='projection').output, model.get_layer(name='projection2').output]
+
+        proj_model = keras.Model(model.inputs, proj_outs)
+
+        # Equal proj
+        inputs = {'imgs': tf.ones([1, 32, 32, 3]), 'imgs2': tf.ones([1, 32, 32, 3])}
+        outputs = proj_model(inputs)
+        tf.debugging.assert_equal(outputs[0], outputs[1])
+
+        # Unequal proj
+        inputs = {'imgs': tf.random.normal([1, 32, 32, 3]), 'imgs2': tf.random.normal([1, 32, 32, 3])}
+        outputs = proj_model(inputs)
+        tf.debugging.assert_none_equal(outputs[0], outputs[1])
+
     def test_l2_reg(self):
         args = '--data=cifar10 --model=resnet50v2 --weight-decay=1e-3 ' \
                '--bsz=8 --lr=1e-3 --loss=ce '
@@ -49,6 +70,18 @@ class TestModel(unittest.TestCase):
 
         # Assert regularization on at least 40 modules
         self.assertGreaterEqual(len(model.losses), 40)
+
+    def test_additional_supcon_l2_reg(self):
+        for loss in ['ce', 'supcon']:
+            args = '--data=cifar10 --model=affine --weight-decay=1e-3 ' \
+                   f'--bsz=8 --lr=1e-3 --loss={loss}'
+            args = utils.parser.parse_args(args.split())
+            utils.setup(args)
+
+            model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
+
+            target_reg = 4 if loss == 'ce' else 6
+            self.assertGreaterEqual(len(model.losses), target_reg)
 
     def test_no_l2_reg(self):
         args = '--data=cifar10 --model=affine --weight-decay=0 ' \
