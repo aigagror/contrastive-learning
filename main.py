@@ -16,7 +16,8 @@ def run(args):
 
     # Data
     ds_train, ds_val, ds_info = data.load_datasets(args)
-    plots.plot_img_samples(args, ds_train, ds_val)
+    if args.debug:
+        plots.plot_img_samples(args, ds_train, ds_val)
 
     # Make and compile model
     with strategy.scope():
