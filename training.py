@@ -72,10 +72,12 @@ def compile_model(args, model):
         opt = optimizers.Adam(args.lr)
     else:
         raise Exception(f'unknown optimizer {args.optimizer}')
+    if args.debug:
+        print(f'{opt} optimizer')
 
     # Loss and metrics
     losses = {'labels': tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)}
-    metrics = {'labels': 'acc'}
+    metrics = {'labels': ['acc', 'loss']}
 
     contrast_loss_dict = {
         'supcon': custom_losses.SupCon(),
