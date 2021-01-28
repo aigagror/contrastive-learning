@@ -42,15 +42,6 @@ class L2Normalize(layers.Layer):
     def call(self, inputs, **kwargs):
         tf.debugging.assert_rank(inputs, 2)
         square_sum = tf.reduce_sum(tf.square(inputs), axis=1, keepdims=True)
-
-        # Encourage features to be unit length themselves
-        norm = tf.sqrt(square_sum)
-        l2_loss = tf.square(norm - tf.ones_like(norm))
-        l2_loss = tf.reduce_sum(l2_loss)
-        self.add_loss(l2_loss)
-        self.add_metric(tf.cast(l2_loss, tf.float32), 'l2_loss')
-
-        # L2 normalize
         inv_norm = tf.math.rsqrt(tf.maximum(square_sum, 1e-12))
         return inputs * tf.stop_gradient(inv_norm)
 
