@@ -48,7 +48,7 @@ class L2Normalize(layers.Layer):
         l2_loss = tf.square(norm - tf.ones_like(norm))
         l2_loss = tf.reduce_sum(l2_loss)
         self.add_loss(l2_loss)
-        self.add_metric(l2_loss, 'l2_loss')
+        self.add_metric(tf.cast(l2_loss, tf.float32), 'l2_loss')
 
         # L2 normalize
         inv_norm = tf.math.rsqrt(tf.maximum(square_sum, 1e-12))
