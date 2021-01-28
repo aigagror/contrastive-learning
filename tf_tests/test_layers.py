@@ -49,7 +49,7 @@ class LayersTest(unittest.TestCase):
         tf.debugging.assert_near(var, tf.ones_like(mean), atol=0.5)
 
     def test_l2_normalize(self):
-        x = tf.random.normal([8, 32])
+        x = tf.random.normal([10000, 32])
         y = custom_layers.L2Normalize()(x)
 
         # Assert one norm
