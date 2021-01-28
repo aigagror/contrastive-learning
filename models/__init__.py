@@ -62,6 +62,9 @@ def make_model(args, nclass, input_shape):
     if args.model.endswith('-norm'):
         feats = custom_layers.L2Normalize()(raw_feats)
         feats2 = custom_layers.L2Normalize()(raw_feats2)
+    else:
+        feats = raw_feats
+        feats2 = raw_feats2
 
     # Name the features
     feats = layers.Activation('linear', name='feats')(feats)
