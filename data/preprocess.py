@@ -121,7 +121,6 @@ def preprocess_for_train(image_bytes, image_size):
     """
     image = _decode_and_random_crop(image_bytes, image_size)
     image = _flip(image)
-    image = color_augment(image)
     image = tf.reshape(image, [image_size, image_size, 3])
     image = tf.cast(image, tf.uint8)
     return image
@@ -142,24 +141,6 @@ def preprocess_for_eval(image_bytes, image_size):
     image = tf.reshape(image, [image_size, image_size, 3])
     image = tf.cast(image, tf.uint8)
     return image
-
-
-def preprocess_image(image_bytes, image_size, is_training=False):
-    """Preprocesses the given image.
-
-    Args:
-      image_bytes: `Tensor` representing an image binary of arbitrary size.
-      image_size: image size.
-      is_training: `bool` for whether the preprocessing is for training.
-      use_bfloat16: `bool` for whether to use bfloat16.
-
-    Returns:
-      A preprocessed image `Tensor` with value range of [0, 255].
-    """
-    if is_training:
-        return preprocess_for_train(image_bytes, image_size)
-    else:
-        return preprocess_for_eval(image_bytes, image_size)
 
 
 def color_augment(image):
