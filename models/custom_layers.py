@@ -46,7 +46,9 @@ class L2Normalize(layers.Layer):
         # Encourage features to be unit length themselves
         norm = tf.sqrt(square_sum)
         l2_loss = tf.square(norm - tf.ones_like(norm))
-        self.add_loss(tf.reduce_mean(l2_loss))
+        l2_loss = tf.reduce_sum(l2_loss)
+        self.add_loss(l2_loss)
+        self.add_metric(l2_loss, 'l2_loss')
 
         # L2 normalize
         inv_norm = tf.math.rsqrt(tf.maximum(square_sum, 1e-12))
