@@ -86,7 +86,7 @@ class PartialSupCon(ConLoss):
         inst_mask = tf.cast((y_true == 2), dtype)
         partial_class_mask = tf.cast((y_true == 1), dtype)
         partial_class_sum = tf.math.reduce_sum(partial_class_mask, axis=1, keepdims=True)
-        neg_mask = tf.cast((y_true == 0), dtype)
+        partial_mask = tf.cast((y_true <= 1), dtype)
 
         # Similarities
         sims = y_pred * 10
@@ -94,8 +94,8 @@ class PartialSupCon(ConLoss):
 
         # Log probs
         exp = tf.math.exp(sims)
-        neg_sum_exp = tf.math.reduce_sum(exp * neg_mask, axis=1, keepdims=True)
-        partial_log_prob = sims - tf.math.log(neg_sum_exp + exp)
+        partial_sum_exp = tf.math.reduce_sum(exp * partial_mask, axis=1, keepdims=True)
+        partial_log_prob = sims - tf.math.log(partial_sum_exp + exp)
         tf.debugging.assert_less_equal(partial_log_prob, tf.zeros_like(partial_log_prob))
 
         # Partial class positive pairs log prob
