@@ -32,8 +32,7 @@ def train(args, model, ds_train, ds_val, ds_info):
 
 
 def get_callbacks(args):
-    cbks = [callbacks.TensorBoard(os.path.join(args.out, 'logs'), histogram_freq=1,
-                                  update_freq=args.update_freq, write_graph=False)]
+    cbks = [callbacks.TensorBoard(os.path.join(args.out, 'logs'), update_freq=args.update_freq, write_graph=False)]
 
     # Save work?
     if not args.no_save:
