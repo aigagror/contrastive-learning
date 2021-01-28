@@ -55,13 +55,13 @@ def make_model(args, nclass, input_shape):
     stand_img = custom_layers.StandardizeImage()
 
     # Features
-    feats = backbone(stand_img(input))
-    feats2 = backbone(stand_img(input2))
+    raw_feats = backbone(stand_img(input))
+    raw_feats2 = backbone(stand_img(input2))
 
     # Normalize?
     if args.model.endswith('-norm'):
-        feats = custom_layers.L2Normalize()(feats)
-        feats2 = custom_layers.L2Normalize()(feats2)
+        feats = custom_layers.L2Normalize()(raw_feats)
+        feats2 = custom_layers.L2Normalize()(raw_feats2)
 
     # Name the features
     feats = layers.Activation('linear', name='feats')(feats)
