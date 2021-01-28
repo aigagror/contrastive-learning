@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow.keras import callbacks, optimizers
@@ -31,6 +32,27 @@ def train(args, model, ds_train, ds_val, ds_info):
         print('keyboard interrupt caught. ending training early')
 
 
+def make_lr_scheduler(args):
+    def scheduler(epoch, _):
+        # Warmup?
+        if args.warmup and epoch < args.warmup[1]:
+            return np.linspace(args.warmup[0], args.lr, int(args.warmup[1]))[epoch]
+
+        # Main LR
+        curr_lr = args.lr
+        if args.lr_decays is None:
+            return curr_lr
+
+        # Decay
+        for e in range(epoch + 1):
+            if e in args.lr_decays:
+                curr_lr *= 0.1
+
+        return curr_lr
+
+    return scheduler
+
+
 def get_callbacks(args):
     cbks = [callbacks.TensorBoard(os.path.join(args.out, 'logs'), update_freq=args.update_freq, write_graph=False)]
 
@@ -40,17 +62,9 @@ def get_callbacks(args):
                                               save_best_only=True, monitor='val_loss', mode='min'))
 
     # Learning rate schedule
-    def scheduler(epoch, _):
-        curr_lr = args.lr
-        if args.lr_decays is None:
-            return curr_lr
+    lr_scheduler = make_lr_scheduler(args)
+    cbks.append(callbacks.LearningRateScheduler(lr_scheduler, verbose=1))
 
-        for e in range(epoch + 1):
-            if e in args.lr_decays:
-                curr_lr *= 0.1
-        return curr_lr
-
-    cbks.append(callbacks.LearningRateScheduler(scheduler, verbose=1))
     return cbks
 
 

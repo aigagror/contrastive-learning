@@ -25,6 +25,16 @@ class TestTraining(unittest.TestCase):
                 training.compile_model(args, model)
             model.fit(ds_train, epochs=1, steps_per_epoch=1)
 
+    def test_lr_schedule(self):
+        args = '--warmup 1e-1 5 --lr=5e-1 --lr-decays 30 60 80 '
+        args = utils.parser.parse_args(args.split())
+
+        lr_scheduler = training.make_lr_scheduler(args)
+        self.assertEqual(lr_scheduler(0, None), 0.1)
+        self.assertEqual(lr_scheduler(5, None), 0.5)
+        self.assertAlmostEqual(lr_scheduler(30, None), 0.05)
+        self.assertAlmostEqual(lr_scheduler(60, None), 0.005)
+        self.assertAlmostEqual(lr_scheduler(80, None), 0.0005)
 
 if __name__ == '__main__':
     unittest.main()
