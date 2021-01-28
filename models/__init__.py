@@ -89,7 +89,7 @@ def make_model(args, nclass, input_shape):
 
     # Label logits
     prediction = layers.Dense(nclass, name='labels', kernel_regularizer=regularizer, bias_regularizer=regularizer,
-                              dtype=tf.float32)(feats)
+                              dtype=tf.float32)(raw_feats)
 
     # Model
     inputs = [input]
