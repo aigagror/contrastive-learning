@@ -89,9 +89,9 @@ def compile_model(args, model):
     metrics = {'labels': [acc_metric, ce_metric]}
 
     contrast_loss_dict = {
-        'supcon': custom_losses.SupCon(),
-        'partial-supcon': custom_losses.PartialSupCon(),
-        'simclr': custom_losses.SimCLR(),
+        'supcon': custom_losses.SupCon(args.temp),
+        'partial-supcon': custom_losses.PartialSupCon(args.temp),
+        'simclr': custom_losses.SimCLR(args.temp),
         'no-op': custom_losses.NoOp()
     }
     if args.loss in contrast_loss_dict:

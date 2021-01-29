@@ -4,7 +4,7 @@ from tensorflow.keras import losses
 
 
 class ConLoss(losses.Loss):
-    def __init__(self, temp=0.1, **kwargs):
+    def __init__(self, temp, **kwargs):
         super().__init__(**kwargs)
         self.temp = temp
 
