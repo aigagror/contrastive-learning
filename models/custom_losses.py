@@ -43,7 +43,7 @@ class ConLoss(losses.Loss):
         tf.debugging.assert_less_equal(y_true, 2 * tf.ones_like(y_true))
 
 
-class NoOp(ConLoss):
+class NoOp(losses.Loss):
     def call(self, y_true, y_pred):
         self.process_y(y_true, y_pred)
         return tf.constant(0, dtype=y_pred.dtype)
