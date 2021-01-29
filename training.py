@@ -35,7 +35,7 @@ def train(args, model, ds_train, ds_val, ds_info):
 def make_lr_scheduler(args):
     def scheduler(epoch, _):
         # Warmup?
-        if args.warmup and epoch < args.warmup[1]:
+        if args.warmup is not None and epoch < args.warmup[1]:
             return np.linspace(args.warmup[0], args.lr, int(args.warmup[1]))[epoch]
 
         # Main LR

@@ -17,6 +17,7 @@ parser.add_argument('--model', choices=['small-resnet50v2', 'small-resnet50v2-no
 
 # Loss objective
 parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
+parser.add_argument('--temp', type=float, default=0.1)
 
 # Training hyperparameters
 parser.add_argument('--optimizer', choices=['sgd', 'adam', 'lamb'], default='sgd')

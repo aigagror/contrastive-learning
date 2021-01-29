@@ -4,6 +4,13 @@ from tensorflow.keras import losses
 
 
 class ConLoss(losses.Loss):
+    def __init__(self, temp, **kwargs):
+        super().__init__(**kwargs)
+        self.temp = temp
+
+    def get_config(self):
+        return {"temp": self.temp}
+
     def process_y(self, y_true, y_pred):
         # Feat views
         replica_context = tf.distribute.get_replica_context()
@@ -54,7 +61,7 @@ class SimCLR(ConLoss):
 
         # Similarities
         sims = y_pred
-        inst_loss = nn.softmax_cross_entropy_with_logits(inst_mask, sims * 10)
+        inst_loss = nn.softmax_cross_entropy_with_logits(inst_mask, sims / self.temp)
         return inst_loss
 
 
@@ -71,7 +78,7 @@ class SupCon(ConLoss):
 
         # Similarities
         sims = y_pred
-        supcon_loss = nn.softmax_cross_entropy_with_logits(labels, sims * 10)
+        supcon_loss = nn.softmax_cross_entropy_with_logits(labels, sims / self.temp)
         return supcon_loss
 
 
@@ -89,7 +96,7 @@ class PartialSupCon(ConLoss):
         partial_mask = tf.cast((y_true <= 1), dtype)
 
         # Similarities
-        sims = y_pred * 10
+        sims = y_pred / self.temp
         sims = sims - tf.stop_gradient(tf.reduce_max(sims, axis=1, keepdims=True))
 
         # Log probs
