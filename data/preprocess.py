@@ -121,7 +121,7 @@ def preprocess_for_train(image_bytes, image_size):
     """
     image = _decode_and_random_crop(image_bytes, image_size)
     image = _flip(image)
-    image = color_augment(image)
+    # image = color_augment(image)
     image = tf.reshape(image, [image_size, image_size, 3])
     image = tf.cast(image, tf.uint8)
     return image
