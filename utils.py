@@ -12,6 +12,7 @@ parser.add_argument('--data', choices=['imagenet', 'cifar10', 'fake-cifar10'])
 
 # Model
 parser.add_argument('--model', choices=['small-resnet50v2', 'small-resnet50v2-norm',
+                                        'resnet50', 'resnet50-norm',
                                         'resnet50v2', 'resnet50v2-norm',
                                         'affine', 'affine-norm'])
 

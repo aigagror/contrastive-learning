@@ -40,6 +40,8 @@ def make_model(args, nclass, input_shape):
         backbone = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape, pooling='avg')
         if args.data == 'imagenet':
             print('WARNING: Using small resnet on large dataset')
+    elif args.model.startswith('resnet50'):
+        backbone = applications.ResNet50(weights=None, include_top=False, input_shape=input_shape, pooling='avg')
     elif args.model.startswith('affine'):
         backbone = keras.Sequential([
             layers.Conv2D(128, 3, kernel_regularizer=regularizer, bias_regularizer=regularizer),
