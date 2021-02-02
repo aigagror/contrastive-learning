@@ -14,16 +14,12 @@ def train(args, model, ds_train, ds_val, ds_info):
 
     try:
         train_steps, val_steps = args.train_steps, args.val_steps
-        if args.steps_exec is not None:
-            ds_train, ds_val = ds_train.repeat(), ds_val.repeat()
-            if args.train_steps is None:
-                train_steps = ds_info['train_size'] // args.bsz
-                print('steps per execution set and train_steps not specified. '
-                      f'setting it to train_size // bsz = {train_steps}')
-            if args.val_steps is None:
-                val_steps = ds_info['val_size'] // args.bsz
-                print('steps per execution set and val_steps not specified. '
-                      f'setting it to val_size // bsz = {val_steps}')
+        if args.train_steps is None:
+            train_steps = ds_info['train_size'] // args.bsz
+            print(f'train_steps not specified. setting it to train_size // bsz = {train_steps}')
+        if args.val_steps is None:
+            val_steps = ds_info['val_size'] // args.bsz
+            print(f'val_steps not specified. setting it to val_size // bsz = {val_steps}')
 
         model.fit(ds_train, initial_epoch=args.init_epoch, epochs=args.epochs,
                   validation_data=ds_val, validation_steps=val_steps, steps_per_epoch=train_steps,

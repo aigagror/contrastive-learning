@@ -31,8 +31,8 @@ def load_datasets(args):
         raise Exception(f'unknown data {args.data}')
 
     # Batch
-    ds_train = ds_train.batch(args.bsz, drop_remainder=True)
-    ds_val = ds_val.batch(args.bsz, drop_remainder=True)
+    ds_train = ds_train.batch(args.bsz)
+    ds_val = ds_val.batch(args.bsz)
 
     # Add batch similarities (supcon labels)
     if args.loss != 'ce':

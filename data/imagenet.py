@@ -28,6 +28,11 @@ def load_imagenet(args):
     val_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/validation-*', shuffle=True)
     train_data = train_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE)
     val_data = val_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE)
+
+    # Shuffle and repeat train data
+    train_data = train_data.shuffle(10000)
+    train_data = train_data.repeat()
+
     ds_train = train_data.map(parse_imagenet_example, AUTOTUNE)
     ds_val = val_data.map(parse_imagenet_example, AUTOTUNE)
 

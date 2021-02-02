@@ -37,6 +37,9 @@ def load_cifar10(args):
     ds_train = ds_train.shuffle(len(ds_train))
     ds_val = ds_val.shuffle(len(ds_val))
 
+    # Repeat train data
+    ds_train = ds_train.repeat()
+
     # Preprocess
     if args.loss == 'ce':
         def process_train(img, label):
