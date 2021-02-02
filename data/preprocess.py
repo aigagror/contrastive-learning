@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+from data import autoaugment
 CROP_PADDING = 32
 
 
@@ -121,7 +121,7 @@ def preprocess_for_train(image_bytes, image_size):
     """
     image = _decode_and_random_crop(image_bytes, image_size)
     image = _flip(image)
-    # image = color_augment(image)
+    image = autoaugment.AutoAugment().distort(image)
     image = tf.reshape(image, [image_size, image_size, 3])
     image = tf.cast(image, tf.uint8)
     return image
@@ -147,12 +147,12 @@ def preprocess_for_eval(image_bytes, image_size):
 def color_augment(image):
     # Color Jitter
     if tf.random.uniform([]) < 0.8:
-        image = tf.image.random_brightness(image, 0.4)
-        image = tf.image.random_contrast(image, 0.6, 1.4)
-        image = tf.image.random_saturation(image, 0.6, 1.4)
-        image = tf.image.random_hue(image, 0.1)
+        image = tf.image.random_hue(image, 0.08)
+        image = tf.image.random_saturation(image, 0.6, 1.6)
+        image = tf.image.random_brightness(image, 0.05)
+        image = tf.image.random_contrast(image, 0.7, 1.3)
+
     # Gray scale
     if tf.random.uniform([]) < 0.2:
-        image = tf.image.rgb_to_grayscale(image)
-        image = tf.repeat(image, 3, axis=-1)
+        image = tf.image.grayscale_to_rgb(tf.image.rgb_to_grayscale(image))
     return image
