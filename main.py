@@ -54,5 +54,4 @@ def run(args):
 
 if __name__ == '__main__':
     args = utils.parser.parse_args()
-
     run(args)
