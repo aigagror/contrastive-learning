@@ -72,7 +72,8 @@ def make_model(args, nclass, input_shape):
         # Average L2 norm with BN
         feats = layers.BatchNormalization(scale=False, center=False)(raw_feats)
         feats2 = layers.BatchNormalization(scale=False, center=False)(raw_feats2)
-        feats, feats2 = feats / feats.shape[-1], feats2 / feats2.shape[-1]
+        feats_scale =  tf.math.rsqrt(tf.cast(feats.shape[-1], tf.float32))
+        feats, feats2 = feats * feats_scale, feats2 * feats_scale
     else:
         # No normalization
         feats = raw_feats
