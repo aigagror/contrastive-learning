@@ -20,7 +20,7 @@ def SmallResNet50V2(
         stack_fn,
         True,
         True,
-        'resnet50v2',
+        'small_resnet50v2',
         include_top,
         input_tensor,
         input_shape,
