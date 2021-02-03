@@ -50,7 +50,8 @@ def make_lr_scheduler(args):
 
 
 def get_callbacks(args):
-    cbks = [callbacks.TensorBoard(os.path.join(args.out, 'logs'), update_freq=args.update_freq, write_graph=False)]
+    cbks = [callbacks.TensorBoard(os.path.join(args.out, 'logs'), update_freq=args.update_freq, write_graph=False,
+                                  profile_batch=args.profile_batch)]
 
     # Save work?
     if not args.no_save:

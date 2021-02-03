@@ -49,6 +49,7 @@ parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--out', type=str, default='out/')
 parser.add_argument('--debug', action='store_true')
 parser.add_argument('--no-save', action='store_true', help='skip saving logs and model checkpoints')
+parser.add_argument('--profile-batch', type=int, nargs='*', default=0)
 
 # Tensorboard
 parser.add_argument('--update-freq', type=str, default='epoch', help='tensorboard metrics update frequency')
