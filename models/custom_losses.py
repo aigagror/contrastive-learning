@@ -20,7 +20,7 @@ class ConLoss(losses.Loss):
 
         # Predicted similarities
         feats1, all_feats2 = local_feat_views[0], global_feat_views[1]
-        sims = tf.matmul(feats1, tf.stop_gradient(all_feats2), transpose_b=True)
+        sims = tf.matmul(feats1, all_feats2, transpose_b=True)
 
         # Assert equal shapes
         tf.debugging.assert_shapes([
