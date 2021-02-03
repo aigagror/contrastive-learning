@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser()
 
 # Data
 parser.add_argument('--data', choices=['imagenet', 'cifar10', 'fake-cifar10'])
+parser.add_argument('--augment', choices=['auto'])
 
 # Model
 parser.add_argument('--model', choices=['small-resnet50v2', 'small-resnet50v2-norm',

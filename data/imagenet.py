@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.python.data import AUTOTUNE
 
+from data import autoaugment
 from data.preprocess import preprocess_for_train, preprocess_for_eval
 
 
@@ -36,24 +37,34 @@ def load_imagenet(args):
     ds_train = train_data.map(parse_imagenet_example, AUTOTUNE)
     ds_val = val_data.map(parse_imagenet_example, AUTOTUNE)
 
+    # Get augment
+    augment = None
+    if args.augment == 'auto':
+        augment = autoaugment.AutoAugment().distort
+
     # Preprocess
     if args.loss == 'ce':
         def process_train(img_bytes, label):
-            inputs = {'imgs': preprocess_for_train(img_bytes, 224)}
+            inputs = {'imgs': preprocess_for_train(img_bytes, 224, augment)}
             targets = {'labels': label}
             return inputs, targets
 
         def process_val(img_bytes, label):
-            return {'imgs': preprocess_for_eval(img_bytes, 224)}, {'labels': label}
+            inputs = {'imgs': preprocess_for_eval(img_bytes, 224)}
+            targets = {'labels': label}
+            return inputs, targets
     else:
         def process_train(img_bytes, label):
-            inputs = {'imgs': preprocess_for_train(img_bytes, 224), 'imgs2': preprocess_for_train(img_bytes, 224)}
+            inputs = {'imgs': preprocess_for_train(img_bytes, 224, augment),
+                      'imgs2': preprocess_for_train(img_bytes, 224, augment)}
             targets = {'labels': label}
             return inputs, targets
 
         def process_val(img_bytes, label):
-            return {'imgs': preprocess_for_eval(img_bytes, 224), 'imgs2': preprocess_for_train(img_bytes, 224)}, {
-                'labels': label}
+            inputs = {'imgs': preprocess_for_eval(img_bytes, 224),
+                      'imgs2': preprocess_for_train(img_bytes, 224, augment)}
+            targets = {'labels': label}
+            return inputs, targets
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)

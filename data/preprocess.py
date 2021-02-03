@@ -1,5 +1,5 @@
 import tensorflow as tf
-from data import autoaugment
+
 CROP_PADDING = 32
 
 
@@ -108,7 +108,7 @@ def _flip(image):
     return image
 
 
-def preprocess_for_train(image_bytes, image_size):
+def preprocess_for_train(image_bytes, image_size, augment=None):
     """Preprocesses the given image for training.
 
     Args:
@@ -121,7 +121,8 @@ def preprocess_for_train(image_bytes, image_size):
     """
     image = _decode_and_random_crop(image_bytes, image_size)
     image = _flip(image)
-    image = autoaugment.AutoAugment().distort(image)
+    if augment is not None:
+        image = augment(image)
     image = tf.reshape(image, [image_size, image_size, 3])
     image = tf.cast(image, tf.uint8)
     return image
