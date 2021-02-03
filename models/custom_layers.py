@@ -158,7 +158,7 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
 
             sigma = tf.matmul(tf.matmul(v, w), u, transpose_b=True)
 
-            self.w.assign(self.w / tf.cast(sigma, self.w.dtype))
+            self.w.assign(self.w / tf.cast(sigma, self.compute_dtype))
             self.u.assign(u)
 
     def get_config(self):
