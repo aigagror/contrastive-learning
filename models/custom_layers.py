@@ -50,7 +50,8 @@ class L2Normalize(layers.Layer):
 class MeasureNorm(layers.Layer):
     def call(self, inputs, **kwargs):
         norms = tf.linalg.norm(inputs, axis=1)
-        self.add_metric(tf.reduce_mean(norms), self.name)
+        avg_norm = tf.reduce_mean(norms)
+        self.add_metric(tf.cast(avg_norm, tf.float32), self.name)
         return inputs
 
 
