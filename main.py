@@ -13,6 +13,7 @@ from training import train
 def run(args):
     # Setup
     strategy = utils.setup(args)
+    print(args)
 
     # Data
     ds_train, ds_val, ds_info = data.load_datasets(args)
@@ -53,6 +54,5 @@ def run(args):
 
 if __name__ == '__main__':
     args = utils.parser.parse_args()
-    print(args)
 
     run(args)
