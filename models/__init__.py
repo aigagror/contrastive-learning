@@ -72,7 +72,7 @@ def make_model(args, nclass, input_shape):
         # Average L2 norm with BN
         feats_scale = 1 / (raw_feats.shape[-1] ** 0.5)
         feats_scale = keras.initializers.Constant(feats_scale)
-        batchnorm = layers.BatchNormalization(gamma_initializer=feats_scale, center=False)
+        batchnorm = layers.BatchNormalization(name='avg_l2_norm', gamma_initializer=feats_scale, center=False)
         feats = batchnorm(raw_feats)
         feats2 = batchnorm(raw_feats2)
     else:
