@@ -9,14 +9,14 @@ class LossesTest(unittest.TestCase):
 
     # Error
     def test_y_true_greater_than_two_error(self):
-        for loss in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
+        for loss in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
             x = tf.zeros([3, 3])
             y = 3 * tf.eye(3, dtype=tf.uint8)
             with self.assertRaises(Exception):
                 loss(y, x)
 
     def test_y_true_no_inst(self):
-        for loss in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
+        for loss in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
             x = tf.zeros([3, 3])
             y = tf.eye(3, dtype=tf.uint8)
             with self.assertRaises(Exception):
@@ -24,7 +24,7 @@ class LossesTest(unittest.TestCase):
 
     # Positive singular losses with various shapes
     def test_losses_format_and_output(self):
-        for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
+        for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
             for _ in range(100):
                 n = tf.random.uniform([], minval=1, maxval=3, dtype=tf.int32)
                 d = tf.random.uniform([], minval=1, maxval=32, dtype=tf.int32)
@@ -40,7 +40,7 @@ class LossesTest(unittest.TestCase):
 
     # Test cross entropy correctness
     def test_zero_loss(self):
-        for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon()]:
+        for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1)]:
             y = 2 * tf.eye(3)
             x = tf.eye(3)
             x = tf.repeat(x, 2, axis=0)
@@ -50,7 +50,7 @@ class LossesTest(unittest.TestCase):
             tf.debugging.assert_near(loss, tf.zeros_like(loss), atol=1e-4)
 
     def test_non_zero_loss(self):
-        for loss_fn in [custom_losses.SimCLR(), custom_losses.SupCon(), custom_losses.PartialSupCon()]:
+        for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
             y = 2 * tf.eye(3)
             x = tf.ones([3, 2, 32])
             loss = loss_fn(y, x)
@@ -87,13 +87,13 @@ class LossesTest(unittest.TestCase):
                 else:
                     y = global_y[2:]
                     x = global_x[2:]
-                loss = LossClass(reduction=tf.keras.losses.Reduction.SUM)(y, x) / 4
+                loss = LossClass(0.1, reduction=tf.keras.losses.Reduction.SUM)(y, x) / 4
                 return loss
 
             distributed_loss = strategy.run(foo)
             distributed_loss = strategy.reduce('SUM', distributed_loss, axis=None)
 
-            global_loss = LossClass()(global_y, global_x)
+            global_loss = LossClass(0.1)(global_y, global_x)
             tf.debugging.assert_near(global_loss, distributed_loss, atol=1e-4, message=f'{LossClass}')
 
 
