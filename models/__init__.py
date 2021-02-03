@@ -37,7 +37,7 @@ def make_model(args, nclass, input_shape):
 
     if args.backbone == 'resnet50v2':
         backbone = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape, pooling='avg')
-        if args.data == 'cifar':
+        if args.data == 'cifar10':
             print('WARNING: Using standard resnet on small dataset')
     elif args.backbone == 'small-resnet50v2':
         backbone = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape, pooling='avg')
