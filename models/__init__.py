@@ -81,7 +81,6 @@ def make_model(args, nclass, input_shape):
 
     # Measure the norms of the features
     feats = custom_layers.MeasureNorm(name='norm')(feats)
-    feats2 = custom_layers.MeasureNorm(name='norm2')(feats2)
 
     # Name the features
     feats = layers.Activation('linear', name='feats')(feats)
@@ -110,7 +109,6 @@ def make_model(args, nclass, input_shape):
 
     # Measure the norms of the projected features
     proj_feats = custom_layers.MeasureNorm(name='proj_norm')(proj_feats)
-    proj_feats2 = custom_layers.MeasureNorm(name='proj_norm2')(proj_feats2)
 
     # Name the projected features
     proj_feats = layers.Activation('linear', name='proj_feats')(proj_feats)
