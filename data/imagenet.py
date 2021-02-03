@@ -39,7 +39,7 @@ def load_imagenet(args):
 
     # Get augment
     augment = None
-    if args.augment == 'auto':
+    if args.autoaugment:
         augment = autoaugment.AutoAugment().distort
 
     # Preprocess

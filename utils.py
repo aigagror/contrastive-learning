@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 
 # Data
 parser.add_argument('--data', choices=['imagenet', 'cifar10', 'fake-cifar10'])
-parser.add_argument('--augment', choices=['auto'])
+parser.add_argument('--autoaugment', action='store_true')
 
 # Model
 parser.add_argument('--backbone', choices=['small-resnet50v2', 'resnet50v2', 'resnet50', 'affine'])
