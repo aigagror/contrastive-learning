@@ -76,6 +76,7 @@ def make_model(args, nclass, input_shape):
         feats, feats2 = feats * feats_scale, feats2 * feats_scale
     else:
         # No normalization
+        assert args.feat_norm is None
         feats = raw_feats
         feats2 = raw_feats2
 
@@ -103,6 +104,7 @@ def make_model(args, nclass, input_shape):
         proj_feats2 = projection(feats2)
     else:
         # No normalization
+        assert args.feat_norm is None
         proj_feats = projection(feats)
         proj_feats2 = projection(feats2)
 
