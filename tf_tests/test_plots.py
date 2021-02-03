@@ -14,6 +14,7 @@ class TestPlots(unittest.TestCase):
                '--bsz=8 --lr=1e-3 ' \
                '--loss=partial-supcon '
         args = utils.parser.parse_args(args.split())
+        utils.setup(args)
         strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
 
         _, ds_val, _ = data.load_datasets(args)

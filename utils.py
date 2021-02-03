@@ -58,12 +58,13 @@ def setup(args):
     tf.get_logger().setLevel('DEBUG' if args.debug else 'WARNING')
 
     # Output directory
-    args.out = os.path.join(args.out, f'{args.data}-{args.backbone}-{args.feat_norm}-{args.loss}')
+    args.out = os.path.join(args.base_dir, f'{args.data}-{args.backbone}-{args.feat_norm}-{args.loss}')
     if not args.load:
         if args.out.startswith('gs://'):
             os.system(f"gsutil -m rm {os.path.join(args.out, '**')}")
         else:
-            shutil.rmtree(args.out)
+            if os.path.exists(args.out):
+                shutil.rmtree(args.out)
             os.mkdir(args.out)
 
     # Strategy
