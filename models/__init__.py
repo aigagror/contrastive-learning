@@ -80,7 +80,7 @@ def make_model(args, nclass, input_shape):
         feats2 = raw_feats2
 
     # Measure the norms of the features
-    feats = custom_layers.MeasureNorm(name='norm')(feats)
+    feats = custom_layers.MeasureNorm(name='feat_norm')(feats)
 
     # Name the features
     feats = layers.Activation('linear', name='feats')(feats)
