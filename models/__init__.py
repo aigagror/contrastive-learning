@@ -75,8 +75,6 @@ def make_model(args, nclass, input_shape):
         batchnorm = layers.BatchNormalization(gamma_initializer=feats_scale, center=False)
         feats = batchnorm(raw_feats)
         feats2 = batchnorm(raw_feats2)
-
-        feats, feats2 = feats * feats_scale, feats2 * feats_scale
     else:
         # No normalization
         assert args.feat_norm is None
