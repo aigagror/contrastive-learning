@@ -12,10 +12,10 @@ parser.add_argument('--data', choices=['imagenet', 'cifar10', 'fake-cifar10'])
 parser.add_argument('--augment', choices=['auto'])
 
 # Model
-parser.add_argument('--model', choices=['small-resnet50v2', 'small-resnet50v2-norm',
-                                        'resnet50', 'resnet50-norm',
-                                        'resnet50v2', 'resnet50v2-norm',
-                                        'affine', 'affine-norm'])
+parser.add_argument('--model', choices=['small-resnet50v2', 'small-resnet50v2-norm', 'small-resnet50v2-sn',
+                                        'resnet50', 'resnet50-norm', 'resnet50-sn',
+                                        'resnet50v2', 'resnet50v2-norm', 'resnet50v2-sn',
+                                        'affine', 'affine-norm', 'affine-sn'])
 
 # Loss objective
 parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])

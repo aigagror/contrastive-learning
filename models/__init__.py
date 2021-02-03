@@ -77,10 +77,15 @@ def make_model(args, nclass, input_shape):
 
     # Projected features
     projection = layers.Dense(128, name='projection', kernel_regularizer=regularizer, bias_regularizer=regularizer)
+
+    # Spectral normalize?
+    if args.model.endswith('-sn'):
+        projection = custom_layers.SpectralNormalization(projection)
+
     proj_feats = projection(feats)
     proj_feats2 = projection(feats2)
 
-    # Normalize?
+    # L2 normalize?
     if args.model.endswith('-norm'):
         proj_feats = custom_layers.L2Normalize()(proj_feats)
         proj_feats2 = custom_layers.L2Normalize()(proj_feats2)
