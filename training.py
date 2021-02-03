@@ -72,7 +72,7 @@ def compile_model(args, model):
     elif args.optimizer == 'adam':
         opt = optimizers.Adam(args.lr)
     elif args.optimizer == 'lamb':
-        opt = tfa.optimizers.LAMB(args.lr)
+        opt = tfa.optimizers.LAMB(args.lr, weight_decay_rate=args.weight_decay)
     else:
         raise Exception(f'unknown optimizer {args.optimizer}')
     if args.debug:

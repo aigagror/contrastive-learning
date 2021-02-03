@@ -27,6 +27,9 @@ def make_model(args, nclass, input_shape):
         regularizer = keras.regularizers.L2(args.weight_decay)
     else:
         regularizer = None
+    if args.opt == 'lamb':
+        regularizer = None
+        print('Adding weight decay via the LAMB optimizer instead of Keras regularization')
 
     # Inputs
     input = keras.Input(input_shape, name='imgs')
