@@ -39,8 +39,8 @@ def run(args):
 
     # Print model information
     model.summary()
-    if args.debug:
-        keras.utils.plot_model(model, 'out/model.png')
+    keras.utils.plot_model(model, 'out/model.png')
+    print("model plotted to 'out/model.png'")
 
     # Train
     train(args, model, ds_train, ds_val, ds_info)
