@@ -24,7 +24,7 @@ def add_regularization_with_reset(model, regularizer):
 def make_model(args, nclass, input_shape):
     # Weight decay
     if args.weight_decay is not None and args.weight_decay > 0:
-        regularizer = keras.regularizers.L2(args.weight_decay)
+        regularizer = keras.regularizers.L2(args.weight_decay / 2)
     else:
         regularizer = None
     if args.optimizer == 'lamb':
