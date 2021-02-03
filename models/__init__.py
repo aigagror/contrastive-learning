@@ -70,9 +70,12 @@ def make_model(args, nclass, input_shape):
         feats2 = custom_layers.L2Normalize()(raw_feats2)
     elif args.feat_norm == 'sn':
         # Average L2 norm with BN
-        feats = layers.BatchNormalization(scale=False, center=False)(raw_feats)
-        feats2 = layers.BatchNormalization(scale=False, center=False)(raw_feats2)
-        feats_scale = 1 / (feats.shape[-1] ** 0.5)
+        feats_scale = 1 / (raw_feats.shape[-1] ** 0.5)
+        feats_scale = keras.initializers.Constant(feats_scale)
+        batchnorm = layers.BatchNormalization(gamma_initializer=feats_scale, center=False)
+        feats = batchnorm(raw_feats)
+        feats2 = batchnorm(raw_feats2)
+
         feats, feats2 = feats * feats_scale, feats2 * feats_scale
     else:
         # No normalization
