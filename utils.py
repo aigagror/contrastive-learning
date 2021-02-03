@@ -12,14 +12,13 @@ parser.add_argument('--data', choices=['imagenet', 'cifar10', 'fake-cifar10'])
 parser.add_argument('--augment', choices=['auto'])
 
 # Model
-parser.add_argument('--model', choices=['small-resnet50v2', 'small-resnet50v2-norm', 'small-resnet50v2-sn',
-                                        'resnet50', 'resnet50-norm', 'resnet50-sn',
-                                        'resnet50v2', 'resnet50v2-norm', 'resnet50v2-sn',
-                                        'affine', 'affine-norm', 'affine-sn'])
+parser.add_argument('--backbone', choices=['small-resnet50v2', 'resnet50v2', 'resnet50', 'affine'])
+parser.add_argument('--feat-norm', choices=['l2', 'sn'])
 
 # Loss objective
 parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
 parser.add_argument('--temp', type=float, default=0.1)
+parser.add_argument('--weight-decay', type=float, default=1e-4)
 
 # Training hyperparameters
 parser.add_argument('--optimizer', choices=['sgd', 'adam', 'lamb'], default='sgd')
@@ -34,8 +33,6 @@ parser.add_argument('--bsz', type=int)
 parser.add_argument('--warmup', type=float, nargs=2)
 parser.add_argument('--lr', type=float)
 parser.add_argument('--lr-decays', type=int, nargs='+', help='decays learning rate at the specified epochs')
-
-parser.add_argument('--weight-decay', type=float, default=1e-4)
 
 parser.add_argument('--recompile', action='store_true')
 

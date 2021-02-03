@@ -16,7 +16,7 @@ class TestModel(unittest.TestCase):
 
     def test_no_grad_ce(self):
         self.skipTest('legacy')
-        args = '--data=cifar10 --model=affine ' \
+        args = '--data=cifar10 --backbone=affine ' \
                '--bsz=8 --lr=1e-3 --loss=supcon '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
@@ -40,7 +40,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(num_grads, 2)
 
     def test_equal_proj(self):
-        args = '--model=affine --loss=supcon '
+        args = '--backbone=affine --loss=supcon '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
 
@@ -61,7 +61,7 @@ class TestModel(unittest.TestCase):
         tf.debugging.assert_none_equal(outputs[0], outputs[1])
 
     def test_l2_reg(self):
-        args = '--data=cifar10 --model=resnet50v2 --weight-decay=1e-3 ' \
+        args = '--data=cifar10 --backbone=resnet50v2 --weight-decay=1e-3 ' \
                '--bsz=8 --lr=1e-3 --loss=ce '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)
@@ -73,7 +73,7 @@ class TestModel(unittest.TestCase):
 
     def test_additional_supcon_l2_reg(self):
         for loss in ['ce', 'supcon']:
-            args = '--data=cifar10 --model=affine --weight-decay=1e-3 ' \
+            args = '--data=cifar10 --backbone=affine --weight-decay=1e-3 ' \
                    f'--bsz=8 --lr=1e-3 --loss={loss}'
             args = utils.parser.parse_args(args.split())
             utils.setup(args)
@@ -84,7 +84,7 @@ class TestModel(unittest.TestCase):
             self.assertGreaterEqual(len(model.losses), target_reg)
 
     def test_no_l2_reg(self):
-        args = '--data=cifar10 --model=affine --weight-decay=0 ' \
+        args = '--data=cifar10 --backbone=affine --weight-decay=0 ' \
                '--bsz=8 --lr=1e-3 --loss=ce '
         args = utils.parser.parse_args(args.split())
         utils.setup(args)

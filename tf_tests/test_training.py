@@ -11,7 +11,7 @@ import utils
 class TestTraining(unittest.TestCase):
     def test_compiles(self):
         for loss in ['ce', 'supcon', 'partial-supcon']:
-            args = '--data=cifar10 --model=affine ' \
+            args = '--data=cifar10 --backbone=affine ' \
                    '--bsz=8 --lr=1e-3 ' \
                    f'--loss={loss} '
             args = utils.parser.parse_args(args.split())
