@@ -47,7 +47,7 @@ parser.add_argument('--policy', choices=['mixed_bfloat16', 'float32'], default='
 # Other
 parser.add_argument('--load', action='store_true')
 parser.add_argument('--tsne', action='store_true')
-parser.add_argument('--out', type=str, default='out/')
+parser.add_argument('--base-dir', type=str, default='out/')
 parser.add_argument('--debug', action='store_true')
 parser.add_argument('--no-save', action='store_true', help='skip saving logs and model checkpoints')
 parser.add_argument('--profile-batch', type=int, nargs='*', default=0)
@@ -60,7 +60,8 @@ def setup(args):
     # Logging
     tf.get_logger().setLevel('DEBUG' if args.debug else 'WARNING')
 
-    # Output
+    # Output directory
+    args.out = os.path.join(args.out, f'{args.data}-{args.backbone}-{args.feat_norm}-{args.loss}')
     if not args.load:
         if args.out.startswith('gs://'):
             os.system(f"gsutil -m rm {os.path.join(args.out, '**')}")
