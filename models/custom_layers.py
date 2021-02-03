@@ -1,4 +1,6 @@
+import tensorflow as tf
 from tensorflow.keras import layers
+from typeguard import typechecked
 
 
 class StandardizeImage(layers.Layer):
@@ -45,28 +47,11 @@ class L2Normalize(layers.Layer):
         return inputs * tf.stop_gradient(inv_norm)
 
 
-class CastFloat32(layers.Layer):
+class MeasureNorm(layers.Layer):
     def call(self, inputs, **kwargs):
-        return tf.cast(inputs, tf.float32)
-
-    # Copyright 2020 The TensorFlow Authors. All Rights Reserved.
-    #
-    # Licensed under the Apache License, Version 2.0 (the "License");
-    # you may not use this file except in compliance with the License.
-    # You may obtain a copy of the License at
-    #
-    #     http://www.apache.org/licenses/LICENSE-2.0
-    #
-    # Unless required by applicable law or agreed to in writing, software
-    # distributed under the License is distributed on an "AS IS" BASIS,
-    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    # See the License for the specific language governing permissions and
-    # limitations under the License.
-    # =============================================================================
-
-
-import tensorflow as tf
-from typeguard import typechecked
+        norms = tf.linalg.norm(inputs, axis=1)
+        self.add_metric(tf.reduce_mean(norms), self.name)
+        return inputs
 
 
 class SpectralNormalization(tf.keras.layers.Wrapper):
@@ -186,5 +171,5 @@ custom_objects = {
     'FeatViews': FeatViews,
     'GlobalBatchSims': GlobalBatchSims,
     'L2Normalize': L2Normalize,
-    'CastFloat32': CastFloat32
+    'MeasureNorm': MeasureNorm
 }

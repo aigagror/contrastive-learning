@@ -65,11 +65,22 @@ def make_model(args, nclass, input_shape):
 
     # Normalize?
     if args.model.endswith('-norm'):
+        # L2 normalize
         feats = custom_layers.L2Normalize()(raw_feats)
         feats2 = custom_layers.L2Normalize()(raw_feats2)
+    elif args.model.endswith('-sn'):
+        # Average L2 norm with BN
+        feats = layers.BatchNormalization(scale=False, center=False)(raw_feats)
+        feats2 = layers.BatchNormalization(scale=False, center=False)(raw_feats2)
+        feats, feats2 = feats / feats.shape[-1], feats2 / feats2.shape[-1]
     else:
+        # No normalization
         feats = raw_feats
         feats2 = raw_feats2
+
+    # Measure the norms of the features
+    feats = custom_layers.MeasureNorm(name='norm')(feats)
+    feats2 = custom_layers.MeasureNorm(name='norm2')(feats2)
 
     # Name the features
     feats = layers.Activation('linear', name='feats')(feats)
@@ -78,21 +89,32 @@ def make_model(args, nclass, input_shape):
     # Projected features
     projection = layers.Dense(128, name='projection', kernel_regularizer=regularizer, bias_regularizer=regularizer)
 
-    # Spectral normalize?
+    # Normalize?
     if args.model.endswith('-sn'):
+        # Spectral normalize
         projection = custom_layers.SpectralNormalization(projection)
+        proj_feats = projection(feats)
+        proj_feats2 = projection(feats2)
 
-    proj_feats = projection(feats)
-    proj_feats2 = projection(feats2)
-
-    # L2 normalize?
-    if args.model.endswith('-norm'):
+    elif args.model.endswith('-norm'):
+        # L2 normalize
+        proj_feats = projection(feats)
+        proj_feats2 = projection(feats2)
         proj_feats = custom_layers.L2Normalize()(proj_feats)
         proj_feats2 = custom_layers.L2Normalize()(proj_feats2)
+    else:
+        # No normalization
+        proj_feats = projection(feats)
+        proj_feats2 = projection(feats2)
+
+    # Measure the norms of the projected features
+    proj_feats = custom_layers.MeasureNorm(name='proj_norm')(proj_feats)
+    proj_feats2 = custom_layers.MeasureNorm(name='proj_norm2')(proj_feats2)
 
     # Name the projected features
     proj_feats = layers.Activation('linear', name='proj_feats')(proj_feats)
     proj_feats2 = layers.Activation('linear', name='proj_feats2')(proj_feats2)
+
 
     # Feature views
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))
