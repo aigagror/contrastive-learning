@@ -72,8 +72,8 @@ class TestModel(unittest.TestCase):
         self.assertGreaterEqual(len(model.losses), 40)
 
     def test_num_l2_reg(self):
-        for loss, feat_norm, target_reg in [('ce', '', 4), ('supcon', '', 5),
-                                            ('ce', '--feat-norm=sn', 4), ('supcon', '--feat-norm=sn', 4)]:
+        for loss, feat_norm, target_reg in [('ce', '', 4), ('supcon', '', 3),
+                                            ('ce', '--feat-norm=sn', 4), ('supcon', '--feat-norm=sn', 2)]:
             args = f'--backbone=affine --weight-decay=1e-3 --loss={loss} {feat_norm}'
             args = utils.parser.parse_args(args.split())
             utils.setup(args)
