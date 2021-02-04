@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.data import AUTOTUNE
 
-from data import autoaugment
 from data.preprocess import preprocess_for_train, preprocess_for_eval
 
 
@@ -25,6 +24,8 @@ def parse_imagenet_example(serial):
 def load_imagenet(args, shuffle):
     imsize, nclass = 224, 1000
     train_size, val_size = 1281167, 50000
+
+    # Sharded record datasets
     train_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/train*', shuffle)
     val_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/validation-*', shuffle)
     train_data = train_files.interleave(tf.data.TFRecordDataset, cycle_length=10, num_parallel_calls=AUTOTUNE)
@@ -37,9 +38,9 @@ def load_imagenet(args, shuffle):
     # Repeat train data
     train_data = train_data.repeat()
 
+    # Parse records
     ds_train = train_data.map(parse_imagenet_example, AUTOTUNE)
     ds_val = val_data.map(parse_imagenet_example, AUTOTUNE)
-
 
     # Preprocess
     if args.loss == 'ce':
