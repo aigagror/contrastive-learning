@@ -1,7 +1,13 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from typeguard import typechecked
+from data import autoaugment
 
+
+class AutoAugment(layers.Layer):
+    def call(self, inputs, **kwargs):
+        training = kwargs.pop('training')
+        return tf.cond(training, lambda: autoaugment.AutoAugment().distort(inputs), lambda: inputs)
 
 class StandardizeImage(layers.Layer):
 

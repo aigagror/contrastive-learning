@@ -55,12 +55,6 @@ def load_datasets(args):
     # Repeat train dataset
     ds_train = ds_train.repeat()
 
-    # Autoaugment
-    if args.autoaugment:
-        ds_train = ds_train.map(autoaugment_all_views, tf.data.AUTOTUNE)
-        ds_val = ds_val.map(autoaugment_second_view, tf.data.AUTOTUNE)
-        logging.info('autoaugment-ed datasets')
-
     # Batch
     ds_train = ds_train.batch(args.bsz)
     ds_val = ds_val.batch(args.bsz)

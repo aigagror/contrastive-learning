@@ -58,12 +58,19 @@ def make_model(args, nclass, input_shape):
     # Add weight decay to backbone
     backbone = add_regularization_with_reset(backbone, regularizer)
 
+    # Autoaugment?
+    if args.autoaugment:
+        aug_img = custom_layers.AutoAugment()
+        x1, x2 = aug_img(input), aug_img(input2)
+    else:
+        x1, x2 = input, input2
+
     # Standardize input
     stand_img = custom_layers.StandardizeImage()
 
     # Features
-    raw_feats = backbone(stand_img(input))
-    raw_feats2 = backbone(stand_img(input2))
+    raw_feats = backbone(stand_img(x1))
+    raw_feats2 = backbone(stand_img(x2))
 
     # Normalize?
     if args.feat_norm == 'l2':

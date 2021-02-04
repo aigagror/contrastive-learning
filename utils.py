@@ -62,7 +62,7 @@ parser.add_argument('--update-freq', type=str, default='epoch', help='tensorboar
 
 def setup(args):
     # Logging
-    logging.getLogger().setLevel(args.log_level)
+    logging.getLogger().setLevel(args.log_level.upper())
 
     # Output directory
     args.out = os.path.join(args.base_dir, f'{args.data}-{args.backbone}-{args.feat_norm}-{args.loss}')

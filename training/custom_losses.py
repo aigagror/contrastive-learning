@@ -74,7 +74,7 @@ class SupCon(ConLoss):
 
         # Masks
         class_mask = tf.cast((y_true >= 1), dtype)
-        labels = tf.linalg.normalize(class_mask, ord=1, axis=1)
+        labels, _ = tf.linalg.normalize(class_mask, ord=1, axis=1)
 
         # Similarities
         sims = y_pred / self.temp
