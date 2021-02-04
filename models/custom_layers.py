@@ -189,5 +189,6 @@ custom_objects = {
     'GlobalBatchSims': GlobalBatchSims,
     'L2Normalize': L2Normalize,
     'MeasureNorm': MeasureNorm,
-    'Scale': Scale
+    'Scale': Scale,
+    'AutoAugment': AutoAugment
 }
