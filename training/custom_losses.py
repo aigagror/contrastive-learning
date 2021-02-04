@@ -74,25 +74,11 @@ class SupCon(ConLoss):
 
         # Masks
         class_mask = tf.cast((y_true >= 1), dtype)
-        class_sum = tf.math.reduce_sum(class_mask, axis=1, keepdims=True)
-        mask = tf.cast((y_true <= 1), dtype)
 
         # Similarities
         sims = y_pred / self.temp
-        sims = sims - tf.stop_gradient(tf.reduce_max(sims, axis=1, keepdims=True))
 
-        # Log probs
-        exp = tf.math.exp(sims)
-        sum_exp = tf.math.reduce_sum(exp * mask, axis=1, keepdims=True)
-        log_prob = sims - tf.math.log(sum_exp + exp)
-        tf.debugging.assert_less_equal(log_prob, tf.zeros_like(log_prob))
-
-        # Partial class positive pairs log prob
-        class_log_prob = class_mask * log_prob
-        class_log_prob = tf.math.reduce_sum(class_log_prob / class_sum, axis=1)
-        supcon_loss = -class_log_prob
-
-        return supcon_loss
+        return nn.softmax_cross_entropy_with_logits(class_mask, sims)
 
 
 class PartialSupCon(ConLoss):
