@@ -19,8 +19,8 @@ parser.add_argument('--cycle-length', type=int, default=64)
 
 # Model
 parser.add_argument('--backbone', choices=['small-resnet50v2', 'resnet50v2', 'resnet50', 'affine'])
-parser.add_argument('--feat-norm', choices=['l2', 'sn'])
-parser.add_argument('--proj-norm', choices=['l2', 'sn'])
+parser.add_argument('--feat-norm', choices=['l2', 'bn'])
+parser.add_argument('--proj-norm', choices=['l2', 'bn', 'sn'])
 parser.add_argument('--proj-dim', type=int, default=128)
 
 # Loss objective

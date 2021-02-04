@@ -23,6 +23,28 @@ def add_regularization_with_reset(model, regularizer):
     return model
 
 
+def optional_normalize(norm, feats1, feats2):
+    if norm == 'l2':
+        # L2 normalize
+        feats = custom_layers.L2Normalize()(feats1)
+        feats2 = custom_layers.L2Normalize()(feats2)
+    elif norm == 'bn':
+        # Average L2 norm with BN
+        batchnorm = layers.BatchNormalization(scale=False, center=False)
+        feats, feats2 = batchnorm(feats1), batchnorm(feats2)
+
+        # Scale down by sqrt of feature dimension
+        feats_scale = 1 / (feats1.shape[-1] ** 0.5)
+        scale = custom_layers.Scale(feats_scale)
+        feats, feats2 = scale(feats), scale(feats2)
+    else:
+        # No normalization
+        assert norm is None or norm == 'sn'
+        feats = feats1
+        feats2 = feats2
+    return feats, feats2
+
+
 def make_model(args, nclass, input_shape):
     # Weight decay
     if args.weight_decay is not None and args.weight_decay > 0:
@@ -62,28 +84,10 @@ def make_model(args, nclass, input_shape):
     stand_img = custom_layers.StandardizeImage()
 
     # Features
-    raw_feats = backbone(stand_img(input))
-    raw_feats2 = backbone(stand_img(input2))
+    raw_feats, raw_feats2 = backbone(stand_img(input)), backbone(stand_img(input2))
 
-    # Normalize?
-    if args.feat_norm == 'l2':
-        # L2 normalize
-        feats = custom_layers.L2Normalize()(raw_feats)
-        feats2 = custom_layers.L2Normalize()(raw_feats2)
-    elif args.feat_norm == 'bn':
-        # Average L2 norm with BN
-        batchnorm = layers.BatchNormalization(name='avg_l2_norm', scale=False, center=False)
-        feats, feats2 = batchnorm(raw_feats), batchnorm(raw_feats2)
-
-        # Scale down by sqrt of feature dimension
-        feats_scale = 1 / (raw_feats.shape[-1] ** 0.5)
-        scale = custom_layers.Scale(feats_scale)
-        feats, feats2 = scale(feats), scale(feats2)
-    else:
-        # No normalization
-        assert args.feat_norm is None
-        feats = raw_feats
-        feats2 = raw_feats2
+    # Normalize features?
+    feats, feats2 = optional_normalize(args.feat_norm, raw_feats, raw_feats2)
 
     # Measure the norms of the features
     feats = custom_layers.MeasureNorm(name='feat_norm')(feats)
@@ -92,31 +96,21 @@ def make_model(args, nclass, input_shape):
     feats = layers.Activation('linear', name='feats')(feats)
     feats2 = layers.Activation('linear', name='feats2')(feats2)
 
-    # Projected features
+    # Projection
     if args.proj_dim is None or args.proj_dim <= 0:
         projection = layers.Activation('linear', name='projection')
     else:
         projection = layers.Dense(args.proj_dim, name='projection', use_bias=False,
                                   kernel_regularizer=regularizer if args.proj_norm is None else None,
                                   bias_regularizer=regularizer if args.proj_norm is None else None)
-
-    # Normalize?
-    if args.proj_norm == 'l2':
-        # L2 normalize
-        proj_feats = projection(feats)
-        proj_feats2 = projection(feats2)
-        proj_feats = custom_layers.L2Normalize()(proj_feats)
-        proj_feats2 = custom_layers.L2Normalize()(proj_feats2)
-    elif args.proj_norm == 'sn':
-        # Spectral normalize
+    if args.proj_norm == 'sn':
         projection = custom_layers.SpectralNormalization(projection, name='sn_projection')
-        proj_feats = projection(feats)
-        proj_feats2 = projection(feats2)
-    else:
-        # No normalization
-        assert args.proj_norm is None
-        proj_feats = projection(feats)
-        proj_feats2 = projection(feats2)
+
+    # Projected features
+    proj_feats, proj_feats2 = projection(feats), projection(feats2)
+
+    # Normalize projected features?
+    proj_feats, proj_feats2 = optional_normalize(args.feat_norm, proj_feats, proj_feats2)
 
     # Measure the norms of the projected features
     proj_feats = custom_layers.MeasureNorm(name='proj_norm')(proj_feats)
