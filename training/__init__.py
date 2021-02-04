@@ -1,11 +1,10 @@
 import os
 
-import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow.keras import callbacks, optimizers
 
-from training import custom_losses
+from training import custom_losses, lr_schedule
 
 
 def train(args, model, ds_train, ds_val, ds_info):
@@ -13,40 +12,18 @@ def train(args, model, ds_train, ds_val, ds_info):
     cbks = get_callbacks(args)
 
     try:
-        train_steps, val_steps = args.train_steps, args.val_steps
         if args.train_steps is None:
-            train_steps = ds_info['train_size'] // args.bsz
-            print(f'train_steps not specified. setting it to train_size // bsz = {train_steps}')
+            args.train_steps = ds_info['train_size'] // args.bsz
+            print(f'train_steps not specified. setting it to train_size // bsz = {args.train_steps}')
         if args.val_steps is None:
-            val_steps = ds_info['val_size'] // args.bsz
-            print(f'val_steps not specified. setting it to val_size // bsz = {val_steps}')
+            args.val_steps = ds_info['val_size'] // args.bsz
+            print(f'val_steps not specified. setting it to val_size // bsz = {args.val_steps}')
 
         model.fit(ds_train, initial_epoch=args.init_epoch, epochs=args.epochs,
-                  validation_data=ds_val, validation_steps=val_steps, steps_per_epoch=train_steps,
+                  validation_data=ds_val, validation_steps=args.val_steps, steps_per_epoch=args.train_steps,
                   callbacks=cbks)
     except KeyboardInterrupt:
         print('keyboard interrupt caught. ending training early')
-
-
-def make_lr_scheduler(args):
-    def scheduler(epoch, _):
-        # Warmup?
-        if args.warmup is not None and epoch < args.warmup[1]:
-            return np.linspace(args.warmup[0], args.lr, int(args.warmup[1]))[epoch]
-
-        # Main LR
-        curr_lr = args.lr
-        if args.lr_decays is None:
-            return curr_lr
-
-        # Decay
-        for e in range(epoch + 1):
-            if e in args.lr_decays:
-                curr_lr *= 0.1
-
-        return curr_lr
-
-    return scheduler
 
 
 def get_callbacks(args):
@@ -58,21 +35,20 @@ def get_callbacks(args):
         cbks.append(callbacks.ModelCheckpoint(os.path.join(args.out, 'model'), verbose=1,
                                               save_best_only=True, monitor='val_loss', mode='min'))
 
-    # Learning rate schedule
-    lr_scheduler = make_lr_scheduler(args)
-    cbks.append(callbacks.LearningRateScheduler(lr_scheduler, verbose=1))
-
     return cbks
 
 
 def compile_model(args, model):
+    # LR schedule
+    lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup, args.lr_decays)
+
     # Optimizer
     if args.optimizer == 'sgd':
-        opt = optimizers.SGD(args.lr, momentum=0.9)
+        opt = optimizers.SGD(lr_scheduler, momentum=0.9)
     elif args.optimizer == 'adam':
-        opt = optimizers.Adam(args.lr)
+        opt = optimizers.Adam(lr_scheduler)
     elif args.optimizer == 'lamb':
-        opt = tfa.optimizers.LAMB(args.lr, weight_decay_rate=args.weight_decay)
+        opt = tfa.optimizers.LAMB(lr_scheduler, weight_decay_rate=args.weight_decay)
     else:
         raise Exception(f'unknown optimizer {args.optimizer}')
     if args.debug:

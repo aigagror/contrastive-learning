@@ -33,7 +33,7 @@ parser.add_argument('--train-steps', type=int, help='train steps per epoch')
 parser.add_argument('--val-steps', type=int, help='val steps per epoch')
 
 parser.add_argument('--bsz', type=int)
-parser.add_argument('--warmup', type=float, nargs=2)
+parser.add_argument('--warmup', type=int, default=0)
 parser.add_argument('--lr', type=float)
 parser.add_argument('--lr-decays', type=int, nargs='+', help='decays learning rate at the specified epochs')
 

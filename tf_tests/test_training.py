@@ -6,6 +6,7 @@ import data
 import models
 import training
 import utils
+from training import lr_schedule
 
 
 class TestTraining(unittest.TestCase):
@@ -26,26 +27,26 @@ class TestTraining(unittest.TestCase):
         model.fit(ds_train, epochs=1, steps_per_epoch=1)
 
     def test_lr_schedule(self):
-        args = '--warmup 1e-1 5 --lr=5e-1 --lr-decays 30 60 80 '
+        args = '--warmup=5 --lr=5e-1 --lr-decays 30 60 80 --train-steps=1000'
         args = utils.parser.parse_args(args.split())
+        lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup,
+                                                                    args.lr_decays)
 
-        lr_scheduler = training.make_lr_scheduler(args)
-        self.assertEqual(lr_scheduler(0, None), 0.1)
-        self.assertEqual(lr_scheduler(5, None), 0.5)
-        self.assertAlmostEqual(lr_scheduler(30, None), 0.05)
-        self.assertAlmostEqual(lr_scheduler(60, None), 0.005)
-        self.assertAlmostEqual(lr_scheduler(80, None), 0.0005)
+        for step, tar_lr in [(0, 0), (1, 5e-1 / 5000), (2, 10e-1 / 5000), (5000, 5e-1), (30001, 5e-2), (60001, 5e-3),
+                             (80001, 5e-4)]:
+            lr = lr_scheduler(step)
+            tf.debugging.assert_equal(lr, tf.constant(tar_lr, dtype=lr.dtype), message=f'step {step}: {lr} vs {tar_lr}')
 
     def test_no_warmup_lr_schedule(self):
-        args = '--lr=5e-1 --lr-decays 30 60 80 '
+        args = '--lr=5e-1 --lr-decays 30 60 80 --train-steps=1000'
         args = utils.parser.parse_args(args.split())
+        lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup,
+                                                                    args.lr_decays)
 
-        lr_scheduler = training.make_lr_scheduler(args)
-        self.assertEqual(lr_scheduler(0, None), 0.5)
-        self.assertEqual(lr_scheduler(5, None), 0.5)
-        self.assertAlmostEqual(lr_scheduler(30, None), 0.05)
-        self.assertAlmostEqual(lr_scheduler(60, None), 0.005)
-        self.assertAlmostEqual(lr_scheduler(80, None), 0.0005)
+        for step, tar_lr in [(0, 5e-1), (1, 5e-1), (2, 5e-1), (5000, 5e-1), (30001, 5e-2), (60001, 5e-3),
+                             (80001, 5e-4)]:
+            lr = lr_scheduler(step)
+            tf.debugging.assert_equal(lr, tf.constant(tar_lr, dtype=lr.dtype), message=f'step {step}: {lr} vs {tar_lr}')
 
 
 if __name__ == '__main__':
