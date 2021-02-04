@@ -7,7 +7,10 @@ from data import autoaugment
 class AutoAugment(layers.Layer):
     def call(self, inputs, **kwargs):
         training = kwargs.pop('training')
-        return tf.cond(training, lambda: autoaugment.AutoAugment().distort(inputs), lambda: inputs)
+        if training:
+            return autoaugment.AutoAugment().distort(inputs)
+        else:
+            return inputs
 
 class StandardizeImage(layers.Layer):
 
