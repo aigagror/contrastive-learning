@@ -27,4 +27,3 @@ def SmallResNet50V2(
         pooling,
         classes,
         classifier_activation=classifier_activation)
-

@@ -13,10 +13,10 @@ class PiecewiseConstantDecayWithWarmup(tf.keras.optimizers.schedules.PiecewiseCo
         super().__init__(self.step_boundaries, self.lr_values, name)
 
     def __call__(self, step):
-        if step < self.warmup_steps:
-            return self.lr * (tf.cast(step, tf.float32) / tf.cast(self.warmup_steps, tf.float32))
-        else:
-            return super().__call__(step)
+        lr = tf.cond(step < self.warmup_steps,
+                     lambda: self.lr * (tf.cast(step, tf.float32) / tf.cast(self.warmup_steps, tf.float32)),
+                     lambda: super(PiecewiseConstantDecayWithWarmup, self).__call__(step))
+        return lr
 
     def get_config(self):
         parent_config = super().get_config()

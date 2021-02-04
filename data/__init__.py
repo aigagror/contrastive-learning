@@ -1,8 +1,9 @@
 import tensorflow as tf
 
+from data import autoaugment
 from data.cifar10 import load_cifar10
 from data.imagenet import load_imagenet
-from data import autoaugment
+
 
 def add_contrast_data(inputs, targets):
     labels = targets['labels']
@@ -18,16 +19,19 @@ def add_contrast_data(inputs, targets):
     targets['contrast'] = contrast
     return inputs, targets
 
+
 def autoaugment_train(inputs, targets):
     for key in ['imgs', 'imgs2']:
         if key in inputs:
             inputs[key] = autoaugment.AutoAugment().distort(inputs[key])
     return inputs, targets
 
+
 def autoaugment_val(inputs, targets):
     if 'imgs2' in inputs:
         inputs['imgs2'] = autoaugment.AutoAugment().distort(inputs['imgs2'])
     return inputs, targets
+
 
 def load_datasets(args, shuffle=True):
     if 'cifar10' in args.data:

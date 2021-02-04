@@ -140,5 +140,3 @@ def make_model(args, nclass, input_shape):
     model = keras.Model(inputs, outputs)
 
     return model
-
-
