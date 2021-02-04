@@ -69,7 +69,7 @@ def load_datasets(args):
     if args.loss != 'ce':
         ds_train = ds_train.map(add_contrast_data, tf.data.AUTOTUNE)
         ds_val = ds_val.map(add_contrast_data, tf.data.AUTOTUNE)
-        logging.info('addded contrast data')
+        logging.info('added contrast data')
 
     # Prefetch
     ds_train = ds_train.prefetch(tf.data.AUTOTUNE)

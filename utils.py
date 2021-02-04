@@ -23,7 +23,7 @@ parser.add_argument('--feat-norm', choices=['l2', 'sn'])
 parser.add_argument('--proj-dim', type=int, default=128)
 
 # Loss objective
-parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
+parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'], default='ce')
 parser.add_argument('--temp', type=float, default=0.1)
 parser.add_argument('--weight-decay', type=float, default=1e-4)
 
@@ -76,7 +76,7 @@ def setup(args):
 
     # Strategy
     if args.tpu:
-        resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
+        resolver = tf.distribute.cluster_resolver.TPUClusterResolver(project='deep-learning-290721')
         tf.config.experimental_connect_to_cluster(resolver)
         # This is the TPU initialization code that has to be at the beginning.
         tf.tpu.experimental.initialize_tpu_system(resolver)
