@@ -50,12 +50,13 @@ def load_datasets(args):
     if args.autoaugment:
         ds_train = ds_train.map(autoaugment_all_views, tf.data.AUTOTUNE)
         ds_val = ds_val.map(autoaugment_second_view, tf.data.AUTOTUNE)
+        logging.info('autoaugmenting datasets')
 
     # Shuffle?
     shuffle = args.shuffle_buffer is not None and args.shuffle_buffer > 0
     if shuffle:
         ds_train = ds_train.shuffle(args.shuffle_buffer)
-        logging.info('shuffling dataset')
+    logging.info(f'dataset shuffle={shuffle}')
 
     # Repeat train dataset
     ds_train = ds_train.repeat()
