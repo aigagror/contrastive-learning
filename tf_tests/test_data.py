@@ -1,3 +1,4 @@
+import logging
 import unittest
 
 import matplotlib.pyplot as plt
@@ -6,7 +7,6 @@ import tensorflow as tf
 import data
 import data.cifar10
 import data.imagenet
-import logging
 import data.preprocess
 import utils
 
