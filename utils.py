@@ -5,6 +5,9 @@ import shutil
 import tensorflow as tf
 from tensorflow.keras import mixed_precision
 
+from models import custom_layers
+from training import custom_losses
+
 parser = argparse.ArgumentParser()
 
 # Data
@@ -86,3 +89,6 @@ def setup(args):
     mixed_precision.set_global_policy(policy)
 
     return strategy
+
+
+all_custom_objects = {**custom_losses.custom_objects, **custom_layers.custom_objects}

@@ -25,7 +25,7 @@ def run(args):
         # Model
         if args.load:
             model = keras.models.load_model(os.path.join(args.out, 'model'), compile=(not args.recompile),
-                                            custom_objects=models.all_custom_objects)
+                                            custom_objects=utils.all_custom_objects)
             print('loaded model')
             if args.recompile:
                 training.compile_model(args, model)

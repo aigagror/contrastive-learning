@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import applications, layers
 
-from models import custom_layers, custom_losses
+from models import custom_layers
 from models import small_resnet_v2
 
 
@@ -142,4 +142,3 @@ def make_model(args, nclass, input_shape):
     return model
 
 
-all_custom_objects = {**custom_losses.custom_objects, **custom_layers.custom_objects}

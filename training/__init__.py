@@ -5,7 +5,7 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow.keras import callbacks, optimizers
 
-from models import custom_losses
+from training import custom_losses
 
 
 def train(args, model, ds_train, ds_val, ds_info):

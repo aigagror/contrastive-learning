@@ -2,7 +2,7 @@ import unittest
 
 import tensorflow as tf
 
-from models import custom_losses
+from training import custom_losses
 
 
 class LossesTest(unittest.TestCase):
