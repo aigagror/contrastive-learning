@@ -84,22 +84,5 @@ class TestData(unittest.TestCase):
         print("Test images saved to 'data/images/'")
 
 
-    def test_cifar10_augmentation(self):
-        img = tf.io.decode_image(tf.io.read_file('images/cifar10-sample.png'))
-
-        f, ax = plt.subplots(1, 9)
-        f.set_size_inches(20, 5)
-        ax[0].set_title('original')
-        ax[0].imshow(img)
-        for i in range(1, 9):
-            aug_img = data.cifar10._rand_crop_flip(img)
-            tf.debugging.assert_type(aug_img, tf.uint8)
-            ax[i].set_title('augmentation')
-            ax[i].imshow(aug_img)
-        f.tight_layout()
-        f.savefig('images/cifar10-sample-augmentations.jpg')
-        print("Test images saved to 'data/images/'")
-
-
 if __name__ == '__main__':
     unittest.main()
