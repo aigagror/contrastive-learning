@@ -167,10 +167,21 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
         return {**base_config, **config}
 
 
+class Scale(layers.Layer):
+    def __init__(self, initializer):
+        super().__init__()
+        self.scale = self.add_weight(shape=[], initializer=initializer, trainable=False, name="scale",
+                                     dtype=self.dtype)
+
+    def call(self, inputs, **kwargs):
+        return self.scale * inputs
+
+
 custom_objects = {
     'StandardizeImage': StandardizeImage,
     'FeatViews': FeatViews,
     'GlobalBatchSims': GlobalBatchSims,
     'L2Normalize': L2Normalize,
-    'MeasureNorm': MeasureNorm
+    'MeasureNorm': MeasureNorm,
+    'Scale': Scale
 }
