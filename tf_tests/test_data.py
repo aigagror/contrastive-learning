@@ -68,11 +68,12 @@ class TestData(unittest.TestCase):
 
     def test_autoaugment(self):
         self.skipTest('too long')
-        all_args = ['--data=cifar10 --bsz=8', '--data=cifar10 --autoaugment --bsz=8']
+        all_args = ['--data=cifar10 --bsz=8 --shuffle-buffer=0',
+                    '--data=cifar10 --autoaugment --bsz=8 --shuffle-buffer=0']
         for args in all_args:
             args = utils.parser.parse_args(args.split())
 
-            ds_train, ds_val, ds_info = data.load_datasets(args, shuffle=False)
+            ds_train, ds_val, ds_info = data.load_datasets(args)
             imgs = next(iter(ds_train))[0]['imgs']
             f, ax = plt.subplots(1, 8)
             f.set_size_inches(20, 5)

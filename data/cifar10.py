@@ -18,7 +18,10 @@ def _rand_crop_flip(image):
     return image
 
 
-def load_cifar10(args, shuffle):
+def load_cifar10(args):
+    # Shuffle?
+    shuffle = args.shuffle_buffer is not None and args.shuffle_buffer > 0
+
     imsize, nclass = 32, 10
     (x_train, y_train), (x_val, y_val) = datasets.cifar10.load_data()
     y_train = y_train.astype(np.int32)
@@ -30,8 +33,8 @@ def load_cifar10(args, shuffle):
 
     # Shuffle entire dataset
     if shuffle:
-        ds_train = ds_train.shuffle(len(ds_train))
-        ds_val = ds_val.shuffle(len(ds_val))
+        ds_train = ds_train.shuffle(args.shuffle_buffer)
+        ds_val = ds_val.shuffle(args.shuffle_buffer)
 
     # Repeat train data
     ds_train = ds_train.repeat()

@@ -21,20 +21,23 @@ def parse_imagenet_example(serial):
     return example['image/encoded'], label
 
 
-def load_imagenet(args, shuffle):
+def load_imagenet(args):
     imsize, nclass = 224, 1000
     train_size, val_size = 1281167, 50000
+
+    # Shuffle?
+    shuffle = args.shuffle_buffer is not None and args.shuffle_buffer > 0
 
     # Sharded record datasets
     train_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/train*', shuffle)
     val_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/validation-*', shuffle)
-    train_data = train_files.interleave(tf.data.TFRecordDataset, cycle_length=64, num_parallel_calls=AUTOTUNE,
-                                        deterministic=False)
+    train_data = train_files.interleave(tf.data.TFRecordDataset, cycle_length=args.cycle_length,
+                                        num_parallel_calls=AUTOTUNE, deterministic=False)
     val_data = val_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE, deterministic=False)
 
     # Shuffle?
     if shuffle:
-        train_data = train_data.shuffle(10000)
+        train_data = train_data.shuffle(args.shuffle_buffer)
 
     # Repeat train data
     train_data = train_data.repeat()

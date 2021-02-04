@@ -33,14 +33,14 @@ def autoaugment_val(inputs, targets):
     return inputs, targets
 
 
-def load_datasets(args, shuffle=True):
+def load_datasets(args):
     if 'cifar10' in args.data:
-        ds_train, ds_val, ds_info = load_cifar10(args, shuffle)
+        ds_train, ds_val, ds_info = load_cifar10(args)
         if args.data.startswith('fake-'):
             ds_train = ds_train.take(4)
             ds_val = ds_val.take(4)
     elif args.data == 'imagenet':
-        ds_train, ds_val, ds_info = load_imagenet(args, shuffle)
+        ds_train, ds_val, ds_info = load_imagenet(args)
     else:
         raise Exception(f'unknown data {args.data}')
 

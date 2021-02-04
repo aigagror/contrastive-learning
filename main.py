@@ -46,9 +46,9 @@ def run(args):
         print(f'{len(model.losses)} regularization losses in this model')
 
     # Print model information
-    model.summary()
     keras.utils.plot_model(model, 'out/model.png')
     print("model plotted to 'out/model.png'")
+    model.summary()
 
     # Train
     train(args, model, ds_train, ds_val, ds_info)

@@ -13,6 +13,8 @@ parser = argparse.ArgumentParser()
 # Data
 parser.add_argument('--data', choices=['imagenet', 'cifar10', 'fake-cifar10'])
 parser.add_argument('--autoaugment', action='store_true')
+parser.add_argument('--shuffle-buffer', type=int)
+parser.add_argument('--cycle-length', type=int)
 
 # Model
 parser.add_argument('--backbone', choices=['small-resnet50v2', 'resnet50v2', 'resnet50', 'affine'])
