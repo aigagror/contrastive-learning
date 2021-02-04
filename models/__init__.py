@@ -77,7 +77,6 @@ def make_model(args, nclass, input_shape):
 
         # Scale down by sqrt of feature dimension
         feats_scale = 1 / (raw_feats.shape[-1] ** 0.5)
-        feats_scale = keras.initializers.Constant(feats_scale)
         scale = custom_layers.Scale(feats_scale)
         feats, feats2 = scale(feats), scale(feats2)
     else:
