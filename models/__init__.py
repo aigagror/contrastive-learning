@@ -1,3 +1,5 @@
+import logging
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import applications, layers
@@ -29,7 +31,7 @@ def make_model(args, nclass, input_shape):
         regularizer = None
     if args.optimizer == 'lamb':
         regularizer = None
-        print('adding weight decay via the LAMB optimizer instead of Keras regularization')
+        logging.info('adding weight decay via the LAMB optimizer instead of Keras regularization')
 
     # Inputs
     input = keras.Input(input_shape, name='imgs')
@@ -38,11 +40,11 @@ def make_model(args, nclass, input_shape):
     if args.backbone == 'resnet50v2':
         backbone = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape, pooling='avg')
         if args.data == 'cifar10':
-            print('WARNING: Using standard resnet on small dataset')
+            logging.warning('using standard resnet on small dataset')
     elif args.backbone == 'small-resnet50v2':
         backbone = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape, pooling='avg')
         if args.data == 'imagenet':
-            print('WARNING: Using small resnet on large dataset')
+            logging.warning('using small resnet on large dataset')
     elif args.backbone == 'resnet50':
         backbone = applications.ResNet50(weights=None, include_top=False, input_shape=input_shape, pooling='avg')
     elif args.backbone == 'affine':
@@ -109,7 +111,7 @@ def make_model(args, nclass, input_shape):
     elif args.feat_norm == 'sn':
         # Spectral normalize
         if isinstance(projection, layers.Activation):
-            print('projection is activation layer. no spectral normalization applied')
+            logging.info('projection is activation layer. no spectral normalization applied')
         else:
             projection = custom_layers.SpectralNormalization(projection, name='sn_projection')
         proj_feats = projection(feats)

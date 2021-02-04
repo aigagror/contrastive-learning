@@ -1,3 +1,5 @@
+import logging
+
 import tensorflow as tf
 
 from data import autoaugment
@@ -20,14 +22,14 @@ def add_contrast_data(inputs, targets):
     return inputs, targets
 
 
-def autoaugment_train(inputs, targets):
+def autoaugment_all_views(inputs, targets):
     for key in ['imgs', 'imgs2']:
         if key in inputs:
             inputs[key] = autoaugment.AutoAugment().distort(inputs[key])
     return inputs, targets
 
 
-def autoaugment_val(inputs, targets):
+def autoaugment_second_view(inputs, targets):
     if 'imgs2' in inputs:
         inputs['imgs2'] = autoaugment.AutoAugment().distort(inputs['imgs2'])
     return inputs, targets
@@ -44,10 +46,20 @@ def load_datasets(args):
     else:
         raise Exception(f'unknown data {args.data}')
 
+    # Shuffle?
+    shuffle = args.shuffle_buffer is not None and args.shuffle_buffer > 0
+    if shuffle:
+        ds_train = ds_train.shuffle(args.shuffle_buffer)
+        logging.debug('shuffling dataset')
+
+    # Repeat train dataset
+    ds_train = ds_train.repeat()
+
     # Autoaugment
     if args.autoaugment:
-        ds_train = ds_train.map(autoaugment_train, tf.data.AUTOTUNE)
-        ds_val = ds_val.map(autoaugment_val, tf.data.AUTOTUNE)
+        ds_train = ds_train.map(autoaugment_all_views, tf.data.AUTOTUNE)
+        ds_val = ds_val.map(autoaugment_second_view, tf.data.AUTOTUNE)
+        logging.debug('autoaugment-ed datasets')
 
     # Batch
     ds_train = ds_train.batch(args.bsz)
@@ -57,6 +69,7 @@ def load_datasets(args):
     if args.loss != 'ce':
         ds_train = ds_train.map(add_contrast_data, tf.data.AUTOTUNE)
         ds_val = ds_val.map(add_contrast_data, tf.data.AUTOTUNE)
+        logging.debug('addded contrast data')
 
     # Prefetch
     ds_train = ds_train.prefetch(tf.data.AUTOTUNE)

@@ -28,7 +28,7 @@ class TestData(unittest.TestCase):
                 ax[i].imshow(new_img)
             f.tight_layout()
             f.savefig(f'images/{name}.jpg')
-        print("Test images saved to 'data/images/'")
+        logging.info("test images saved to 'data/images/'")
 
     def test_data_format(self):
         args = '--data=cifar10 --bsz=8 --loss=supcon'
@@ -82,7 +82,7 @@ class TestData(unittest.TestCase):
             f.tight_layout()
             f.savefig(f'images/cifar10-autoaugment-{args.autoaugment}.jpg')
 
-        print("Test images saved to 'data/images/'")
+        logging.info("test images saved to 'data/images/'")
 
 
 if __name__ == '__main__':

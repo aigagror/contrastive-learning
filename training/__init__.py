@@ -1,3 +1,4 @@
+import logging
 import os
 
 import tensorflow as tf
@@ -16,7 +17,7 @@ def train(args, model, ds_train, ds_val, ds_info):
                   validation_data=ds_val, validation_steps=args.val_steps, steps_per_epoch=args.train_steps,
                   callbacks=cbks)
     except KeyboardInterrupt:
-        print('keyboard interrupt caught. ending training early')
+        logging.info('keyboard interrupt caught. ending training early')
 
 
 def get_callbacks(args):
@@ -45,7 +46,7 @@ def compile_model(args, model):
     else:
         raise Exception(f'unknown optimizer {args.optimizer}')
     if args.debug:
-        print(f'{opt.__class__.__name__} optimizer')
+        logging.info(f'{opt.__class__.__name__} optimizer')
 
     # Loss and metrics
     ce_loss = tf.keras.losses.SparseCategoricalCrossentropy(name='ce', from_logits=True)
@@ -63,7 +64,7 @@ def compile_model(args, model):
     if args.loss in contrast_loss_dict:
         losses['contrast'] = contrast_loss_dict[args.loss]
         if args.feat_norm is None:
-            print('WARNING: Optimizing over contrastive loss without any feature normalization')
+            logging.warning('optimizing over contrastive loss without any feature normalization')
 
     # Compile
     model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)

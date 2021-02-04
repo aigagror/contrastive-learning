@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import shutil
 
@@ -61,7 +62,7 @@ parser.add_argument('--update-freq', type=str, default='epoch', help='tensorboar
 
 def setup(args):
     # Logging
-    tf.get_logger().setLevel('DEBUG' if args.debug else 'WARNING')
+    logging.getLogger().setLevel('DEBUG' if args.debug else 'WARNING')
 
     # Output directory
     args.out = os.path.join(args.base_dir, f'{args.data}-{args.backbone}-{args.feat_norm}-{args.loss}')

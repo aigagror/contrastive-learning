@@ -1,3 +1,4 @@
+import logging
 import os
 
 from tensorflow import keras
@@ -13,7 +14,7 @@ from training import train
 def run(args):
     # Setup
     strategy = utils.setup(args)
-    print(args)
+    logging.info(args)
 
     # Data
     ds_train, ds_val, ds_info = data.load_datasets(args)
@@ -23,10 +24,10 @@ def run(args):
     # Set training steps
     if args.train_steps is None:
         args.train_steps = ds_info['train_size'] // args.bsz
-        print(f'train_steps not specified. setting it to train_size // bsz = {args.train_steps}')
+        logging.info(f'train_steps not specified. setting it to train_size // bsz = {args.train_steps}')
     if args.val_steps is None:
         args.val_steps = ds_info['val_size'] // args.bsz
-        print(f'val_steps not specified. setting it to val_size // bsz = {args.val_steps}')
+        logging.info(f'val_steps not specified. setting it to val_size // bsz = {args.val_steps}')
 
     # Make and compile model
     with strategy.scope():
@@ -34,20 +35,20 @@ def run(args):
         if args.load:
             model = keras.models.load_model(os.path.join(args.out, 'model'), compile=(not args.recompile),
                                             custom_objects=utils.all_custom_objects)
-            print('loaded model')
+            logging.info('loaded model')
             if args.recompile:
                 training.compile_model(args, model)
-                print('recompiled model')
+                logging.info('recompiled model')
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
             training.compile_model(args, model)
-            print('starting with new model')
+            logging.info('starting with new model')
 
-        print(f'{len(model.losses)} regularization losses in this model')
+        logging.info(f'{len(model.losses)} regularization losses in this model')
 
     # Print model information
     keras.utils.plot_model(model, 'out/model.png')
-    print("model plotted to 'out/model.png'")
+    logging.info("model plotted to 'out/model.png'")
     model.summary()
 
     # Train

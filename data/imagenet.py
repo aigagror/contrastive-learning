@@ -35,13 +35,6 @@ def load_imagenet(args):
                                         num_parallel_calls=AUTOTUNE, deterministic=False)
     val_data = val_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE, deterministic=False)
 
-    # Shuffle?
-    if shuffle:
-        train_data = train_data.shuffle(args.shuffle_buffer)
-
-    # Repeat train data
-    train_data = train_data.repeat()
-
     # Parse records
     ds_train = train_data.map(parse_imagenet_example, AUTOTUNE)
     ds_val = val_data.map(parse_imagenet_example, AUTOTUNE)

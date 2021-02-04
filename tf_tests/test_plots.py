@@ -28,12 +28,12 @@ class TestPlots(unittest.TestCase):
     def test_hist(self):
         args, strategy, model, ds_val = self.basic_usage()
         plots.plot_hist_sims(args, strategy, model, ds_val.take(1))
-        print(f'hist saved to {args.out}')
+        logging.info(f'hist saved to {args.out}')
 
     def test_tsne(self):
         args, strategy, model, ds_val = self.basic_usage()
         plots.plot_tsne(args, strategy, model, ds_val.take(1))
-        print(f'tsne saved to {args.out}')
+        logging.info(f'tsne saved to {args.out}')
 
 
 if __name__ == '__main__':
