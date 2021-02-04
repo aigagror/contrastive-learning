@@ -58,26 +58,19 @@ def make_model(args, nclass, input_shape):
     # Add weight decay to backbone
     backbone = add_regularization_with_reset(backbone, regularizer)
 
-    # Autoaugment?
-    if args.autoaugment:
-        aug_img = custom_layers.AutoAugment()
-        x1, x2 = aug_img(input), aug_img(input2)
-    else:
-        x1, x2 = input, input2
-
     # Standardize input
     stand_img = custom_layers.StandardizeImage()
 
     # Features
-    raw_feats = backbone(stand_img(x1))
-    raw_feats2 = backbone(stand_img(x2))
+    raw_feats = backbone(stand_img(input))
+    raw_feats2 = backbone(stand_img(input2))
 
     # Normalize?
     if args.feat_norm == 'l2':
         # L2 normalize
         feats = custom_layers.L2Normalize()(raw_feats)
         feats2 = custom_layers.L2Normalize()(raw_feats2)
-    elif args.feat_norm == 'sn':
+    elif args.feat_norm == 'bn':
         # Average L2 norm with BN
         batchnorm = layers.BatchNormalization(name='avg_l2_norm', scale=False, center=False)
         feats, feats2 = batchnorm(raw_feats), batchnorm(raw_feats2)
@@ -105,27 +98,24 @@ def make_model(args, nclass, input_shape):
         projection = layers.Activation('linear', name='projection')
     else:
         projection = layers.Dense(args.proj_dim, name='projection', use_bias=False,
-                                  kernel_regularizer=regularizer if args.feat_norm is None else None,
-                                  bias_regularizer=regularizer if args.feat_norm is None else None)
+                                  kernel_regularizer=regularizer if args.proj_norm is None else None,
+                                  bias_regularizer=regularizer if args.proj_norm is None else None)
 
     # Normalize?
-    if args.feat_norm == 'l2':
+    if args.proj_norm == 'l2':
         # L2 normalize
         proj_feats = projection(feats)
         proj_feats2 = projection(feats2)
         proj_feats = custom_layers.L2Normalize()(proj_feats)
         proj_feats2 = custom_layers.L2Normalize()(proj_feats2)
-    elif args.feat_norm == 'sn':
+    elif args.proj_norm == 'sn':
         # Spectral normalize
-        if isinstance(projection, layers.Activation):
-            logging.info('projection is activation layer. no spectral normalization applied')
-        else:
-            projection = custom_layers.SpectralNormalization(projection, name='sn_projection')
+        projection = custom_layers.SpectralNormalization(projection, name='sn_projection')
         proj_feats = projection(feats)
         proj_feats2 = projection(feats2)
     else:
         # No normalization
-        assert args.feat_norm is None
+        assert args.proj_norm is None
         proj_feats = projection(feats)
         proj_feats2 = projection(feats2)
 
