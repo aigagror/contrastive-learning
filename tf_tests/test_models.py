@@ -71,17 +71,16 @@ class TestModel(unittest.TestCase):
         # Assert regularization on at least 40 modules
         self.assertGreaterEqual(len(model.losses), 40)
 
-    def test_additional_supcon_l2_reg(self):
-        for loss in ['ce', 'supcon']:
-            args = '--data=cifar10 --backbone=affine --weight-decay=1e-3 ' \
-                   f'--bsz=8 --lr=1e-3 --loss={loss}'
+    def test_num_l2_reg(self):
+        for loss, feat_norm, target_reg in [('ce', '', 4), ('supcon', '', 6),
+                                            ('ce', '--feat-norm=sn', 4), ('supcon', '--feat-norm=sn', 4)]:
+            args = f'--backbone=affine --weight-decay=1e-3 --loss={loss} {feat_norm}'
             args = utils.parser.parse_args(args.split())
             utils.setup(args)
 
             model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
 
-            target_reg = 4 if loss == 'ce' else 6
-            self.assertGreaterEqual(len(model.losses), target_reg)
+            self.assertEqual(len(model.losses), target_reg, loss)
 
     def test_no_l2_reg(self):
         args = '--data=cifar10 --backbone=affine --weight-decay=0 ' \

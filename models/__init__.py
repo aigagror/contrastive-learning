@@ -93,8 +93,8 @@ def make_model(args, nclass, input_shape):
 
     # Projected features
     projection = layers.Dense(128, name='projection',
-                              kernel_regularizer=regularizer if args.feat_norm is not None else None,
-                              bias_regularizer=regularizer if args.feat_norm is not None else None)
+                              kernel_regularizer=regularizer if args.feat_norm is None else None,
+                              bias_regularizer=regularizer if args.feat_norm is None else None)
 
     # Normalize?
     if args.feat_norm == 'l2':
