@@ -28,7 +28,7 @@ def load_imagenet(args, shuffle):
     # Sharded record datasets
     train_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/train*', shuffle)
     val_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/validation-*', shuffle)
-    train_data = train_files.interleave(tf.data.TFRecordDataset, cycle_length=10, num_parallel_calls=AUTOTUNE)
+    train_data = train_files.interleave(tf.data.TFRecordDataset, cycle_length=64, num_parallel_calls=AUTOTUNE)
     val_data = val_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE)
 
     # Shuffle?
