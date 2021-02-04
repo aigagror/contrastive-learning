@@ -126,8 +126,8 @@ def make_model(args, nclass, input_shape):
 
     # Label logits
     prediction = layers.Dense(nclass, name='labels',
-                              kernel_regularizer=regularizer if args.loss == 'ce' else None,
-                              bias_regularizer=regularizer if args.loss == 'ce' else None,
+                              kernel_regularizer=regularizer if args.feat_norm is None else None,
+                              bias_regularizer=regularizer if args.feat_norm is None else None,
                               dtype=tf.float32)(feats)
 
     # Model
