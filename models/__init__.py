@@ -110,7 +110,7 @@ def make_model(args, nclass, input_shape):
     proj_feats, proj_feats2 = projection(feats), projection(feats2)
 
     # Normalize projected features?
-    proj_feats, proj_feats2 = optional_normalize(args.feat_norm, proj_feats, proj_feats2)
+    proj_feats, proj_feats2 = optional_normalize(args.proj_norm, proj_feats, proj_feats2)
 
     # Measure the norms of the projected features
     proj_feats = custom_layers.MeasureNorm(name='proj_norm')(proj_feats)
