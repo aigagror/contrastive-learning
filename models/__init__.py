@@ -93,12 +93,12 @@ def make_model(args, nclass, input_shape):
     feats = custom_layers.MeasureNorm(name='feat_norm')(feats)
 
     # Name the features
-    feats = layers.Activation('linear', name='feats')(feats)
-    feats2 = layers.Activation('linear', name='feats2')(feats2)
+    feats = custom_layers.Identity(name='feats')(feats)
+    feats2 = custom_layers.Identity(name='feats2')(feats2)
 
     # Projection
     if args.proj_dim is None or args.proj_dim <= 0:
-        projection = layers.Activation('linear', name='projection')
+        projection = custom_layers.Identity(name='projection')
     else:
         projection = layers.Dense(args.proj_dim, name='projection', use_bias=False,
                                   kernel_regularizer=regularizer if args.proj_norm is None else None,
@@ -116,8 +116,8 @@ def make_model(args, nclass, input_shape):
     proj_feats = custom_layers.MeasureNorm(name='proj_norm')(proj_feats)
 
     # Name the projected features
-    proj_feats = layers.Activation('linear', name='proj_feats')(proj_feats)
-    proj_feats2 = layers.Activation('linear', name='proj_feats2')(proj_feats2)
+    proj_feats = custom_layers.Identity(name='proj_feats')(proj_feats)
+    proj_feats2 = custom_layers.Identity(name='proj_feats2')(proj_feats2)
 
     # Feature views
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))

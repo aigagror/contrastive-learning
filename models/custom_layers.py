@@ -176,6 +176,10 @@ class Scale(layers.Layer):
     def call(self, inputs, **kwargs):
         return self.scale * inputs
 
+class Identity(layers.Activation):
+    def __init__(self, name, dtype=None):
+        super().__init__('linear', name=name, dtype=dtype)
+
 
 custom_objects = {
     'StandardizeImage': StandardizeImage,
@@ -183,5 +187,6 @@ custom_objects = {
     'GlobalBatchSims': GlobalBatchSims,
     'L2Normalize': L2Normalize,
     'MeasureNorm': MeasureNorm,
-    'Scale': Scale
+    'Scale': Scale,
+    'Identity': Identity
 }
