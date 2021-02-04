@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-CROP_PADDING = 32
+CROP_PADDING = 0
 
 
 def distorted_bounding_box_crop(image_bytes,
