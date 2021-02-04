@@ -18,8 +18,7 @@ def run(args):
 
     # Data
     ds_train, ds_val, ds_info = data.load_datasets(args)
-    if args.debug:
-        plots.plot_img_samples(args, ds_train, ds_val)
+    plots.plot_img_samples(args, ds_train, ds_val)
 
     # Set training steps
     if args.train_steps is None:

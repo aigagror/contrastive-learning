@@ -45,8 +45,7 @@ def compile_model(args, model):
         opt = tfa.optimizers.LAMB(lr_scheduler, weight_decay_rate=args.weight_decay)
     else:
         raise Exception(f'unknown optimizer {args.optimizer}')
-    if args.debug:
-        logging.info(f'{opt.__class__.__name__} optimizer')
+    logging.info(f'{opt.__class__.__name__} optimizer')
 
     # Loss and metrics
     ce_loss = tf.keras.losses.SparseCategoricalCrossentropy(name='ce', from_logits=True)

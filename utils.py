@@ -52,7 +52,7 @@ parser.add_argument('--policy', choices=['mixed_bfloat16', 'float32'], default='
 parser.add_argument('--load', action='store_true')
 parser.add_argument('--tsne', action='store_true')
 parser.add_argument('--base-dir', type=str, default='out/')
-parser.add_argument('--debug', action='store_true')
+parser.add_argument('--log-level', choices=['debug', 'info', 'warning', 'error'], default='info')
 parser.add_argument('--no-save', action='store_true', help='skip saving logs and model checkpoints')
 parser.add_argument('--profile-batch', type=int, nargs='*', default=0)
 
@@ -62,7 +62,7 @@ parser.add_argument('--update-freq', type=str, default='epoch', help='tensorboar
 
 def setup(args):
     # Logging
-    logging.getLogger().setLevel('DEBUG' if args.debug else 'WARNING')
+    logging.getLogger().setLevel(args.log_level)
 
     # Output directory
     args.out = os.path.join(args.base_dir, f'{args.data}-{args.backbone}-{args.feat_norm}-{args.loss}')

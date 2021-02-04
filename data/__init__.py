@@ -50,7 +50,7 @@ def load_datasets(args):
     shuffle = args.shuffle_buffer is not None and args.shuffle_buffer > 0
     if shuffle:
         ds_train = ds_train.shuffle(args.shuffle_buffer)
-        logging.debug('shuffling dataset')
+        logging.info('shuffling dataset')
 
     # Repeat train dataset
     ds_train = ds_train.repeat()
@@ -59,7 +59,7 @@ def load_datasets(args):
     if args.autoaugment:
         ds_train = ds_train.map(autoaugment_all_views, tf.data.AUTOTUNE)
         ds_val = ds_val.map(autoaugment_second_view, tf.data.AUTOTUNE)
-        logging.debug('autoaugment-ed datasets')
+        logging.info('autoaugment-ed datasets')
 
     # Batch
     ds_train = ds_train.batch(args.bsz)
@@ -69,7 +69,7 @@ def load_datasets(args):
     if args.loss != 'ce':
         ds_train = ds_train.map(add_contrast_data, tf.data.AUTOTUNE)
         ds_val = ds_val.map(add_contrast_data, tf.data.AUTOTUNE)
-        logging.debug('addded contrast data')
+        logging.info('addded contrast data')
 
     # Prefetch
     ds_train = ds_train.prefetch(tf.data.AUTOTUNE)
