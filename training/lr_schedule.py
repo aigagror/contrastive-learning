@@ -28,3 +28,8 @@ class PiecewiseConstantDecayWithWarmup(tf.keras.optimizers.schedules.PiecewiseCo
         }
 
         return {**parent_config, **subclass_config}
+
+
+custom_objects = {
+    'PiecewiseConstantDecayWithWarmup': PiecewiseConstantDecayWithWarmup
+}

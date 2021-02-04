@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.keras import mixed_precision
 
 from models import custom_layers
-from training import custom_losses
+from training import custom_losses, lr_schedule
 
 parser = argparse.ArgumentParser()
 
@@ -17,6 +17,7 @@ parser.add_argument('--autoaugment', action='store_true')
 # Model
 parser.add_argument('--backbone', choices=['small-resnet50v2', 'resnet50v2', 'resnet50', 'affine'])
 parser.add_argument('--feat-norm', choices=['l2', 'sn'])
+parser.add_argument('--proj-dim', type=int, default=128)
 
 # Loss objective
 parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'])
@@ -91,4 +92,4 @@ def setup(args):
     return strategy
 
 
-all_custom_objects = {**custom_losses.custom_objects, **custom_layers.custom_objects}
+all_custom_objects = {**custom_losses.custom_objects, **custom_layers.custom_objects, **lr_schedule.custom_objects}

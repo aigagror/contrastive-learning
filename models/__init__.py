@@ -92,9 +92,12 @@ def make_model(args, nclass, input_shape):
     feats2 = layers.Activation('linear', name='feats2')(feats2)
 
     # Projected features
-    projection = layers.Dense(128, name='projection', use_bias=False,
-                              kernel_regularizer=regularizer if args.feat_norm is None else None,
-                              bias_regularizer=regularizer if args.feat_norm is None else None)
+    if args.proj_dim is None or args.proj_dim <= 0:
+        projection = layers.Activation('linear', name='projection')
+    else:
+        projection = layers.Dense(args.proj_dim, name='projection', use_bias=False,
+                                  kernel_regularizer=regularizer if args.feat_norm is None else None,
+                                  bias_regularizer=regularizer if args.feat_norm is None else None)
 
     # Normalize?
     if args.feat_norm == 'l2':
