@@ -20,6 +20,14 @@ def run(args):
     if args.debug:
         plots.plot_img_samples(args, ds_train, ds_val)
 
+    # Set training steps
+    if args.train_steps is None:
+        args.train_steps = ds_info['train_size'] // args.bsz
+        print(f'train_steps not specified. setting it to train_size // bsz = {args.train_steps}')
+    if args.val_steps is None:
+        args.val_steps = ds_info['val_size'] // args.bsz
+        print(f'val_steps not specified. setting it to val_size // bsz = {args.val_steps}')
+
     # Make and compile model
     with strategy.scope():
         # Model

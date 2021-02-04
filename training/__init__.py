@@ -12,13 +12,6 @@ def train(args, model, ds_train, ds_val, ds_info):
     cbks = get_callbacks(args)
 
     try:
-        if args.train_steps is None:
-            args.train_steps = ds_info['train_size'] // args.bsz
-            print(f'train_steps not specified. setting it to train_size // bsz = {args.train_steps}')
-        if args.val_steps is None:
-            args.val_steps = ds_info['val_size'] // args.bsz
-            print(f'val_steps not specified. setting it to val_size // bsz = {args.val_steps}')
-
         model.fit(ds_train, initial_epoch=args.init_epoch, epochs=args.epochs,
                   validation_data=ds_val, validation_steps=args.val_steps, steps_per_epoch=args.train_steps,
                   callbacks=cbks)
