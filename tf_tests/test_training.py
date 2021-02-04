@@ -10,20 +10,19 @@ import utils
 
 class TestTraining(unittest.TestCase):
     def test_compiles(self):
-        for loss in ['ce', 'supcon', 'partial-supcon']:
-            args = '--data=cifar10 --backbone=affine ' \
-                   '--bsz=8 --lr=1e-3 ' \
-                   f'--loss={loss} '
-            args = utils.parser.parse_args(args.split())
-            utils.setup(args)
+        args = '--data=cifar10 --backbone=affine ' \
+               '--bsz=8 --lr=1e-3 ' \
+               '--loss=partial-supcon '
+        args = utils.parser.parse_args(args.split())
+        utils.setup(args)
 
-            ds_train, _, _ = data.load_datasets(args)
+        ds_train, _, _ = data.load_datasets(args)
 
-            strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
-            with strategy.scope():
-                model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
-                training.compile_model(args, model)
-            model.fit(ds_train, epochs=1, steps_per_epoch=1)
+        strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
+        with strategy.scope():
+            model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
+            training.compile_model(args, model)
+        model.fit(ds_train, epochs=1, steps_per_epoch=1)
 
     def test_lr_schedule(self):
         args = '--warmup 1e-1 5 --lr=5e-1 --lr-decays 30 60 80 '
