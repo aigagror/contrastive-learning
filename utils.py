@@ -64,6 +64,11 @@ def setup(args):
     # Logging
     logging.getLogger().setLevel(args.log_level.upper())
 
+    # Removed duplicate stream in TF logger
+    tf_logger = logging.getLogger('tensorflow')
+    for h in tf_logger.handlers:
+        tf_logger.removeHandler(h)
+
     # Output directory
     args.out = os.path.join(args.base_dir, f'{args.data}-{args.backbone}-{args.feat_norm}-{args.loss}')
     if not args.load:
