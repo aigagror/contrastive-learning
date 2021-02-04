@@ -108,7 +108,10 @@ def make_model(args, nclass, input_shape):
         proj_feats2 = custom_layers.L2Normalize()(proj_feats2)
     elif args.feat_norm == 'sn':
         # Spectral normalize
-        projection = custom_layers.SpectralNormalization(projection, name='sn_projection')
+        if isinstance(projection, layers.Activation):
+            print('projection is activation layer. no spectral normalization applied')
+        else:
+            projection = custom_layers.SpectralNormalization(projection, name='sn_projection')
         proj_feats = projection(feats)
         proj_feats2 = projection(feats2)
     else:
