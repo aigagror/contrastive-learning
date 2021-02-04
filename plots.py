@@ -50,6 +50,7 @@ def plot_tsne(args, strategy, model, ds_val):
         ax[1].scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}')
 
     f.savefig(os.path.join('out/', 'tsne.jpg'))
+    logging.info("plotted tsne to 'out/'")
 
 
 def plot_img_samples(args, ds_train, ds_val):
@@ -148,3 +149,4 @@ def plot_hist_sims(args, strategy, model, ds_val):
     ax[1].legend()
 
     f.savefig(os.path.join('out/', 'similarity-types.jpg'))
+    logging.info("plotted similarity histograms to 'out/'")

@@ -46,6 +46,11 @@ def load_datasets(args):
     else:
         raise Exception(f'unknown data {args.data}')
 
+    # Augment?
+    if args.autoaugment:
+        ds_train = ds_train.map(autoaugment_all_views, tf.data.AUTOTUNE)
+        ds_val = ds_val.map(autoaugment_second_view, tf.data.AUTOTUNE)
+
     # Shuffle?
     shuffle = args.shuffle_buffer is not None and args.shuffle_buffer > 0
     if shuffle:

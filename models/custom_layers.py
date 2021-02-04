@@ -1,16 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from typeguard import typechecked
-from data import autoaugment
 
-
-class AutoAugment(layers.Layer):
-    def call(self, inputs, **kwargs):
-        training = kwargs.pop('training')
-        if training:
-            return autoaugment.AutoAugment().distort(inputs)
-        else:
-            return inputs
 
 class StandardizeImage(layers.Layer):
 
@@ -192,6 +183,5 @@ custom_objects = {
     'GlobalBatchSims': GlobalBatchSims,
     'L2Normalize': L2Normalize,
     'MeasureNorm': MeasureNorm,
-    'Scale': Scale,
-    'AutoAugment': AutoAugment
+    'Scale': Scale
 }
