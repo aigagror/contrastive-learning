@@ -74,11 +74,12 @@ class SupCon(ConLoss):
 
         # Masks
         class_mask = tf.cast((y_true >= 1), dtype)
+        labels = tf.linalg.normalize(class_mask, ord=1, axis=1)
 
         # Similarities
         sims = y_pred / self.temp
 
-        return nn.softmax_cross_entropy_with_logits(class_mask, sims)
+        return nn.softmax_cross_entropy_with_logits(labels, sims)
 
 
 class PartialSupCon(ConLoss):
