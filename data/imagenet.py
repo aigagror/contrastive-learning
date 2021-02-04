@@ -44,24 +44,24 @@ def load_imagenet(args, shuffle):
     # Preprocess
     if args.loss == 'ce':
         def process_train(img_bytes, label):
-            inputs = {'imgs': preprocess_for_train(img_bytes, 224)}
+            inputs = {'imgs': preprocess_for_train(img_bytes, imsize)}
             targets = {'labels': label}
             return inputs, targets
 
         def process_val(img_bytes, label):
-            inputs = {'imgs': preprocess_for_eval(img_bytes, 224)}
+            inputs = {'imgs': preprocess_for_eval(img_bytes, imsize)}
             targets = {'labels': label}
             return inputs, targets
     else:
         def process_train(img_bytes, label):
-            inputs = {'imgs': preprocess_for_train(img_bytes, 224),
-                      'imgs2': preprocess_for_train(img_bytes, 224)}
+            inputs = {'imgs': preprocess_for_train(img_bytes, imsize),
+                      'imgs2': preprocess_for_train(img_bytes, imsize)}
             targets = {'labels': label}
             return inputs, targets
 
         def process_val(img_bytes, label):
-            inputs = {'imgs': preprocess_for_eval(img_bytes, 224),
-                      'imgs2': preprocess_for_train(img_bytes, 224)}
+            inputs = {'imgs': preprocess_for_eval(img_bytes, imsize),
+                      'imgs2': preprocess_for_train(img_bytes, imsize)}
             targets = {'labels': label}
             return inputs, targets
 
