@@ -63,7 +63,12 @@ def _at_least_x_are_equal(a, b, x):
 def _decode_and_random_crop(image_bytes, image_size):
     """Make a random crop of image_size."""
     bbox = tf.constant([0.0, 0.0, 1.0, 1.0], dtype=tf.float32, shape=[1, 1, 4])
-    image = distorted_bounding_box_crop(image_bytes, bbox)
+    image = distorted_bounding_box_crop(image_bytes,
+        bbox,
+        min_object_covered=0.1,
+        aspect_ratio_range=(3. / 4, 4. / 3.),
+        area_range=(0.08, 1.0),
+        max_attempts=10)
     original_shape = tf.image.extract_jpeg_shape(image_bytes)
     bad = _at_least_x_are_equal(original_shape, tf.shape(image), 3)
 
