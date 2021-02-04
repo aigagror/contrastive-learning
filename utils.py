@@ -76,7 +76,7 @@ def setup(args):
 
     # Strategy
     if args.tpu:
-        resolver = tf.distribute.cluster_resolver.TPUClusterResolver(project='deep-learning-290721')
+        resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
         tf.config.experimental_connect_to_cluster(resolver)
         # This is the TPU initialization code that has to be at the beginning.
         tf.tpu.experimental.initialize_tpu_system(resolver)
