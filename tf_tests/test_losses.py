@@ -75,7 +75,7 @@ class LossesTest(unittest.TestCase):
     def test_distribute_equivalent(self):
         for LossClass in [custom_losses.SimCLR, custom_losses.SupCon, custom_losses.PartialSupCon]:
             strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
-            global_x = tf.random.normal([4, 2, 32])
+            global_x = tf.random.normal([4, 2, 32]) / 4
             global_y = 2 * tf.eye(4, dtype=tf.int32)
 
             def foo():

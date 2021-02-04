@@ -22,25 +22,24 @@ def parse_imagenet_example(serial):
     return example['image/encoded'], label
 
 
-def load_imagenet(args):
+def load_imagenet(args, shuffle):
     imsize, nclass = 224, 1000
     train_size, val_size = 1281167, 50000
-    train_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/train*', shuffle=True)
-    val_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/validation-*', shuffle=True)
+    train_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/train*', shuffle)
+    val_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/validation-*', shuffle)
     train_data = train_files.interleave(tf.data.TFRecordDataset, cycle_length=10, num_parallel_calls=AUTOTUNE)
     val_data = val_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE)
 
-    # Shuffle and repeat train data
-    train_data = train_data.shuffle(10000)
+    # Shuffle?
+    if shuffle:
+        train_data = train_data.shuffle(10000)
+
+    # Repeat train data
     train_data = train_data.repeat()
 
     ds_train = train_data.map(parse_imagenet_example, AUTOTUNE)
     ds_val = val_data.map(parse_imagenet_example, AUTOTUNE)
 
-    # Get augment
-    augment = None
-    if args.autoaugment:
-        augment = autoaugment.AutoAugment().distort
 
     # Preprocess
     if args.loss == 'ce':

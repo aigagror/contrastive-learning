@@ -10,6 +10,7 @@ import utils
 
 class TestPlots(unittest.TestCase):
     def basic_usage(self):
+        self.skipTest('too long')
         args = '--data=cifar10 --backbone=affine ' \
                '--bsz=8 --lr=1e-3 ' \
                '--loss=partial-supcon '

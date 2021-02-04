@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from data.cifar10 import load_cifar10
 from data.imagenet import load_imagenet
-
+from data import autoaugment
 
 def add_contrast_data(inputs, targets):
     labels = targets['labels']
@@ -18,17 +18,32 @@ def add_contrast_data(inputs, targets):
     targets['contrast'] = contrast
     return inputs, targets
 
+def autoaugment_train(inputs, targets):
+    for key in ['imgs', 'imgs2']:
+        if key in inputs:
+            inputs[key] = autoaugment.AutoAugment().distort(inputs[key])
+    return inputs, targets
 
-def load_datasets(args):
+def autoaugment_val(inputs, targets):
+    if 'imgs2' in inputs:
+        inputs['imgs2'] = autoaugment.AutoAugment().distort(inputs['imgs2'])
+    return inputs, targets
+
+def load_datasets(args, shuffle=True):
     if 'cifar10' in args.data:
-        ds_train, ds_val, ds_info = load_cifar10(args)
+        ds_train, ds_val, ds_info = load_cifar10(args, shuffle)
         if args.data.startswith('fake-'):
             ds_train = ds_train.take(4)
             ds_val = ds_val.take(4)
     elif args.data == 'imagenet':
-        ds_train, ds_val, ds_info = load_imagenet(args)
+        ds_train, ds_val, ds_info = load_imagenet(args, shuffle)
     else:
         raise Exception(f'unknown data {args.data}')
+
+    # Autoaugment
+    if args.autoaugment:
+        ds_train = ds_train.map(autoaugment_train, tf.data.AUTOTUNE)
+        ds_val = ds_val.map(autoaugment_val, tf.data.AUTOTUNE)
 
     # Batch
     ds_train = ds_train.batch(args.bsz)

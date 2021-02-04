@@ -123,7 +123,7 @@ def preprocess_for_train(image_bytes, image_size, augment=None):
     image = _flip(image)
     if augment is not None:
         image = augment(image)
-    image = tf.reshape(image, [image_size, image_size, 3])
+    image = tf.ensure_shape(image, [image_size, image_size, 3])
     image = tf.cast(image, tf.uint8)
     return image
 

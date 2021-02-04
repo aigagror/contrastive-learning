@@ -3,10 +3,8 @@ import tensorflow as tf
 from tensorflow.keras import datasets
 from tensorflow.python.data import AUTOTUNE
 
-from data.preprocess import color_augment
 
-
-def augment_cifar10_img(image):
+def _rand_crop_flip(image):
     # Pad 4 pixels on all sides
     image = tf.image.pad_to_bounding_box(image, 4, 4, 40, 40)
 
@@ -16,14 +14,11 @@ def augment_cifar10_img(image):
     # Random flip
     image = tf.image.random_flip_left_right(image)
 
-    # Color augment
-    image = color_augment(image)
-
     image = tf.cast(image, tf.uint8)
     return image
 
 
-def load_cifar10(args):
+def load_cifar10(args, shuffle):
     imsize, nclass = 32, 10
     (x_train, y_train), (x_val, y_val) = datasets.cifar10.load_data()
     y_train = y_train.astype(np.int32)
@@ -34,8 +29,9 @@ def load_cifar10(args):
     ds_val = tf.data.Dataset.from_tensor_slices((x_val, y_val.flatten())).cache()
 
     # Shuffle entire dataset
-    ds_train = ds_train.shuffle(len(ds_train))
-    ds_val = ds_val.shuffle(len(ds_val))
+    if shuffle:
+        ds_train = ds_train.shuffle(len(ds_train))
+        ds_val = ds_val.shuffle(len(ds_val))
 
     # Repeat train data
     ds_train = ds_train.repeat()
@@ -43,7 +39,7 @@ def load_cifar10(args):
     # Preprocess
     if args.loss == 'ce':
         def process_train(img, label):
-            inputs = {'imgs': augment_cifar10_img(img)}
+            inputs = {'imgs': _rand_crop_flip(img)}
             targets = {'labels': label}
             return inputs, targets
 
@@ -51,12 +47,12 @@ def load_cifar10(args):
             return {'imgs': img}, {'labels': label}
     else:
         def process_train(img, label):
-            inputs = {'imgs': augment_cifar10_img(img), 'imgs2': augment_cifar10_img(img)}
+            inputs = {'imgs': _rand_crop_flip(img), 'imgs2': _rand_crop_flip(img)}
             targets = {'labels': label}
             return inputs, targets
 
         def process_val(img, label):
-            return {'imgs': img, 'imgs2': augment_cifar10_img(img)}, {'labels': label}
+            return {'imgs': img, 'imgs2': _rand_crop_flip(img)}, {'labels': label}
 
     ds_train = ds_train.map(process_train, AUTOTUNE)
     ds_val = ds_val.map(process_val, AUTOTUNE)

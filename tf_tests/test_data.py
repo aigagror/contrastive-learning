@@ -66,6 +66,24 @@ class TestData(unittest.TestCase):
             tf.debugging.assert_less_equal(contrast, 2 * tf.ones_like(contrast))
             tf.debugging.assert_greater_equal(contrast, tf.zeros_like(contrast))
 
+    def test_autoaugment(self):
+        self.skipTest('too long')
+        all_args = ['--data=cifar10 --bsz=8', '--data=cifar10 --autoaugment --bsz=8']
+        for args in all_args:
+            args = utils.parser.parse_args(args.split())
+
+            ds_train, ds_val, ds_info = data.load_datasets(args, shuffle=False)
+            imgs = next(iter(ds_train))[0]['imgs']
+            f, ax = plt.subplots(1, 8)
+            f.set_size_inches(20, 5)
+            for i in range(8):
+                ax[i].imshow(imgs[i])
+            f.tight_layout()
+            f.savefig(f'images/cifar10-autoaugment-{args.autoaugment}.jpg')
+
+        print("Test images saved to 'data/images/'")
+
+
     def test_cifar10_augmentation(self):
         img = tf.io.decode_image(tf.io.read_file('images/cifar10-sample.png'))
 
@@ -74,7 +92,7 @@ class TestData(unittest.TestCase):
         ax[0].set_title('original')
         ax[0].imshow(img)
         for i in range(1, 9):
-            aug_img = data.cifar10.augment_cifar10_img(img)
+            aug_img = data.cifar10._rand_crop_flip(img)
             tf.debugging.assert_type(aug_img, tf.uint8)
             ax[i].set_title('augmentation')
             ax[i].imshow(aug_img)
