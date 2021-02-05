@@ -37,7 +37,7 @@ class LossesTest(unittest.TestCase):
     def test_losses_format_and_output(self):
         for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
             for _ in range(100):
-                n = tf.random.uniform([], minval=1, maxval=3, dtype=tf.int32)
+                n = tf.random.uniform([], minval=1, maxval=4, dtype=tf.int32)
                 d = tf.random.uniform([], minval=1, maxval=32, dtype=tf.int32)
 
                 y = self.rand_batch_sims(n)
@@ -83,7 +83,7 @@ class LossesTest(unittest.TestCase):
 
             ce_loss = partial_ce_loss + inst_loss
             partial_supcon_loss = loss_fn(y, x)
-            tf.debugging.assert_near(ce_loss, partial_supcon_loss)
+            tf.debugging.assert_near(ce_loss, partial_supcon_loss, atol=1e-4)
 
     # Test cross entropy correctness
     def test_zero_loss(self):

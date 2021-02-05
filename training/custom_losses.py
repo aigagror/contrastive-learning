@@ -102,7 +102,7 @@ class PartialSupCon(ConLoss):
         # Log probs
         exp = tf.math.exp(sims)
         partial_sum_exp = tf.math.reduce_sum(exp * partial_mask, axis=1, keepdims=True)
-        partial_log_prob = sims - tf.math.log(partial_sum_exp)
+        partial_log_prob = sims - tf.math.log(partial_sum_exp + 1e-5)
 
         # Partial class positive pairs log prob
         class_partial_log_prob = partial_class_mask * partial_log_prob
