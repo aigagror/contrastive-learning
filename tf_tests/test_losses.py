@@ -83,7 +83,7 @@ class LossesTest(unittest.TestCase):
 
             ce_loss = partial_ce_loss + inst_loss
             partial_supcon_loss = loss_fn(y, x)
-            tf.debugging.assert_near(ce_loss, partial_supcon_loss, atol=1e-4)
+            tf.debugging.assert_near(ce_loss, partial_supcon_loss, atol=1e-2)
 
     # Test cross entropy correctness
     def test_zero_loss(self):
