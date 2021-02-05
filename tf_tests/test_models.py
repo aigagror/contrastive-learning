@@ -73,8 +73,8 @@ class TestModel(unittest.TestCase):
 
     def test_num_l2_reg(self):
         for loss, feat_norm, proj_norm, target_reg in [('ce', '', '', 4), ('supcon', '', '', 5),
-                                            ('ce', '--feat-norm=bn', '--proj-norm=sn', 2),
-                                            ('supcon', '--feat-norm=bn', '--proj-norm=sn', 2)]:
+                                                       ('ce', '--feat-norm=bn', '--proj-norm=sn', 2),
+                                                       ('supcon', '--feat-norm=bn', '--proj-norm=sn', 2)]:
             args = f'--backbone=affine --weight-decay=1e-3 --loss={loss} {feat_norm} {proj_norm}'
             args = utils.parser.parse_args(args.split())
             utils.setup(args)

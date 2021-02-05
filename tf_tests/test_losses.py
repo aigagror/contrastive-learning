@@ -7,6 +7,17 @@ from training import custom_losses
 
 class LossesTest(unittest.TestCase):
 
+    def rand_batch_sims(self, n):
+        y = 2 * tf.eye(n, dtype=tf.int32)
+        rand_class_mask = tf.random.uniform([n, n], maxval=2, dtype=tf.int32)
+        y = tf.maximum(y, rand_class_mask)
+        return y
+
+    def rand_feat_views(self, n, d):
+        x = tf.random.normal([n, 2, d])
+        x = tf.linalg.l2_normalize(x, axis=2)
+        return x
+
     # Error
     def test_y_true_greater_than_two_error(self):
         for loss in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
@@ -29,14 +40,50 @@ class LossesTest(unittest.TestCase):
                 n = tf.random.uniform([], minval=1, maxval=3, dtype=tf.int32)
                 d = tf.random.uniform([], minval=1, maxval=32, dtype=tf.int32)
 
-                y = 2 * tf.eye(n, dtype=tf.int32)
-                x = tf.random.uniform([n, 2, d], minval=-1, maxval=1)
-                x = tf.linalg.l2_normalize(x, axis=2)
+                y = self.rand_batch_sims(n)
+                x = self.rand_feat_views(n, d)
                 loss = loss_fn(y, x)
                 tf.debugging.assert_greater_equal(loss, tf.zeros_like(loss), f'{loss_fn}\nx={x}\ny={y}')
                 tf.debugging.assert_shapes([
                     (loss, [])
                 ])
+
+    # Test cross entropy equivalency
+    def test_cross_entropy_impl_of_partial_supcon(self):
+        loss_fn = custom_losses.PartialSupCon(0.1)
+
+        n, d = 4, 32
+        for _ in range(100):
+            y = self.rand_batch_sims(n)
+            x = self.rand_feat_views(n, d)
+
+            # Compute partial sup con with ragged tensors and the TF cross entropy function
+            inst_mask = (y == 2)
+            partial_class_mask = (y == 1)
+            partial_mask = (y <= 1)
+            partial_class_mask_select = tf.ragged.boolean_mask(partial_class_mask, partial_mask)
+            partial_class_mask_select = tf.cast(partial_class_mask_select, tf.float32)
+
+            sims = tf.matmul(x[:, 0], x[:, 1], transpose_b=True) / 0.1
+            partial_sims_select = tf.ragged.boolean_mask(sims, partial_mask)
+
+            inst_loss = tf.nn.softmax_cross_entropy_with_logits(inst_mask, sims)
+
+            partial_ce_loss = []
+            for i in range(n):
+                row_labels, _ = tf.linalg.normalize(partial_class_mask_select[i], ord=1)
+                if not tf.math.reduce_all(tf.math.is_finite(row_labels)):
+                    partial_ce_loss.append(0.0)
+                else:
+                    row_sims = partial_sims_select[i]
+                    partial_ce_loss.append(tf.nn.softmax_cross_entropy_with_logits(row_labels, row_sims).numpy())
+            partial_ce_loss = partial_ce_loss
+
+            inst_loss, partial_ce_loss = tf.reduce_mean(inst_loss), tf.reduce_mean(partial_ce_loss)
+
+            ce_loss = partial_ce_loss + inst_loss
+            partial_supcon_loss = loss_fn(y, x)
+            tf.debugging.assert_near(ce_loss, partial_supcon_loss)
 
     # Test cross entropy correctness
     def test_zero_loss(self):
@@ -50,9 +97,10 @@ class LossesTest(unittest.TestCase):
             tf.debugging.assert_near(loss, tf.zeros_like(loss), atol=1e-4)
 
     def test_non_zero_loss(self):
+        n, d = 4, 32
         for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
-            y = 2 * tf.eye(3)
-            x = tf.ones([3, 2, 32])
+            y = self.rand_batch_sims(n)
+            x = self.rand_feat_views(n, d)
             loss = loss_fn(y, x)
             tf.debugging.assert_greater(loss, tf.ones_like(loss))
 
@@ -75,8 +123,8 @@ class LossesTest(unittest.TestCase):
     def test_distribute_equivalent(self):
         for LossClass in [custom_losses.SimCLR, custom_losses.SupCon, custom_losses.PartialSupCon]:
             strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
-            global_x = tf.random.normal([4, 2, 32]) / 4
-            global_y = 2 * tf.eye(4, dtype=tf.int32)
+            global_y = self.rand_batch_sims(4)
+            global_x = self.rand_feat_views(4, 32)
 
             def foo():
                 replica_context = tf.distribute.get_replica_context()

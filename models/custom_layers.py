@@ -178,6 +178,7 @@ class Scale(layers.Layer):
     def call(self, inputs, **kwargs):
         return self.scale * inputs
 
+
 class Identity(layers.Activation):
     def __init__(self, name, dtype=None):
         super().__init__('linear', name=name, dtype=dtype)
