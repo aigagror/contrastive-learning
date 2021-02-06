@@ -101,7 +101,7 @@ def setup(args):
     return strategy
 
 
-def upload_to_tensorboard_dev(args):
+def upload_logs_to_tensorboard_dev(args):
     # Copy log files to local disk
     log_dir = os.path.join(args.out, 'logs')
     if log_dir.startswith('gs://'):
@@ -118,7 +118,7 @@ def upload_to_tensorboard_dev(args):
     print(f"tensorboard dev upload "
           f"--logdir {tensorboard_logdir} "
           f"--name '{args.data}, {args.loss}' "
-          f"--description '{args.bsz} bsz, {args.feat_norm}-{args.proj_norm} norm'")
+          f"--description '{args.bsz} bsz, {args.feat_norm} feat norm, {args.proj_norm} proj norm'")
     print('\n' + '=' * 20)
 
 
