@@ -84,7 +84,6 @@ def setup(args):
     if args.tpu:
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver()
         tf.config.experimental_connect_to_cluster(resolver)
-        # This is the TPU initialization code that has to be at the beginning.
         tf.tpu.experimental.initialize_tpu_system(resolver)
         strategy = tf.distribute.TPUStrategy(resolver)
     elif len(tf.config.list_physical_devices('GPU')) > 1:
