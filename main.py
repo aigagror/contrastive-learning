@@ -36,8 +36,8 @@ def run(args):
                                             custom_objects=utils.all_custom_objects)
             logging.info('loaded model')
             if args.recompile:
+                logging.info('recompiling model')
                 training.compile_model(args, model)
-                logging.info('recompiled model')
         else:
             model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
             training.compile_model(args, model)
@@ -47,7 +47,7 @@ def run(args):
 
     # Print model information
     keras.utils.plot_model(model, 'out/model.png')
-    logging.info("model plotted to 'out/model.png'")
+    logging.info("model graph saved to 'out/model.png'")
     model.summary()
 
     # Train
