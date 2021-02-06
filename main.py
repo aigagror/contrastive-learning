@@ -9,6 +9,7 @@ import plots
 import training
 import utils
 from training import train
+from utils import upload_to_tensorboard_dev
 
 
 def run(args):
@@ -51,13 +52,16 @@ def run(args):
     model.summary()
 
     # Train
-    train(args, model, ds_train, ds_val, ds_info)
+    train(args, model, ds_train, ds_val)
 
     # Plot
     if args.loss != 'ce':
         plots.plot_hist_sims(args, strategy, model, ds_val)
     if args.tsne:
         plots.plot_tsne(args, strategy, model, ds_val)
+
+    # Upload Tensorboard data
+    upload_to_tensorboard_dev(args)
 
 
 if __name__ == '__main__':

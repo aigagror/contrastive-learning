@@ -101,4 +101,22 @@ def setup(args):
     return strategy
 
 
+def upload_to_tensorboard_dev(args):
+    # Copy log files to local disk
+    log_dir = os.path.join(args.out, 'logs')
+    if log_dir.startswith('gs://'):
+        import shutil
+        shutil.rmtree('./out/logs', ignore_errors=True)
+        os.system(f"gsutil -m cp -r {log_dir} ./out")
+        tensorboard_logdir = './out/logs'
+    else:
+        tensorboard_logdir = log_dir
+
+    # Upload logfiles to Tensorboard dev
+    os.system(f"tensorboard dev upload "
+              f"--logdir {tensorboard_logdir} "
+              f"--name '{args.data}, {args.loss}' "
+              f"--description '{args.bsz} bsz, {args.feat_norm}-{args.proj_norm} norm'")
+
+
 all_custom_objects = {**custom_losses.custom_objects, **custom_layers.custom_objects, **lr_schedule.custom_objects}

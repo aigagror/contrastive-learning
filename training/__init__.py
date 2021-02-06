@@ -8,7 +8,7 @@ from tensorflow.keras import callbacks, optimizers
 from training import custom_losses, lr_schedule
 
 
-def train(args, model, ds_train, ds_val, ds_info):
+def train(args, model, ds_train, ds_val):
     # Callbacks
     cbks = get_callbacks(args)
 
