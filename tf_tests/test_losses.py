@@ -102,7 +102,7 @@ class LossesTest(unittest.TestCase):
             y = self.rand_batch_sims(n)
             x = self.rand_feat_views(n, d)
             loss = loss_fn(y, x)
-            tf.debugging.assert_greater(loss, tf.ones_like(loss))
+            tf.debugging.assert_greater(loss, tf.zeros_like(loss))
 
     # Distribution equivalancy
     def test_all_gather_same_order(self):

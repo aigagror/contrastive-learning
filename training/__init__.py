@@ -34,8 +34,9 @@ def get_callbacks(args):
 
 def compile_model(args, model):
     # LR schedule
-    lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup, args.lr_decays)
-
+    lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup, args.lr_decays,
+                                                                start_step=args.init_epoch * args.train_steps)
+    logging.info(f'starting learning rate: {lr_scheduler(0)}')
     # Optimizer
     if args.optimizer == 'sgd':
         opt = optimizers.SGD(lr_scheduler, momentum=0.9)

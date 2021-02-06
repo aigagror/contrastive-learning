@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 
 import tensorflow as tf
@@ -47,6 +49,20 @@ class TestTraining(unittest.TestCase):
                              (80001, 5e-4)]:
             lr = lr_scheduler(step)
             tf.debugging.assert_equal(lr, tf.constant(tar_lr, dtype=lr.dtype), message=f'step {step}: {lr} vs {tar_lr}')
+
+    def test_save_load_lr_schedule(self):
+        args = '--warmup=5 --lr=5e-1 --lr-decays 30 60 80 --train-steps=1000'
+        args = utils.parser.parse_args(args.split())
+        lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup,
+                                                                    args.lr_decays)
+        optimizer = tf.keras.optimizers.SGD(lr_scheduler)
+        inputs = tf.keras.Input([1])
+        outputs = tf.keras.layers.Dense(1)(inputs)
+        model = tf.keras.Model(inputs, outputs)
+        model.compile(optimizer=optimizer)
+        model_path = os.path.join(tempfile.gettempdir(), 'model')
+        model.save(model_path)
+        loaded_model = tf.keras.models.load_model(model_path, custom_objects=utils.all_custom_objects)
 
 
 if __name__ == '__main__':
