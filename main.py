@@ -9,7 +9,7 @@ import plots
 import training
 import utils
 from training import train
-from utils import upload_to_tensorboard_dev
+from utils import prepare_tensorboard_dev_logs
 
 
 def run(args):
