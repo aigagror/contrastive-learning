@@ -101,7 +101,7 @@ def setup(args):
     return strategy
 
 
-def upload_logs_to_tensorboard_dev(args):
+def prepare_tensorboard_dev_logs(args):
     # Copy log files to local disk
     log_dir = os.path.join(args.out, 'logs')
     if log_dir.startswith('gs://'):
