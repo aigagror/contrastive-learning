@@ -114,12 +114,13 @@ def upload_logs_to_tensorboard_dev(args):
         tensorboard_logdir = log_dir
 
     # Print command to upload tensorboard data
-    print('=' * 20, end='\n\n')
-    print(f"tensorboard dev upload "
+    print('=' * 40, end='\n\n')
+    print("tensorboard dev upload "
           f"--logdir {tensorboard_logdir} "
           f"--name '{args.data}, {args.loss}' "
-          f"--description '{args.bsz} bsz, {args.feat_norm} feat norm, {args.proj_norm} proj norm'")
-    print('\n' + '=' * 20)
+          f"--description '{args.bsz} bsz, {args.feat_norm} feat norm, {args.proj_norm} proj norm' "
+          "--one_shot ")
+    print('\n' + '=' * 40)
 
 
 all_custom_objects = {**custom_losses.custom_objects, **custom_layers.custom_objects, **lr_schedule.custom_objects}
