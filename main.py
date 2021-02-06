@@ -15,7 +15,6 @@ from utils import prepare_tensorboard_dev_logs
 def run(args):
     # Setup
     strategy = utils.setup(args)
-    logging.info(args)
 
     # Data
     ds_train, ds_val, ds_info = data.load_datasets(args)
