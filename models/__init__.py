@@ -89,12 +89,12 @@ def make_model(args, nclass, input_shape):
     # Normalize features?
     feats, feats2 = optional_normalize(args.feat_norm, raw_feats, raw_feats2)
 
-    # Measure the norms of the features
-    feats = custom_layers.MeasureNorm(name='feat_norm')(feats)
-
     # Name the features
     feats = custom_layers.Identity(name='feats')(feats)
     feats2 = custom_layers.Identity(name='feats2')(feats2)
+
+    # Measure the norms of the features
+    feats = custom_layers.MeasureNorm(name='feat_norm')(feats)
 
     # Projection
     if args.proj_dim is None or args.proj_dim <= 0:
@@ -112,12 +112,12 @@ def make_model(args, nclass, input_shape):
     # Normalize projected features?
     proj_feats, proj_feats2 = optional_normalize(args.proj_norm, proj_feats, proj_feats2)
 
-    # Measure the norms of the projected features
-    proj_feats = custom_layers.MeasureNorm(name='proj_norm')(proj_feats)
-
     # Name the projected features
     proj_feats = custom_layers.Identity(name='proj_feats')(proj_feats)
     proj_feats2 = custom_layers.Identity(name='proj_feats2')(proj_feats2)
+
+    # Measure the norms of the projected features
+    proj_feats = custom_layers.MeasureNorm(name='proj_norm')(proj_feats)
 
     # Feature views
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))
