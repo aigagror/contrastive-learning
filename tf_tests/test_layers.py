@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 
 import tensorflow as tf
@@ -65,6 +67,24 @@ class LayersTest(unittest.TestCase):
         # Assert equal sign
         prod = x * y
         tf.debugging.assert_greater_equal(prod, tf.zeros_like(prod))
+
+    def test_configs(self):
+        identity_config = custom_layers.Identity(name='foo', dtype=tf.float32).get_config()
+        custom_layers.Identity(**identity_config)
+
+        custom_layers.Scale(**custom_layers.Scale(1, name='foo').get_config())
+
+    def test_spec_norm_layer_save_load(self):
+        dense = tf.keras.layers.Dense(1)
+        sn_dense = custom_layers.SpectralNormalization(dense)
+
+        input = tf.keras.Input([1])
+        output = sn_dense(input)
+
+        model = tf.keras.models.Model(input, output)
+        model_path = os.path.join(tempfile.gettempdir(), 'model')
+        model.save(model_path)
+        tf.keras.models.load_model(model_path)
 
 
 if __name__ == '__main__':

@@ -170,8 +170,8 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
 
 
 class Scale(layers.Layer):
-    def __init__(self, scale):
-        super().__init__()
+    def __init__(self, scale, **kwargs):
+        super().__init__(**kwargs)
         self.scale = scale
         self.scale_weight = self.add_weight(shape=[], initializer=tf.keras.initializers.Constant(scale),
                                             trainable=False,
@@ -181,18 +181,15 @@ class Scale(layers.Layer):
         return self.scale_weight * inputs
 
     def get_config(self):
-        return {'scale': self.scale}
+        config = {'scale': self.scale}
+        base_config = super().get_config()
+        return {**base_config, **config}
 
 
 class Identity(layers.Activation):
-    def __init__(self, name, dtype=None):
-        super().__init__('linear', name=name, dtype=dtype)
-
-    def get_config(self):
-        return {
-            'name': self.name,
-            'dtype': self.dtype
-        }
+    def __init__(self, **kwargs):
+        kwargs['activation'] = 'linear'
+        super().__init__(**kwargs)
 
 
 custom_objects = {
@@ -201,6 +198,7 @@ custom_objects = {
     'GlobalBatchSims': GlobalBatchSims,
     'L2Normalize': L2Normalize,
     'MeasureNorm': MeasureNorm,
+    'SpectralNormalization': SpectralNormalization,
     'Scale': Scale,
     'Identity': Identity
 }
