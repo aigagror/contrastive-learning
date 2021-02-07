@@ -38,7 +38,7 @@ def compile_model(args, model):
                                                                 start_step=args.init_epoch * args.train_steps)
     # Optimizer
     if args.optimizer == 'sgd':
-        opt = optimizers.SGD(lr_scheduler, momentum=0.9)
+        opt = optimizers.SGD(lr_scheduler, momentum=0.9, nesterov=True)
     elif args.optimizer == 'adam':
         opt = optimizers.Adam(lr_scheduler)
     elif args.optimizer == 'lamb':
