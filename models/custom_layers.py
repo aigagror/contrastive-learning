@@ -172,16 +172,27 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
 class Scale(layers.Layer):
     def __init__(self, scale):
         super().__init__()
-        self.scale = self.add_weight(shape=[], initializer=tf.keras.initializers.Constant(scale), trainable=False,
-                                     name="scale", dtype=self.dtype)
+        self.scale = scale
+        self.scale_weight = self.add_weight(shape=[], initializer=tf.keras.initializers.Constant(scale),
+                                            trainable=False,
+                                            name="scale", dtype=self.dtype)
 
     def call(self, inputs, **kwargs):
-        return self.scale * inputs
+        return self.scale_weight * inputs
+
+    def get_config(self):
+        return {'scale': self.scale}
 
 
 class Identity(layers.Activation):
     def __init__(self, name, dtype=None):
         super().__init__('linear', name=name, dtype=dtype)
+
+    def get_config(self):
+        return {
+            'name': self.name,
+            'dtype': self.dtype
+        }
 
 
 custom_objects = {
