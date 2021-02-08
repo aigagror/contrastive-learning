@@ -71,7 +71,7 @@ def setup(args):
         tf_logger.removeHandler(h)
 
     # Output directory
-    args.out = os.path.join(args.base_dir, f'{args.data}-{args.backbone}-{args.feat_norm}-{args.loss}')
+    args.out = os.path.join(args.base_dir, args.loss, args.data, f'{args.backbone}-{args.feat_norm}')
     if not args.load:
         if args.out.startswith('gs://'):
             os.system(f"gsutil -m rm {os.path.join(args.out, '**')}")
