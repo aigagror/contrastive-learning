@@ -17,7 +17,11 @@ def run(args):
     strategy = utils.setup(args)
 
     # Data
-    ds_train, ds_val, ds_info = data.load_datasets(args)
+    if args.loss == 'ce':
+        views, with_batch_sims = ['imgs'], False
+    else:
+        views, with_batch_sims = ['imgs', 'imgs2'], True
+    ds_train, ds_val, ds_info = data.load_datasets(args, views, with_batch_sims)
     plots.plot_img_samples(args, ds_train, ds_val)
 
     # Set training steps
@@ -39,7 +43,7 @@ def run(args):
                 logging.info('recompiling model')
                 training.compile_model(args, model)
         else:
-            model = models.make_model(args, ds_info['nclass'], ds_info['input_shape'])
+            model = models.make_model(args, ds_info.features['label'].num_classes, ds_info['input_shape'])
             training.compile_model(args, model)
             logging.info('starting with new model')
 

@@ -1,13 +1,16 @@
 import logging
+from functools import partial
 
 import tensorflow as tf
+import tensorflow_datasets as tfds
 
 from data import autoaugment
 from data.cifar10 import load_cifar10
 from data.imagenet import load_imagenet
+from data.preprocess import process_encoded_example, augment
 
 
-def add_contrast_data(inputs, targets):
+def add_batch_sims(inputs, targets):
     labels = targets['labels']
     labels = tf.expand_dims(labels, axis=1)
     tf.debugging.assert_shapes([
@@ -35,28 +38,40 @@ def autoaugment_second_view(inputs, targets):
     return inputs, targets
 
 
-def load_datasets(args):
-    if 'cifar10' in args.data:
-        ds_train, ds_val, ds_info = load_cifar10(args)
-        if args.data.startswith('fake-'):
-            ds_train = ds_train.take(4)
-            ds_val = ds_val.take(4)
-    elif args.data == 'imagenet':
-        ds_train, ds_val, ds_info = load_imagenet(args)
-    else:
-        raise Exception(f'unknown data {args.data}')
+def load_datasets(args, views, with_batch_sims):
+    # Load image bytes and labels
+    shuffle = args.shuffle_buffer is not None and args.shuffle_buffer > 0
+    decoder_args = {'image': tfds.decode.SkipDecoding()}
+    splits = ['train', 'validation' if args.data == 'imagenet' else 'test']
+    ds_train, ds_val, info = tfds.load(args.data, split=splits, as_supervised=True, shuffle_files=shuffle,
+                                       decoders=decoder_args, with_info=True, data_dir='gs://aigagror/datasets')
 
-    # Augment?
+    # Determine image size
+    imsize = {'cifar10': 32, 'cifar100': 32, 'imagenet2012': 224}[args.data]
+
+    # Preprocess
+    process_train_fn = partial(process_encoded_example, views=views, imsize=imsize, rand_crop=True)
+    process_val_fn = partial(process_encoded_example, views=views, imsize=imsize, rand_crop=False)
+
+    ds_train = ds_train.map(process_train_fn, tf.data.AUTOTUNE)
+    ds_val = ds_val.map(process_val_fn, tf.data.AUTOTUNE)
+
+    # Augment (we skip augmenting the first view in the validation set)
     if args.autoaugment:
-        ds_train = ds_train.map(autoaugment_all_views, tf.data.AUTOTUNE)
-        ds_val = ds_val.map(autoaugment_second_view, tf.data.AUTOTUNE)
-        logging.info('autoaugmenting datasets')
+        autoaugment_fn = autoaugment.AutoAugment().distort
+        augment_fn = lambda x: autoaugment_fn(tf.image.random_flip_left_right(x))
+    else:
+        augment_fn = tf.image.random_flip_left_right
+
+    augment_train_fn = partial(augment, views=views, augment_fn=augment_fn)
+    augment_val_fn = partial(augment, views=views[1:], augment_fn=augment_fn)
+    ds_train = ds_train.map(augment_train_fn, tf.data.AUTOTUNE)
+    ds_val = ds_val.map(augment_val_fn, tf.data.AUTOTUNE)
 
     # Shuffle?
-    shuffle = args.shuffle_buffer is not None and args.shuffle_buffer > 0
     if shuffle:
         ds_train = ds_train.shuffle(args.shuffle_buffer)
-    logging.info(f'dataset shuffle={shuffle}')
+        logging.info(f'train dataset shuffled with {args.shuffle_buffer} buffer')
 
     # Repeat train dataset
     ds_train = ds_train.repeat()
@@ -66,13 +81,13 @@ def load_datasets(args):
     ds_val = ds_val.batch(args.bsz)
 
     # Add batch similarities (supcon labels)
-    if args.loss != 'ce':
-        ds_train = ds_train.map(add_contrast_data, tf.data.AUTOTUNE)
-        ds_val = ds_val.map(add_contrast_data, tf.data.AUTOTUNE)
-        logging.info('added contrast data')
+    if with_batch_sims:
+        ds_train = ds_train.map(add_batch_sims, tf.data.AUTOTUNE)
+        ds_val = ds_val.map(add_batch_sims, tf.data.AUTOTUNE)
+        logging.info('added batch similarities')
 
     # Prefetch
     ds_train = ds_train.prefetch(tf.data.AUTOTUNE)
     ds_val = ds_val.prefetch(tf.data.AUTOTUNE)
 
-    return ds_train, ds_val, ds_info
+    return ds_train, ds_val, info

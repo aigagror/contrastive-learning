@@ -16,8 +16,8 @@ class TestData(unittest.TestCase):
     def test_preprocess_for_train_and_eval(self):
         image_bytes = tf.io.read_file('images/imagenet-sample.jpg')
 
-        for name, preprocess_fn in [('preprocess-for-train', data.preprocess.preprocess_for_train),
-                                    ('preprocess-for-eval', data.preprocess.preprocess_for_eval)]:
+        for name, preprocess_fn in [('preprocess-for-train', data.process_encoded_example.preprocess_for_train),
+                                    ('preprocess-for-eval', data.process_encoded_example.preprocess_for_eval)]:
             f, ax = plt.subplots(1, 9)
             f.set_size_inches(20, 5)
             ax[0].set_title('original')

@@ -75,7 +75,7 @@ def _decode_and_random_crop(image_bytes, image_size):
     image = tf.cond(
         bad,
         lambda: _decode_and_center_crop(image_bytes, image_size),
-        lambda: tf.image.resize([image], [image_size, image_size], method='bicubic')[0])
+        lambda: tf.image.resize(image, [image_size, image_size], method='bicubic'))
 
     return image
 
@@ -101,58 +101,26 @@ def _decode_and_center_crop(image_bytes, image_size):
     return image
 
 
-def _flip(image):
-    """Random horizontal image flip."""
-    image = tf.image.random_flip_left_right(image)
-    return image
+def process_encoded_example(image_bytes, labels, image_size, views, rand_crop):
+    inputs, targets = {}, {'labels': labels}
+    for view in views:
+        if rand_crop:
+            image = _decode_and_random_crop(image_bytes, image_size)
+        else:
+            image = _decode_and_center_crop(image_bytes, image_size)
+
+        image = tf.cast(image, tf.uint8)
+        image = tf.ensure_shape(image, [image_size, image_size, 3])
+
+        inputs[view] = image
+
+    return inputs, targets
 
 
-def preprocess_for_train(image_bytes, image_size, augment=None):
-    """Preprocesses the given image for training.
+def augment(inputs, targets, views, augment_fn):
+    for view in views:
+        if view not in inputs:
+            continue
+        inputs[view] = augment_fn(inputs[view])
 
-    Args:
-      image_bytes: `Tensor` representing an image binary of arbitrary size.
-      image_size: image size.
-      use_bfloat16: `bool` for whether to use bfloat16.
-
-    Returns:
-      A preprocessed image `Tensor`.
-    """
-    image = _decode_and_random_crop(image_bytes, image_size)
-    image = _flip(image)
-    if augment is not None:
-        image = augment(image)
-    image = tf.ensure_shape(image, [image_size, image_size, 3])
-    image = tf.cast(image, tf.uint8)
-    return image
-
-
-def preprocess_for_eval(image_bytes, image_size):
-    """Preprocesses the given image for evaluation.
-
-    Args:
-      image_bytes: `Tensor` representing an image binary of arbitrary size.
-      image_size: image size.
-      use_bfloat16: `bool` for whether to use bfloat16.
-
-    Returns:
-      A preprocessed image `Tensor`.
-    """
-    image = _decode_and_center_crop(image_bytes, image_size)
-    image = tf.reshape(image, [image_size, image_size, 3])
-    image = tf.cast(image, tf.uint8)
-    return image
-
-
-def color_augment(image):
-    # Color Jitter
-    if tf.random.uniform([]) < 0.8:
-        image = tf.image.random_hue(image, 0.08)
-        image = tf.image.random_saturation(image, 0.6, 1.6)
-        image = tf.image.random_brightness(image, 0.05)
-        image = tf.image.random_contrast(image, 0.7, 1.3)
-
-    # Gray scale
-    if tf.random.uniform([]) < 0.2:
-        image = tf.image.grayscale_to_rgb(tf.image.rgb_to_grayscale(image))
-    return image
+    return inputs, targets

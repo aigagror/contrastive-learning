@@ -12,7 +12,7 @@ from training import custom_losses, lr_schedule
 parser = argparse.ArgumentParser()
 
 # Data
-parser.add_argument('--data', choices=['imagenet', 'cifar10', 'fake-cifar10'])
+parser.add_argument('--data', choices=['imagenet', 'cifar10', 'cifar100'])
 parser.add_argument('--autoaugment', action='store_true')
 parser.add_argument('--shuffle-buffer', type=int, default=10000)
 parser.add_argument('--cycle-length', type=int, default=64)
