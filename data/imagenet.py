@@ -1,24 +1,7 @@
-import tensorflow as tf
+import tensorflow_datasets as tfds
 from tensorflow.python.data import AUTOTUNE
 
 from data.preprocess import preprocess_for_train, preprocess_for_eval
-
-
-def parse_imagenet_example(serial):
-    features = {
-        'image/height': tf.io.FixedLenFeature([], tf.int64),
-        'image/width': tf.io.FixedLenFeature([], tf.int64),
-        'image/colorspace': tf.io.FixedLenFeature([], tf.string),
-        'image/channels': tf.io.FixedLenFeature([], tf.int64),
-        'image/class/label': tf.io.FixedLenFeature([], tf.int64),
-        'image/class/synset': tf.io.FixedLenFeature([], tf.string),
-        'image/format': tf.io.FixedLenFeature([], tf.string),
-        'image/filename': tf.io.FixedLenFeature([], tf.string),
-        'image/encoded': tf.io.FixedLenFeature([], tf.string),
-    }
-    example = tf.io.parse_example(serial, features)
-    label = example['image/class/label'] - 1
-    return example['image/encoded'], label
 
 
 def load_imagenet(args):
@@ -29,15 +12,11 @@ def load_imagenet(args):
     shuffle = args.shuffle_buffer is not None and args.shuffle_buffer > 0
 
     # Sharded record datasets
-    train_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/train*', shuffle)
-    val_files = tf.data.Dataset.list_files('gs://aigagror/datasets/imagenet/validation-*', shuffle)
-    train_data = train_files.interleave(tf.data.TFRecordDataset, cycle_length=args.cycle_length,
-                                        num_parallel_calls=AUTOTUNE, deterministic=False)
-    val_data = val_files.interleave(tf.data.TFRecordDataset, num_parallel_calls=AUTOTUNE, deterministic=False)
-
-    # Parse records
-    ds_train = train_data.map(parse_imagenet_example, AUTOTUNE)
-    ds_val = val_data.map(parse_imagenet_example, AUTOTUNE)
+    decoder_args = {'image': tfds.decode.SkipDecoding()}
+    ds_train, info = tfds.load('imagenet2012', split='train', shuffle_files=shuffle, with_info=True, as_supervised=True,
+                               decoders=decoder_args, data_dir='gs://aigagror/datasets')
+    ds_val = tfds.load('imagenet2012', split='validation', as_supervised=True, decoders=decoder_args,
+                       data_dir='gs://aigagror/datasets')
 
     # Preprocess
     if args.loss == 'ce':
