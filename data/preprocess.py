@@ -101,18 +101,24 @@ def _decode_and_center_crop(image_bytes, image_size):
     return image
 
 
+def _decode_and_crop(image_bytes, rand_crop, imsize):
+    if rand_crop:
+        image = _decode_and_random_crop(image_bytes, imsize)
+    else:
+        image = _decode_and_center_crop(image_bytes, imsize)
+    return image
+
 def process_encoded_example(image_bytes, label, imsize, augment_config):
     inputs, targets = {}, {'label': label}
     for view_config in augment_config.view_configs:
-        if view_config.rand_crop:
-            image = _decode_and_random_crop(image_bytes, imsize)
-        else:
-            image = _decode_and_center_crop(image_bytes, imsize)
+        image = tf.cond(tf.image.is_jpeg(image_bytes),
+                        lambda: _decode_and_crop(image_bytes, view_config.rand_crop, imsize),
+                        lambda: tf.image.resize(tf.image.decode_png(image_bytes, channels=3), [imsize, imsize]))
+        image = tf.cast(image, tf.uint8)
 
         # Augment
         image = view_config.augment(image)
 
-        image = tf.cast(image, tf.uint8)
         image = tf.ensure_shape(image, [imsize, imsize, 3])
 
         inputs[view_config.name] = image
