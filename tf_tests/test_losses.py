@@ -19,7 +19,7 @@ class LossesTest(unittest.TestCase):
         return x
 
     def rand_labels(self, n):
-        return tf.random.uniform([n], maxval=2, dtype=tf.int32)
+        return tf.random.uniform([n, 1], maxval=2, dtype=tf.int32)
 
     # Error
     def test_y_true_greater_than_two_error(self):
@@ -61,8 +61,7 @@ class LossesTest(unittest.TestCase):
             x = self.rand_feat_views(n, d)
 
             # Compute partial sup con with ragged tensors and the TF cross entropy function
-            y = tf.expand_dims(labels, 1)
-            y = tf.cast(y == tf.transpose(y), tf.uint8)
+            y = tf.cast(labels == tf.transpose(labels), tf.uint8)
             y += tf.eye(len(y), dtype=tf.uint8)
             inst_mask = (y == 2)
             partial_class_mask = (y == 1)
@@ -94,7 +93,7 @@ class LossesTest(unittest.TestCase):
     # Test cross entropy correctness
     def test_zero_loss(self):
         for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1)]:
-            y = tf.constant([1, 2, 3])
+            y = tf.constant([[1], [2], [3]])
             x = tf.eye(3)
             x = tf.repeat(x, 2, axis=0)
             x = tf.reshape(x, [3, 2, 3])

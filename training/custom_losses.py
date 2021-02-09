@@ -15,13 +15,15 @@ class ConLoss(losses.Loss):
         tf.debugging.assert_shapes([(y_true, (None, 1))])
         replica_context = tf.distribute.get_replica_context()
         replica_id = replica_context.replica_id_in_sync_group
+        num_replicas = replica_context.num_replicas_in_sync
 
         # Feat views
         all_labels = replica_context.all_gather(y_true, axis=0)
         local_bsz, global_bsz = tf.shape(y_true)[0], tf.shape(all_labels)[0]
         batch_sims = tf.cast(all_labels == tf.transpose(all_labels), tf.uint8)
         batch_sims += tf.eye(global_bsz, dtype=tf.uint8)
-        batch_sims = batch_sims[replica_id * local_bsz: (replica_id + 1) * local_bsz]
+        batch_sims = tf.reshape(batch_sims, [num_replicas, local_bsz, global_bsz])
+        batch_sims = batch_sims[replica_id]
 
         all_y_pred = replica_context.all_gather(y_pred, axis=0)
         local_feat_views = tf.transpose(y_pred, [1, 0, 2])
