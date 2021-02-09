@@ -13,7 +13,7 @@ from training import custom_losses, lr_schedule
 parser = argparse.ArgumentParser()
 
 # Data
-parser.add_argument('--data-id', choices=['imagenet2012', 'tf_flowers', 'cifar10', 'cifar100'])
+parser.add_argument('--data-id', choices=['imagenet2012', 'tf_flowers', 'cifar10', 'cifar100', 'mnist'])
 parser.add_argument('--autoaugment', action='store_true')
 parser.add_argument('--cache', action='store_true')
 parser.add_argument('--no-shuffle', action='store_false', dest='shuffle', default=True)
