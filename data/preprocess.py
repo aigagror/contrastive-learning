@@ -101,26 +101,20 @@ def _decode_and_center_crop(image_bytes, image_size):
     return image
 
 
-def process_encoded_example(image_bytes, labels, image_size, views, rand_crop):
-    inputs, targets = {}, {'labels': labels}
-    for view in views:
-        if rand_crop:
-            image = _decode_and_random_crop(image_bytes, image_size)
+def process_encoded_example(inputs, imsize, augment_config):
+    image_bytes = inputs['image']
+    for view_config in augment_config.view_configs:
+        if view_config.rand_crop:
+            image = _decode_and_random_crop(image_bytes, imsize)
         else:
-            image = _decode_and_center_crop(image_bytes, image_size)
+            image = _decode_and_center_crop(image_bytes, imsize)
+
+        # Augment
+        image = view_config.augment(image)
 
         image = tf.cast(image, tf.uint8)
-        image = tf.ensure_shape(image, [image_size, image_size, 3])
+        image = tf.ensure_shape(image, [imsize, imsize, 3])
 
-        inputs[view] = image
+        inputs[view_config.name] = image
 
-    return inputs, targets
-
-
-def augment(inputs, targets, views, augment_fn):
-    for view in views:
-        if view not in inputs:
-            continue
-        inputs[view] = augment_fn(inputs[view])
-
-    return inputs, targets
+    return inputs

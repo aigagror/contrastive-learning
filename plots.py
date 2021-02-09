@@ -14,13 +14,13 @@ def plot_tsne(args, strategy, model, ds_val):
     feat_model = tf.keras.Model(model.input, outputs)
 
     @tf.function
-    def get_feats(inputs, targets):
+    def get_feats(inputs):
         feats, proj = feat_model(inputs)
-        return feats, proj, targets['labels']
+        return feats, proj, inputs['label']
 
     all_feats, all_proj, all_labels = [], [], []
-    for inputs, targets in strategy.experimental_distribute_dataset(ds_val):
-        feats, proj, labels = strategy.run(get_feats, (inputs, targets))
+    for inputs in strategy.experimental_distribute_dataset(ds_val):
+        feats, proj, labels = strategy.run(get_feats, [inputs])
 
         feats = strategy.gather(feats, axis=0)
         proj = strategy.gather(proj, axis=0)
@@ -51,22 +51,6 @@ def plot_tsne(args, strategy, model, ds_val):
 
     f.savefig(os.path.join('out/', 'tsne.jpg'))
     logging.info("plotted tsne to 'out/'")
-
-
-def plot_img_samples(args, ds_train, ds_val):
-    f, ax = plt.subplots(2, 8)
-    f.set_size_inches(20, 6)
-    for i, ds in enumerate([ds_train, ds_val]):
-        inputs, _ = next(iter(ds))
-        for j, img in enumerate(inputs['imgs']):
-            if j >= 8:
-                break
-            ax[i, j].set_title('train' if i == 0 else 'val')
-            ax[i, j].imshow(img)
-
-    f.tight_layout()
-    f.savefig(os.path.join('out/', 'img-samples.jpg'))
-    logging.info("image samples saved to 'out/'")
 
 
 def get_all_sims(labels, feats1, feats2, proj1, proj2):
@@ -103,16 +87,16 @@ def plot_hist_sims(args, strategy, model, ds_val):
     feat_model = tf.keras.Model(model.input, outputs)
 
     @tf.function
-    def get_all_feats(inputs, targets):
+    def get_all_feats(inputs):
         feats1, feats2, proj1, proj2 = feat_model(inputs)
-        labels = targets['labels']
+        labels = inputs['label']
         return labels, feats1, feats2, proj1, proj2
 
     neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
     proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
 
-    for inputs, targets in strategy.experimental_distribute_dataset(ds_val):
-        labels, feats1, feats2, proj1, proj2 = strategy.run(get_all_feats, (inputs, targets))
+    for inputs in strategy.experimental_distribute_dataset(ds_val):
+        labels, feats1, feats2, proj1, proj2 = strategy.run(get_all_feats, [inputs])
 
         # All gather
         feats1 = strategy.gather(feats1, axis=0)

@@ -56,23 +56,23 @@ def make_model(args, nclass, input_shape):
         logging.info('adding weight decay via the LAMB optimizer instead of Keras regularization')
 
     # Inputs
-    input = keras.Input(input_shape, name='imgs')
-    input2 = keras.Input(input_shape, name='imgs2')
+    input = keras.Input(input_shape, name='image')
+    input2 = keras.Input(input_shape, name='image2')
 
     if args.backbone == 'resnet50v2':
         backbone = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape, pooling='avg')
-        if args.data == 'cifar10':
+        if args.data_id == 'cifar10':
             logging.warning('using standard resnet on small dataset')
     elif args.backbone == 'small-resnet50v2':
         backbone = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape, pooling='avg')
-        if args.data == 'imagenet':
+        if args.data_id == 'imagenet':
             logging.warning('using small resnet on large dataset')
     elif args.backbone == 'resnet50':
         backbone = applications.ResNet50(weights=None, include_top=False, input_shape=input_shape, pooling='avg')
     elif args.backbone == 'affine':
         backbone = keras.Sequential([
-            layers.Conv2D(128, 3, kernel_regularizer=regularizer, bias_regularizer=regularizer),
-            layers.GlobalAveragePooling2D()
+            layers.GlobalAveragePooling2D(),
+            layers.Dense(1)
         ])
     else:
         raise Exception(f'unknown model {args.backbone}')
@@ -123,7 +123,7 @@ def make_model(args, nclass, input_shape):
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))
 
     # Label logits
-    prediction = layers.Dense(nclass, name='labels',
+    prediction = layers.Dense(nclass, name='label',
                               kernel_regularizer=regularizer if args.feat_norm is None else None,
                               bias_regularizer=regularizer if args.feat_norm is None else None,
                               dtype=tf.float32)(feats)

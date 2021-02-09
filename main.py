@@ -1,6 +1,7 @@
 import logging
 import os
 
+import tensorflow_datasets as tfds
 from tensorflow import keras
 
 import data
@@ -9,7 +10,7 @@ import plots
 import training
 import utils
 from training import train
-from utils import prepare_tensorboard_dev_logs
+from utils import prepare_tensorboard_dev_logs, set_epoch_steps
 
 
 def run(args):
@@ -17,20 +18,21 @@ def run(args):
     strategy = utils.setup(args)
 
     # Data
-    if args.loss == 'ce':
-        views, with_batch_sims = ['imgs'], False
-    else:
-        views, with_batch_sims = ['imgs', 'imgs2'], True
-    ds_train, ds_val, ds_info = data.load_datasets(args, views, with_batch_sims)
-    plots.plot_img_samples(args, ds_train, ds_val)
+    train_augment_config, val_augment_config = utils.load_augment_configs(args)
+    ds_train, ds_info = data.load_datasets(args.data_id, 'train', shuffle=True, repeat=True,
+                                           augment_config=train_augment_config, bsz=args.bsz)
+    val_split_name = data.get_val_split_name(ds_info)
+    ds_val, _ = data.load_datasets(args.data_id, val_split_name, shuffle=False, repeat=False,
+                                   augment_config=val_augment_config, bsz=args.bsz)
 
-    # Set training steps
-    if args.train_steps is None:
-        args.train_steps = ds_info['train_size'] // args.bsz
-        logging.info(f'train_steps not specified. setting it to train_size // bsz = {args.train_steps}')
-    if args.val_steps is None:
-        args.val_steps = ds_info['val_size'] // args.bsz
-        logging.info(f'val_steps not specified. setting it to val_size // bsz = {args.val_steps}')
+    # Show examples
+    train_fig = tfds.show_examples(ds_train.unbatch(), ds_info, rows=1)
+    val_fig = tfds.show_examples(ds_val.unbatch(), ds_info, rows=1)
+    train_fig.savefig('out/train_examples.jpg'), val_fig.savefig('out/val_examples.jpg')
+    logging.info("dataset examples saved to './out'")
+
+    # Set training and validation steps
+    set_epoch_steps(args, ds_info)
 
     # Make and compile model
     with strategy.scope():
@@ -39,13 +41,14 @@ def run(args):
             model = keras.models.load_model(os.path.join(args.out, 'model'), compile=(not args.recompile),
                                             custom_objects=utils.all_custom_objects)
             logging.info('loaded model')
-            if args.recompile:
-                logging.info('recompiling model')
-                training.compile_model(args, model)
         else:
-            model = models.make_model(args, ds_info.features['label'].num_classes, ds_info['input_shape'])
-            training.compile_model(args, model)
+            model = models.make_model(args, ds_info.features['label'].num_classes, ds_info.features['image'].shape)
             logging.info('starting with new model')
+
+        # Compile?
+        if args.recompile or not args.load:
+            logging.info('(re)compiling model')
+            training.compile_model(args, model)
 
         logging.info(f'{len(model.losses)} regularization losses in this model')
 

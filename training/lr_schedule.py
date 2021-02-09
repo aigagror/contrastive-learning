@@ -12,8 +12,11 @@ class PiecewiseConstantDecayWithWarmup(tf.keras.optimizers.schedules.PiecewiseCo
         self.warmup_steps = warmup_epochs * steps_per_epoch
         self.start_step = start_step
 
-        boundaries = [steps_per_epoch * x for x in epoch_boundaries]
-        values = [self.lr] + [self.lr * (10 ** (-i)) for i in range(1, len(epoch_boundaries) + 1)]
+        if epoch_boundaries is not None:
+            boundaries = [steps_per_epoch * x for x in epoch_boundaries]
+        else:
+            boundaries = [float('inf')]
+        values = [self.lr] + [self.lr * (10 ** (-i)) for i in range(1, len(boundaries) + 1)]
         super().__init__(boundaries, values)
 
     def __call__(self, step):

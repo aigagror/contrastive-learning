@@ -984,3 +984,15 @@ class RandAugment(ImageAugment):
 
         image = tf.cast(image, dtype=input_image_type)
         return image
+
+
+class ViewConfig():
+    def __init__(self, name='image', rand_crop=False, augment_fn=None):
+        self.name = name
+        self.rand_crop = rand_crop
+        self.augment = augment_fn or (lambda x: x)
+
+
+class AugmentConfig():
+    def __init__(self, view_configs=None):
+        self.view_configs = view_configs or ViewConfig()

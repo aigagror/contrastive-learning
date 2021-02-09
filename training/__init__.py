@@ -52,8 +52,8 @@ def compile_model(args, model):
     ce_loss = tf.keras.losses.SparseCategoricalCrossentropy(name='ce', from_logits=True)
     acc_metric = tf.keras.metrics.SparseCategoricalAccuracy(name='acc')
     ce_metric = tf.keras.metrics.SparseCategoricalCrossentropy(name='ce', from_logits=True)
-    losses = {'labels': ce_loss}
-    metrics = {'labels': [acc_metric, ce_metric]}
+    losses = {'label': ce_loss}
+    metrics = {'label': [acc_metric, ce_metric]}
 
     contrast_loss_dict = {
         'supcon': custom_losses.SupCon(args.temp),
