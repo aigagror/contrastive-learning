@@ -55,7 +55,7 @@ class TestData(unittest.TestCase):
         # Label
         label = inputs['label']
         tf.debugging.assert_shapes([(label, [8])])
-        tf.debugging.assert_type(label, tf.int64, label.dtype)
+        tf.debugging.assert_type(label, tf.int32, label.dtype)
         tf.debugging.assert_less_equal(label, tf.cast(ds_info.features['label'].num_classes - 1, label.dtype), label)
         tf.debugging.assert_greater_equal(label, tf.zeros_like(label))
 
