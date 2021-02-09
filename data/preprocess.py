@@ -5,6 +5,7 @@ CROP_PADDING = 32
 
 def distorted_bounding_box_crop(image_bytes,
                                 bbox,
+                                channels,
                                 min_object_covered=0.1,
                                 aspect_ratio_range=(0.75, 1.33),
                                 area_range=(0.05, 1.0),
@@ -48,7 +49,7 @@ def distorted_bounding_box_crop(image_bytes,
         offset_y, offset_x, _ = tf.unstack(bbox_begin)
         target_height, target_width, _ = tf.unstack(bbox_size)
         crop_window = tf.stack([offset_y, offset_x, target_height, target_width])
-        image = tf.image.decode_and_crop_jpeg(image_bytes, crop_window, channels=3)
+        image = tf.image.decode_and_crop_jpeg(image_bytes, crop_window, channels)
 
         return image
 
@@ -60,11 +61,12 @@ def _at_least_x_are_equal(a, b, x):
     return tf.greater_equal(tf.reduce_sum(match), x)
 
 
-def _decode_and_random_crop_jpg(image_bytes, image_size):
+def _decode_and_random_crop_jpg(image_bytes, image_size, channels):
     """Make a random crop of image_size."""
     bbox = tf.constant([0.0, 0.0, 1.0, 1.0], dtype=tf.float32, shape=[1, 1, 4])
     image = distorted_bounding_box_crop(image_bytes,
                                         bbox,
+                                        channels,
                                         min_object_covered=0.1,
                                         aspect_ratio_range=(3. / 4, 4. / 3.),
                                         area_range=(0.08, 1.0),
@@ -74,13 +76,13 @@ def _decode_and_random_crop_jpg(image_bytes, image_size):
 
     image = tf.cond(
         bad,
-        lambda: _decode_and_center_crop_jpg(image_bytes, image_size),
+        lambda: _decode_and_center_crop_jpg(image_bytes, image_size, channels),
         lambda: tf.image.resize(image, [image_size, image_size], method='bicubic'))
 
     return image
 
 
-def _decode_and_center_crop_jpg(image_bytes, image_size):
+def _decode_and_center_crop_jpg(image_bytes, image_size, channels):
     """Crops to center of image with padding then scales image_size."""
     shape = tf.image.extract_jpeg_shape(image_bytes)
     image_height = shape[0]
@@ -95,28 +97,29 @@ def _decode_and_center_crop_jpg(image_bytes, image_size):
     offset_width = ((image_width - padded_center_crop_size) + 1) // 2
     crop_window = tf.stack([offset_height, offset_width,
                             padded_center_crop_size, padded_center_crop_size])
-    image = tf.image.decode_and_crop_jpeg(image_bytes, crop_window, channels=3)
+    image = tf.image.decode_and_crop_jpeg(image_bytes, crop_window, channels)
     image = tf.image.resize([image], [image_size, image_size], method='bicubic')[0]
 
     return image
 
 
-def _decode_and_crop_jpg(image_bytes, rand_crop, imsize):
+def _decode_and_crop_jpg(image_bytes, rand_crop, imsize, channels):
     if rand_crop:
-        image = _decode_and_random_crop_jpg(image_bytes, imsize)
+        image = _decode_and_random_crop_jpg(image_bytes, imsize, channels)
     else:
-        image = _decode_and_center_crop_jpg(image_bytes, imsize)
+        image = _decode_and_center_crop_jpg(image_bytes, imsize, channels)
+    image = tf.cast(image, tf.uint8)
     return image
 
 
-def _decode_png_and_crop(image_bytes, imsize, rand_crop):
-    image = tf.image.decode_png(image_bytes)
+def _decode_png_and_crop(image_bytes, imsize, channels, rand_crop):
+    image = tf.image.decode_png(image_bytes, channels)
     image = tf.image.pad_to_bounding_box(image, 4, 4, imsize + 8, imsize + 8)
-    channels = tf.shape(image)[-1]
     if rand_crop:
         image = tf.image.random_crop(image, [imsize, imsize, channels])
     else:
         image = tf.image.resize(image, [imsize, imsize])
+    image = tf.cast(image, tf.uint8)
     return image
 
 
@@ -124,9 +127,8 @@ def process_encoded_example(image_bytes, label, imsize, channels, augment_config
     inputs, targets = {}, {'label': label}
     for view_config in augment_config.view_configs:
         image = tf.cond(tf.image.is_jpeg(image_bytes),
-                        lambda: _decode_and_crop_jpg(image_bytes, view_config.rand_crop, imsize),
-                        lambda: _decode_png_and_crop(image_bytes, imsize, view_config.rand_crop))
-        image = tf.cast(image, tf.uint8)
+                        lambda: _decode_and_crop_jpg(image_bytes, view_config.rand_crop, imsize, channels),
+                        lambda: _decode_png_and_crop(image_bytes, imsize, channels, view_config.rand_crop))
 
         # Augment
         image = view_config.augment(image)
