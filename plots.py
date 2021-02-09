@@ -100,9 +100,7 @@ def plot_hist_sims(args, strategy, model, ds_val, max_iter=None):
     for i, (inputs, targets) in enumerate(ds_val):
         if max_iter is not None and i >= max_iter:
             break
-        print('inputs, targets')
-        tf.print(inputs, targets)
-        print(inputs, targets)
+
         labels, feats1, feats2, proj1, proj2 = strategy.run(get_all_feats, [inputs, targets])
 
         # All gather
