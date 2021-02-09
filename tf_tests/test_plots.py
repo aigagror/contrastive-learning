@@ -12,7 +12,7 @@ import utils
 
 class TestPlots(unittest.TestCase):
     def basic_usage(self):
-        args = '--data-id=tf_flowers --backbone=affine ' \
+        args = '--data-id=mnist --backbone=affine ' \
                '--bsz=8 --lr=1e-3 ' \
                '--loss=partial-supcon '
         args = utils.parser.parse_args(args.split())

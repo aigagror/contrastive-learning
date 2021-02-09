@@ -60,7 +60,7 @@ def _at_least_x_are_equal(a, b, x):
     return tf.greater_equal(tf.reduce_sum(match), x)
 
 
-def _decode_and_random_crop(image_bytes, image_size):
+def _decode_and_random_crop_jpg(image_bytes, image_size):
     """Make a random crop of image_size."""
     bbox = tf.constant([0.0, 0.0, 1.0, 1.0], dtype=tf.float32, shape=[1, 1, 4])
     image = distorted_bounding_box_crop(image_bytes,
@@ -74,13 +74,13 @@ def _decode_and_random_crop(image_bytes, image_size):
 
     image = tf.cond(
         bad,
-        lambda: _decode_and_center_crop(image_bytes, image_size),
+        lambda: _decode_and_center_crop_jpg(image_bytes, image_size),
         lambda: tf.image.resize(image, [image_size, image_size], method='bicubic'))
 
     return image
 
 
-def _decode_and_center_crop(image_bytes, image_size):
+def _decode_and_center_crop_jpg(image_bytes, image_size):
     """Crops to center of image with padding then scales image_size."""
     shape = tf.image.extract_jpeg_shape(image_bytes)
     image_height = shape[0]
@@ -101,11 +101,22 @@ def _decode_and_center_crop(image_bytes, image_size):
     return image
 
 
-def _decode_and_crop(image_bytes, rand_crop, imsize):
+def _decode_and_crop_jpg(image_bytes, rand_crop, imsize):
     if rand_crop:
-        image = _decode_and_random_crop(image_bytes, imsize)
+        image = _decode_and_random_crop_jpg(image_bytes, imsize)
     else:
-        image = _decode_and_center_crop(image_bytes, imsize)
+        image = _decode_and_center_crop_jpg(image_bytes, imsize)
+    return image
+
+
+def _decode_png_and_crop(image_bytes, imsize, rand_crop):
+    image = tf.image.decode_png(image_bytes)
+    image = tf.image.pad_to_bounding_box(image, 4, 4, imsize + 8, imsize + 8)
+    channels = tf.shape(image)[-1]
+    if rand_crop:
+        image = tf.image.random_crop(image, [imsize, imsize, channels])
+    else:
+        image = tf.image.resize(image, [imsize, imsize])
     return image
 
 
@@ -113,8 +124,8 @@ def process_encoded_example(image_bytes, label, imsize, channels, augment_config
     inputs, targets = {}, {'label': label}
     for view_config in augment_config.view_configs:
         image = tf.cond(tf.image.is_jpeg(image_bytes),
-                        lambda: _decode_and_crop(image_bytes, view_config.rand_crop, imsize),
-                        lambda: tf.image.resize(tf.image.decode_png(image_bytes, channels), [imsize, imsize]))
+                        lambda: _decode_and_crop_jpg(image_bytes, view_config.rand_crop, imsize),
+                        lambda: _decode_png_and_crop(image_bytes, imsize, view_config.rand_crop))
         image = tf.cast(image, tf.uint8)
 
         # Augment
