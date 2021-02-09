@@ -20,7 +20,7 @@ class TestTraining(unittest.TestCase):
         utils.setup(args)
 
         train_augment_config, _ = utils.load_augment_configs(args)
-        ds_train, ds_info = data.load_datasets(args.data_id, 'train', shuffle=True, repeat=True,
+        ds_train, ds_info = data.load_datasets(args.data_id, 'train', args.cache, shuffle=True, repeat=True,
                                                augment_config=train_augment_config, bsz=args.bsz)
 
         utils.set_epoch_steps(args, ds_info)

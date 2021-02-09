@@ -19,7 +19,7 @@ class TestPlots(unittest.TestCase):
         strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
 
         train_augment_config, _ = utils.load_augment_configs(args)
-        ds_train, ds_info = data.load_datasets(args.data_id, 'train', shuffle=False, repeat=False,
+        ds_train, ds_info = data.load_datasets(args.data_id, 'train', args.cache, shuffle=False, repeat=False,
                                                augment_config=train_augment_config, bsz=args.bsz)
 
         with strategy.scope():

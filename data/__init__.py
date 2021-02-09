@@ -29,15 +29,18 @@ def add_batch_sims(inputs):
     return inputs
 
 
-def load_datasets(data_id, split, shuffle, repeat, augment_config, bsz):
+def load_datasets(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, augment_config, bsz):
     # Load image bytes and labels
     decoder_args = {'image': tfds.decode.SkipDecoding()}
-    ds, info = tfds.load(data_id, split=split, shuffle_files=shuffle, decoders=decoder_args, with_info=True,
-                         try_gcs=True, data_dir='gs://aigagror/datasets')
-    imsize = info.features['image'].shape[0] or 224
+    read_config = tfds.ReadConfig(input_context=input_ctx)
+    ds = tfds.load(data_id, read_config=read_config, split=split, shuffle_files=shuffle, decoders=decoder_args,
+                   try_gcs=True, data_dir='gs://aigagror/datasets')
+    imsize = ds_info.features['image'].shape[0] or 224
 
-    # Cache
-    ds = ds.cache()
+    # Cache?
+    if cache:
+        ds = ds.cache()
+        logging.info(f'caching {split} dataset')
 
     # Shuffle?
     if shuffle:
@@ -64,4 +67,4 @@ def load_datasets(data_id, split, shuffle, repeat, augment_config, bsz):
     # Prefetch
     ds = ds.prefetch(tf.data.AUTOTUNE)
 
-    return ds, info
+    return ds

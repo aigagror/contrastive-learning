@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser()
 # Data
 parser.add_argument('--data-id', choices=['imagenet2012', 'tf_flowers', 'cifar10', 'cifar100'])
 parser.add_argument('--autoaugment', action='store_true')
+parser.add_argument('--no-cache', action='store_false', dest='cache', default=True)
 parser.add_argument('--no-shuffle', action='store_false', dest='shuffle', default=True)
 
 # Model

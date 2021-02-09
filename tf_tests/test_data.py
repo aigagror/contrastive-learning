@@ -15,7 +15,7 @@ class TestData(unittest.TestCase):
         _ = utils.setup(args)
 
         train_augment_config, val_augment_config = utils.load_augment_configs(args)
-        ds, ds_info = data.load_datasets(args.data_id, 'train', shuffle=True, repeat=True,
+        ds, ds_info = data.load_datasets(args.data_id, 'train', args.cache, shuffle=True, repeat=True,
                                          augment_config=train_augment_config, bsz=args.bsz)
 
         inputs = next(iter(ds))
