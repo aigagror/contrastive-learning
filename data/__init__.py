@@ -20,14 +20,19 @@ def add_batch_sims(inputs):
     tf.debugging.assert_shapes([
         (labels, [None, 1])
     ])
+    local_bsz = tf.shape(labels)[0]
+
     replica_ctx = tf.distribute.get_replica_context()
+    replica_id = replica_ctx.replica_id_in_sync_group
     global_labels = replica_ctx.all_gather(labels, axis=0)
-    class_sims = tf.cast(labels == tf.transpose(global_labels), tf.uint8)
-    contrast = class_sims + tf.eye(tf.shape(labels)[0], dtype=tf.uint8)
+    global_bsz = tf.shape(global_labels)[0]
+
+    class_sims = tf.cast(global_labels == tf.transpose(global_labels), tf.uint8)
+    contrast = class_sims + tf.eye(global_bsz, dtype=tf.uint8)
     tf.debugging.assert_shapes([
         (contrast, ('N', 'N'))
     ])
-    inputs['contrast'] = contrast
+    inputs['contrast'] = contrast[replica_id * local_bsz: (replica_id + 1) * local_bsz]
     return inputs
 
 
