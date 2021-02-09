@@ -61,11 +61,11 @@ def make_model(args, nclass, input_shape):
 
     if args.backbone == 'resnet50v2':
         backbone = applications.ResNet50V2(weights=None, include_top=False, input_shape=input_shape, pooling='avg')
-        if args.data_id == 'cifar10':
+        if input_shape[0] < 224:
             logging.warning('using standard resnet on small dataset')
     elif args.backbone == 'small-resnet50v2':
         backbone = small_resnet_v2.SmallResNet50V2(include_top=False, input_shape=input_shape, pooling='avg')
-        if args.data_id == 'imagenet':
+        if input_shape[0] >= 224:
             logging.warning('using small resnet on large dataset')
     elif args.backbone == 'resnet50':
         backbone = applications.ResNet50(weights=None, include_top=False, input_shape=input_shape, pooling='avg')
