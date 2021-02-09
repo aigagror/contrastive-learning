@@ -10,7 +10,6 @@ import plots
 import training
 import utils
 from training import train
-from utils import prepare_tensorboard_dev_logs, set_epoch_steps
 
 
 def run(args):
@@ -32,7 +31,7 @@ def run(args):
     logging.info("dataset examples saved to './out'")
 
     # Set training and validation steps
-    set_epoch_steps(args, ds_info)
+    utils.set_epoch_steps(args, ds_info)
 
     # Make and compile model
     with strategy.scope():
@@ -67,7 +66,7 @@ def run(args):
         plots.plot_tsne(args, strategy, model, ds_val)
 
     # Upload Tensorboard data
-    return prepare_tensorboard_dev_logs(args)
+    return utils.prepare_tensorboard_dev_logs(args)
 
 
 if __name__ == '__main__':
