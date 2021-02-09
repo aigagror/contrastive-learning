@@ -57,7 +57,8 @@ def load_datasets(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, au
     ds = ds.map(preprocess_fn, tf.data.AUTOTUNE)
 
     # Batch
-    ds = ds.batch(bsz)
+    per_replica_bsz = input_ctx.get_per_replica_batch_size(bsz)
+    ds = ds.batch(per_replica_bsz)
 
     # Add batch similarities (supcon labels)
     if len(augment_config.view_configs) > 1:

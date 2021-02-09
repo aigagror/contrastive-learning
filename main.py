@@ -19,21 +19,21 @@ def run(args):
 
     # Data
     train_augment_config, val_augment_config = utils.load_augment_configs(args)
-    ds_info = tfds.builder(args.data_id, try_gcs=True, data_dir='gs://aigagror/datasets').info
+    ds_info = tfds.builder(args.data_id).info
     ds_train_fn = partial(data.load_datasets, ds_info=ds_info, data_id=args.data_id, split='train', cache=args.cache,
                           shuffle=True, repeat=True, augment_config=train_augment_config, bsz=args.bsz)
     val_split_name = data.get_val_split_name(ds_info)
     ds_val_fn = partial(data.load_datasets, ds_info=ds_info, data_id=args.data_id, split=val_split_name,
                         cache=args.cache, shuffle=False, repeat=False, augment_config=val_augment_config, bsz=args.bsz)
 
-    ds_train = strategy.experimental_distribute_datasets_from_function(ds_train_fn)
-    ds_val = strategy.experimental_distribute_datasets_from_function(ds_val_fn)
+    ds_train = strategy.distribute_datasets_from_function(ds_train_fn)
+    ds_val = strategy.distribute_datasets_from_function(ds_val_fn)
 
     # Show examples
-    train_fig = tfds.show_examples(ds_train.unbatch(), ds_info, rows=1)
-    val_fig = tfds.show_examples(ds_val.unbatch(), ds_info, rows=1)
-    train_fig.savefig('out/train_examples.jpg'), val_fig.savefig('out/val_examples.jpg')
-    logging.info("dataset examples saved to './out'")
+    # train_fig = tfds.show_examples(ds_train.unbatch(), ds_info, rows=1)
+    # val_fig = tfds.show_examples(ds_val.unbatch(), ds_info, rows=1)
+    # train_fig.savefig('out/train_examples.jpg'), val_fig.savefig('out/val_examples.jpg')
+    # logging.info("dataset examples saved to './out'")
 
     # Set training and validation steps
     utils.set_epoch_steps(args, ds_info)
