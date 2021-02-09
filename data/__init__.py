@@ -49,7 +49,7 @@ def source_dataset(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, a
 
     # Batch
     per_replica_bsz = input_ctx.get_per_replica_batch_size(global_bsz)
-    ds = ds.batch(per_replica_bsz)
+    ds = ds.batch(per_replica_bsz, drop_remainder=True)
 
     if len(augment_config.view_configs) > 1:
         ds = ds.map(add_contrast_data, tf.data.AUTOTUNE)
