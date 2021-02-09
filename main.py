@@ -67,7 +67,7 @@ def run(args):
         plots.plot_tsne(args, strategy, model, ds_val)
 
     # Upload Tensorboard data
-    prepare_tensorboard_dev_logs(args)
+    return prepare_tensorboard_dev_logs(args)
 
 
 if __name__ == '__main__':
