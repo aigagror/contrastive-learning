@@ -20,7 +20,9 @@ def add_batch_sims(inputs):
     tf.debugging.assert_shapes([
         (labels, [None, 1])
     ])
-    class_sims = tf.cast(labels == tf.transpose(labels), tf.uint8)
+    replica_ctx = tf.distribute.get_replica_context()
+    global_labels = replica_ctx.all_gather(labels, axis=0)
+    class_sims = tf.cast(labels == tf.transpose(global_labels), tf.uint8)
     contrast = class_sims + tf.eye(tf.shape(labels)[0], dtype=tf.uint8)
     tf.debugging.assert_shapes([
         (contrast, ('N', 'N'))
@@ -28,13 +30,13 @@ def add_batch_sims(inputs):
     inputs['contrast'] = contrast
     return inputs
 
+
 def as_supervised(inputs):
     targets = {}
     for key in ['label', 'contrast']:
         if key in inputs:
             targets[key] = inputs.pop(key)
     return inputs, targets
-
 
 
 def source_dataset(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, augment_config, global_bsz):
