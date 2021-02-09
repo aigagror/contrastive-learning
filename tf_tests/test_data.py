@@ -66,6 +66,9 @@ class TestData(unittest.TestCase):
         tf.debugging.assert_less_equal(contrast, 2 * tf.ones_like(contrast))
         tf.debugging.assert_greater_equal(contrast, tf.zeros_like(contrast))
 
+        # No file_name
+        assert 'file_name' not in inputs
+
 
 if __name__ == '__main__':
     unittest.main()
