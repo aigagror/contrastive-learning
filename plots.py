@@ -14,15 +14,15 @@ def plot_tsne(args, strategy, model, ds_val, max_iter=None):
     feat_model = tf.keras.Model(model.input, outputs)
 
     @tf.function
-    def get_feats(inputs):
+    def get_feats(inputs, targets):
         feats, proj = feat_model(inputs)
-        return feats, proj, inputs['label']
+        return feats, proj, targets['label']
 
     all_feats, all_proj, all_labels = [], [], []
-    for i, inputs in enumerate(ds_val):
+    for i, (inputs, targets) in enumerate(ds_val):
         if max_iter is not None and i >= max_iter:
             break
-        feats, proj, labels = strategy.run(get_feats, [inputs])
+        feats, proj, labels = strategy.run(get_feats, [inputs, targets])
 
         feats = strategy.gather(feats, axis=0)
         proj = strategy.gather(proj, axis=0)
@@ -89,19 +89,19 @@ def plot_hist_sims(args, strategy, model, ds_val, max_iter=None):
     feat_model = tf.keras.Model(model.input, outputs)
 
     @tf.function
-    def get_all_feats(inputs):
+    def get_all_feats(inputs, targets):
         feats1, feats2, proj1, proj2 = feat_model(inputs)
-        labels = inputs['label']
+        labels = targets['label']
         return labels, feats1, feats2, proj1, proj2
 
     neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
     proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
 
-    for i, inputs in enumerate(ds_val):
+    for i, (inputs, targets) in enumerate(ds_val):
         if max_iter is not None and i >= max_iter:
             break
 
-        labels, feats1, feats2, proj1, proj2 = strategy.run(get_all_feats, [inputs])
+        labels, feats1, feats2, proj1, proj2 = strategy.run(get_all_feats, [inputs, targets])
 
         # All gather
         feats1 = strategy.gather(feats1, axis=0)

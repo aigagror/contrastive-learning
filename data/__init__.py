@@ -28,6 +28,14 @@ def add_batch_sims(inputs):
     inputs['contrast'] = contrast
     return inputs
 
+def as_supervised(inputs):
+    targets = {}
+    for key in ['label', 'contrast']:
+        if key in inputs:
+            targets[key] = inputs.pop(key)
+    return inputs, targets
+
+
 
 def source_dataset(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, augment_config, global_bsz):
     # Load image bytes and labels
@@ -64,6 +72,9 @@ def source_dataset(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, a
     if len(augment_config.view_configs) > 1:
         ds = ds.map(add_batch_sims, tf.data.AUTOTUNE)
         logging.info('added batch similarities')
+
+    # To supervision format
+    ds = ds.map(as_supervised, tf.data.AUTOTUNE)
 
     # Prefetch
     ds = ds.prefetch(tf.data.AUTOTUNE)
