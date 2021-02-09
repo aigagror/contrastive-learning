@@ -104,6 +104,7 @@ def plot_hist_sims(args, strategy, model, ds_val, max_iter=None):
         labels, feats1, feats2, proj1, proj2 = strategy.run(get_all_feats, [inputs, targets])
 
         # All gather
+        tf.print(feats1)
         feats1 = strategy.gather(feats1, axis=0)
         feats2 = strategy.gather(feats2, axis=0)
         proj1 = strategy.gather(proj1, axis=0)
