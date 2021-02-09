@@ -36,6 +36,9 @@ def load_datasets(data_id, split, shuffle, repeat, augment_config, bsz):
                          try_gcs=True, data_dir='gs://aigagror/datasets')
     imsize = info.features['image'].shape[0] or 224
 
+    # Cache
+    ds = ds.cache()
+
     # Shuffle?
     if shuffle:
         ds = ds.shuffle(10000)
