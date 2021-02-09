@@ -12,19 +12,20 @@ import utils
 class TestData(unittest.TestCase):
 
     def test_augmentation(self):
-        args = '--data-id=tf_flowers --autoaugment --bsz=8 --loss=supcon '
-        args = utils.parser.parse_args(args.split())
-        strategy = utils.setup(args)
+        for data_id in ['cifar100', 'tf_flowers']:
+            args = f'--data-id={data_id} --autoaugment --bsz=8 --loss=supcon '
+            args = utils.parser.parse_args(args.split())
+            strategy = utils.setup(args)
 
-        _, ds_info = tfds.load(args.data_id, try_gcs=True, data_dir='gs://aigagror/datasets', with_info=True)
-        train_augment_config, val_augment_config = utils.load_augment_configs(args)
-        ds_train, ds_val = data.load_distributed_datasets(args, ds_info, strategy, train_augment_config,
-                                                          val_augment_config)
+            _, ds_info = tfds.load(args.data_id, try_gcs=True, data_dir='gs://aigagror/datasets', with_info=True)
+            train_augment_config, val_augment_config = utils.load_augment_configs(args)
+            ds_train, ds_val = data.load_distributed_datasets(args, ds_info, strategy, train_augment_config,
+                                                              val_augment_config)
 
-        ds_train, ds_val = ds_train.map(lambda x, y: {**x, **y}), ds_val.map(lambda x, y: {**x, **y})
-        train_fig = tfds.show_examples(ds_train.unbatch(), ds_info, rows=1)
-        val_fig = tfds.show_examples(ds_val.unbatch(), ds_info, rows=1)
-        train_fig.savefig('out/train_examples.jpg'), val_fig.savefig('out/val_examples.jpg')
+            ds_train, ds_val = ds_train.map(lambda x, y: {**x, **y}), ds_val.map(lambda x, y: {**x, **y})
+            train_fig = tfds.show_examples(ds_train.unbatch(), ds_info, rows=1)
+            val_fig = tfds.show_examples(ds_val.unbatch(), ds_info, rows=1)
+            train_fig.savefig(f'out/{data_id}_train_examples.jpg'), val_fig.savefig(f'out/{data_id}_val_examples.jpg')
         logging.info("dataset examples saved to './out'")
 
     def test_data_format(self):

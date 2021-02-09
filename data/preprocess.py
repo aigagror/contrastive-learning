@@ -114,8 +114,8 @@ def _decode_and_crop_jpg(image_bytes, rand_crop, imsize, channels):
 
 def _decode_png_and_crop(image_bytes, imsize, channels, rand_crop):
     image = tf.image.decode_png(image_bytes, channels)
-    image = tf.image.pad_to_bounding_box(image, 4, 4, imsize + 8, imsize + 8)
     if rand_crop:
+        image = tf.image.pad_to_bounding_box(image, 4, 4, imsize + 8, imsize + 8)
         image = tf.image.random_crop(image, [imsize, imsize, channels])
     else:
         image = tf.image.resize(image, [imsize, imsize])
