@@ -10,13 +10,13 @@ class TestMain(unittest.TestCase):
         pass
 
     def test_train_ce_load(self):
-        args = '--data-id=tf_flowers --backbone=affine ' \
+        args = '--data-id=mnist --backbone=affine ' \
                '--bsz=2 --lr=1e-3 --loss=ce ' \
                '--epochs=1 --train-steps=1 --val-steps=1 '
         args = utils.parser.parse_args(args.split())
         main.run(args)
 
-        args = '--data-id=tf_flowers --backbone=affine ' \
+        args = '--data-id=mnist --backbone=affine ' \
                '--bsz=2 --lr=1e-3 --loss=ce ' \
                '--epochs=1 --train-steps=1 --val-steps=1 ' \
                '--load'
@@ -24,14 +24,14 @@ class TestMain(unittest.TestCase):
         main.run(args)
 
     def test_distributed_ce_from_load(self):
-        args = '--data-id=tf_flowers --backbone=affine ' \
+        args = '--data-id=mnist --backbone=affine ' \
                '--bsz=2 --lr=1e-3 --loss=ce ' \
                '--epochs=1 --train-steps=1 --val-steps=1  ' \
                '--multi-cpu'
         args = utils.parser.parse_args(args.split())
         main.run(args)
 
-        args = '--data-id=tf_flowers --backbone=affine ' \
+        args = '--data-id=mnist --backbone=affine ' \
                '--bsz=2 --lr=1e-3 --loss=ce ' \
                '--epochs=1 --train-steps=1 --val-steps=1 ' \
                '--multi-cpu --load'
@@ -39,14 +39,14 @@ class TestMain(unittest.TestCase):
         main.run(args)
 
     def test_distributed_partial_supcon_from_load(self):
-        args = '--data-id=tf_flowers --backbone=affine --feat-norm=l2 ' \
+        args = '--data-id=mnist --backbone=affine --feat-norm=l2 ' \
                '--bsz=2 --lr=1e-3 --loss=partial-supcon ' \
                '--epochs=1 --train-steps=1 --val-steps=1  ' \
                '--multi-cpu'
         args = utils.parser.parse_args(args.split())
         main.run(args)
 
-        args = '--data-id=tf_flowers --backbone=affine --feat-norm=l2 ' \
+        args = '--data-id=mnist --backbone=affine --feat-norm=l2 ' \
                '--bsz=2 --lr=1e-3 --loss=partial-supcon ' \
                '--epochs=1 --train-steps=1 --val-steps=1 ' \
                '--multi-cpu --load'

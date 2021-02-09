@@ -26,6 +26,7 @@ def source_dataset(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, a
     ds = tfds.load(data_id, as_supervised=True, read_config=read_config, split=split, shuffle_files=shuffle,
                    decoders=decoder_args, try_gcs=True, data_dir='gs://aigagror/datasets')
     imsize = ds_info.features['image'].shape[0] or 224
+    channels = ds_info.features['image'].shape[2]
 
     # Cache?
     if cache:
@@ -43,7 +44,7 @@ def source_dataset(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, a
         logging.info(f'repeat {split} dataset')
 
     # Preprocess
-    preprocess_fn = partial(process_encoded_example, imsize=imsize, augment_config=augment_config)
+    preprocess_fn = partial(process_encoded_example, imsize=imsize, channels=channels, augment_config=augment_config)
     ds = ds.map(preprocess_fn, tf.data.AUTOTUNE)
 
     # Batch
