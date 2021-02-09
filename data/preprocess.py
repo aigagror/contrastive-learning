@@ -102,7 +102,8 @@ def _decode_and_center_crop(image_bytes, image_size):
 
 
 def process_encoded_example(inputs, imsize, augment_config):
-    inputs.pop('file_name')
+    if 'file_name' in inputs:
+        inputs.pop('file_name')
     inputs['label'] = tf.cast(inputs['label'], tf.int32)
     image_bytes = inputs['image']
     for view_config in augment_config.view_configs:
