@@ -29,7 +29,7 @@ def add_batch_sims(inputs):
     return inputs
 
 
-def load_datasets(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, augment_config, bsz):
+def source_dataset(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, augment_config, global_bsz):
     # Load image bytes and labels
     decoder_args = {'image': tfds.decode.SkipDecoding()}
     read_config = tfds.ReadConfig(input_context=input_ctx)
@@ -57,7 +57,7 @@ def load_datasets(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, au
     ds = ds.map(preprocess_fn, tf.data.AUTOTUNE)
 
     # Batch
-    per_replica_bsz = input_ctx.get_per_replica_batch_size(bsz)
+    per_replica_bsz = input_ctx.get_per_replica_batch_size(global_bsz)
     ds = ds.batch(per_replica_bsz)
 
     # Add batch similarities (supcon labels)
@@ -69,3 +69,15 @@ def load_datasets(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, au
     ds = ds.prefetch(tf.data.AUTOTUNE)
 
     return ds
+
+
+def load_distributed_datasets(args, ds_info, strategy, train_augment_config, val_augment_config):
+    ds_train_fn = partial(source_dataset, ds_info=ds_info, data_id=args.data_id, split='train', cache=args.cache,
+                          shuffle=True, repeat=True, augment_config=train_augment_config, global_bsz=args.bsz)
+    val_split_name = get_val_split_name(ds_info)
+    ds_val_fn = partial(source_dataset, ds_info=ds_info, data_id=args.data_id, split=val_split_name, cache=False,
+                        shuffle=False, repeat=False, augment_config=val_augment_config, global_bsz=args.bsz)
+
+    ds_train = strategy.distribute_datasets_from_function(ds_train_fn)
+    ds_val = strategy.distribute_datasets_from_function(ds_val_fn)
+    return ds_train, ds_val

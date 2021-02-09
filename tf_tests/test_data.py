@@ -1,6 +1,8 @@
+import logging
 import unittest
 
 import tensorflow as tf
+import tensorflow_datasets as tfds
 
 import data
 import data.preprocess
@@ -9,14 +11,31 @@ import utils
 
 class TestData(unittest.TestCase):
 
+    def test_augmentation(self):
+        args = '--data-id=tf_flowers --autoaugment --bsz=8 --loss=supcon '
+        args = utils.parser.parse_args(args.split())
+        strategy = utils.setup(args)
+
+        _, ds_info = tfds.load(args.data_id, try_gcs=True, data_dir='gs://aigagror/datasets', with_info=True)
+        train_augment_config, val_augment_config = utils.load_augment_configs(args)
+        ds_train, ds_val = data.load_distributed_datasets(args, ds_info, strategy, train_augment_config,
+                                                          val_augment_config)
+
+        train_fig = tfds.show_examples(ds_train.unbatch(), ds_info, rows=1)
+        val_fig = tfds.show_examples(ds_val.unbatch(), ds_info, rows=1)
+        train_fig.savefig('out/train_examples.jpg'), val_fig.savefig('out/val_examples.jpg')
+        logging.info("dataset examples saved to './out'")
+
     def test_data_format(self):
         args = '--data-id=tf_flowers --bsz=8 --loss=supcon'
         args = utils.parser.parse_args(args.split())
         _ = utils.setup(args)
 
+        _, ds_info = tfds.load(args.data_id, try_gcs=True, data_dir='gs://aigagror/datasets', with_info=True)
         train_augment_config, val_augment_config = utils.load_augment_configs(args)
-        ds, ds_info = data.load_datasets(args.data_id, 'train', args.cache, shuffle=True, repeat=True,
-                                         augment_config=train_augment_config, bsz=args.bsz)
+        input_ctx = tf.distribute.InputContext()
+        ds = data.source_dataset(input_ctx, ds_info, args.data_id, 'train', args.cache, shuffle=True, repeat=True,
+                                 augment_config=train_augment_config, global_bsz=args.bsz)
 
         inputs = next(iter(ds))
         img = inputs['image']

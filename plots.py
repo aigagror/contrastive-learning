@@ -6,7 +6,7 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 
 
-def plot_tsne(args, strategy, model, ds_val):
+def plot_tsne(args, strategy, model, ds_val, max_iter=None):
     logging.info('plotting tsne of features')
     from sklearn import manifold
 
@@ -19,7 +19,9 @@ def plot_tsne(args, strategy, model, ds_val):
         return feats, proj, inputs['label']
 
     all_feats, all_proj, all_labels = [], [], []
-    for inputs in strategy.experimental_distribute_dataset(ds_val):
+    for i, inputs in enumerate(ds_val):
+        if max_iter is not None and i >= max_iter:
+            break
         feats, proj, labels = strategy.run(get_feats, [inputs])
 
         feats = strategy.gather(feats, axis=0)
@@ -80,7 +82,7 @@ def get_all_sims(labels, feats1, feats2, proj1, proj2):
     return (neg_sims, class_sims, inst_sims), (proj_neg_sims, proj_class_sims, proj_inst_sims)
 
 
-def plot_hist_sims(args, strategy, model, ds_val):
+def plot_hist_sims(args, strategy, model, ds_val, max_iter=None):
     logging.info('plotting similarities histograms')
 
     outputs = [model.get_layer(name=name).output for name in ['feats', 'feats2', 'proj_feats', 'proj_feats2']]
@@ -95,7 +97,10 @@ def plot_hist_sims(args, strategy, model, ds_val):
     neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
     proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
 
-    for inputs in strategy.experimental_distribute_dataset(ds_val):
+    for i, inputs in enumerate(ds_val):
+        if max_iter is not None and i >= max_iter:
+            break
+
         labels, feats1, feats2, proj1, proj2 = strategy.run(get_all_feats, [inputs])
 
         # All gather
