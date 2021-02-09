@@ -18,6 +18,9 @@ class LossesTest(unittest.TestCase):
         x = tf.linalg.l2_normalize(x, axis=2)
         return x
 
+    def rand_labels(self, n):
+        return tf.random.uniform([n], maxval=2, dtype=tf.int32)
+
     # Error
     def test_y_true_greater_than_two_error(self):
         for loss in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
@@ -40,7 +43,7 @@ class LossesTest(unittest.TestCase):
                 n = tf.random.uniform([], minval=1, maxval=4, dtype=tf.int32)
                 d = tf.random.uniform([], minval=1, maxval=32, dtype=tf.int32)
 
-                y = self.rand_batch_sims(n)
+                y = self.rand_labels(n)
                 x = self.rand_feat_views(n, d)
                 loss = loss_fn(y, x)
                 tf.debugging.assert_greater_equal(loss, tf.zeros_like(loss), f'{loss_fn}\nx={x}\ny={y}')
@@ -54,10 +57,13 @@ class LossesTest(unittest.TestCase):
 
         n, d = 4, 32
         for _ in range(100):
-            y = self.rand_batch_sims(n)
+            labels = self.rand_labels(n)
             x = self.rand_feat_views(n, d)
 
             # Compute partial sup con with ragged tensors and the TF cross entropy function
+            y = tf.expand_dims(labels, 1)
+            y = tf.cast(y == tf.transpose(y), tf.uint8)
+            y += tf.eye(len(y), dtype=tf.uint8)
             inst_mask = (y == 2)
             partial_class_mask = (y == 1)
             partial_mask = (y <= 1)
@@ -82,13 +88,13 @@ class LossesTest(unittest.TestCase):
             inst_loss, partial_ce_loss = tf.reduce_mean(inst_loss), tf.reduce_mean(partial_ce_loss)
 
             ce_loss = partial_ce_loss + inst_loss
-            partial_supcon_loss = loss_fn(y, x)
+            partial_supcon_loss = loss_fn(labels, x)
             tf.debugging.assert_near(ce_loss, partial_supcon_loss, atol=1e-2)
 
     # Test cross entropy correctness
     def test_zero_loss(self):
         for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1)]:
-            y = 2 * tf.eye(3)
+            y = tf.constant([1, 2, 3])
             x = tf.eye(3)
             x = tf.repeat(x, 2, axis=0)
             x = tf.reshape(x, [3, 2, 3])
@@ -99,7 +105,7 @@ class LossesTest(unittest.TestCase):
     def test_non_zero_loss(self):
         n, d = 4, 32
         for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
-            y = self.rand_batch_sims(n)
+            y = self.rand_labels(n)
             x = self.rand_feat_views(n, d)
             loss = loss_fn(y, x)
             tf.debugging.assert_greater(loss, tf.zeros_like(loss))
@@ -123,7 +129,7 @@ class LossesTest(unittest.TestCase):
     def test_distribute_equivalent(self):
         for LossClass in [custom_losses.SimCLR, custom_losses.SupCon, custom_losses.PartialSupCon]:
             strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
-            global_y = self.rand_batch_sims(4)
+            global_y = self.rand_labels(4)
             global_x = self.rand_feat_views(4, 32)
 
             def foo():

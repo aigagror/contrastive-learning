@@ -101,10 +101,8 @@ def _decode_and_center_crop(image_bytes, image_size):
     return image
 
 
-def process_encoded_example(inputs, imsize, augment_config):
-    if 'file_name' in inputs:
-        inputs.pop('file_name')
-    image_bytes = inputs['image']
+def process_encoded_example(image_bytes, label, imsize, augment_config):
+    inputs, targets = {}, {'label': label}
     for view_config in augment_config.view_configs:
         if view_config.rand_crop:
             image = _decode_and_random_crop(image_bytes, imsize)
@@ -119,4 +117,4 @@ def process_encoded_example(inputs, imsize, augment_config):
 
         inputs[view_config.name] = image
 
-    return inputs
+    return inputs, targets

@@ -54,18 +54,14 @@ class TestData(unittest.TestCase):
                                                                     'most 1.')
 
         # Label
-        label = targets['label']
-        tf.debugging.assert_shapes([(label, [8])])
-        tf.debugging.assert_type(label, tf.int64, label.dtype)
-        tf.debugging.assert_less_equal(label, tf.cast(ds_info.features['label'].num_classes - 1, label.dtype), label)
-        tf.debugging.assert_greater_equal(label, tf.zeros_like(label))
-
-        # Contrast
-        contrast = targets['contrast']
-        tf.debugging.assert_shapes([(contrast, [8, 8])])
-        tf.debugging.assert_type(contrast, tf.uint8, contrast.dtype)
-        tf.debugging.assert_less_equal(contrast, 2 * tf.ones_like(contrast))
-        tf.debugging.assert_greater_equal(contrast, tf.zeros_like(contrast))
+        for key in ['label', 'contrast']:
+            target_val = targets[key]
+            tf.debugging.assert_shapes([(target_val, [8])])
+            tf.debugging.assert_type(target_val, tf.int64, target_val.dtype)
+            tf.debugging.assert_less_equal(target_val,
+                                           tf.cast(ds_info.features['label'].num_classes - 1, target_val.dtype),
+                                           target_val)
+            tf.debugging.assert_greater_equal(target_val, tf.zeros_like(target_val))
 
         # No file_name
         assert 'file_name' not in inputs

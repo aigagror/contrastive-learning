@@ -23,6 +23,21 @@ class TestMain(unittest.TestCase):
         args = utils.parser.parse_args(args.split())
         main.run(args)
 
+    def test_distributed_ce_from_load(self):
+        args = '--data-id=tf_flowers --backbone=affine ' \
+               '--bsz=2 --lr=1e-3 --loss=ce ' \
+               '--epochs=1 --train-steps=1 --val-steps=1  ' \
+               '--multi-cpu'
+        args = utils.parser.parse_args(args.split())
+        main.run(args)
+
+        args = '--data-id=tf_flowers --backbone=affine ' \
+               '--bsz=2 --lr=1e-3 --loss=ce ' \
+               '--epochs=1 --train-steps=1 --val-steps=1 ' \
+               '--multi-cpu --load'
+        args = utils.parser.parse_args(args.split())
+        main.run(args)
+
     def test_distributed_partial_supcon_from_load(self):
         args = '--data-id=tf_flowers --backbone=affine --feat-norm=l2 ' \
                '--bsz=2 --lr=1e-3 --loss=partial-supcon ' \

@@ -12,8 +12,18 @@ class ConLoss(losses.Loss):
         return {"temp": self.temp}
 
     def process_y(self, y_true, y_pred):
-        # Feat views
+        tf.debugging.assert_shapes([(y_true, (None))])
         replica_context = tf.distribute.get_replica_context()
+        replica_id = replica_context.replica_id_in_sync_group
+
+        # Feat views
+        all_labels = replica_context.all_gather(y_true, axis=0)
+        local_bsz, global_bsz = tf.shape(y_true)[0], tf.shape(all_labels)[0]
+        all_labels = tf.expand_dims(all_labels, 1)
+        batch_sims = tf.cast(all_labels == tf.transpose(all_labels), tf.uint8)
+        batch_sims += tf.eye(global_bsz, dtype=tf.uint8)
+        batch_sims = batch_sims[replica_id * local_bsz: (replica_id + 1) * local_bsz]
+
         all_y_pred = replica_context.all_gather(y_pred, axis=0)
         local_feat_views = tf.transpose(y_pred, [1, 0, 2])
         global_feat_views = tf.transpose(all_y_pred, [1, 0, 2])
@@ -24,11 +34,11 @@ class ConLoss(losses.Loss):
 
         # Assert equal shapes
         tf.debugging.assert_shapes([
-            (y_true, ['N', 'D']),
+            (batch_sims, ['N', 'D']),
             (sims, ['N', 'D']),
         ])
 
-        return y_true, sims
+        return batch_sims, sims
 
     def assert_inputs(self, y_true, y_pred):
         inst_mask = tf.cast((y_true == 2), tf.uint8)
