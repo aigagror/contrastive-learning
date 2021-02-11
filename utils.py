@@ -73,6 +73,7 @@ def setup(args):
 
     # Output directory
     args.out = os.path.join(args.base_dir, args.loss, args.data_id, f'{args.backbone}-{args.feat_norm}')
+    logging.info(f"out directory: '{args.out}'")
     if not args.load:
         if args.out.startswith('gs://'):
             os.system(f"gsutil -m rm {os.path.join(args.out, '**')}")
@@ -80,6 +81,7 @@ def setup(args):
             if os.path.exists(args.out):
                 shutil.rmtree(args.out)
             os.makedirs(args.out)
+        logging.info(f"cleared any previous work in '{args.out}'")
 
     # Strategy
     if args.tpu:
