@@ -41,10 +41,11 @@ class GlobalBatchSims(layers.Layer):
 
 class L2Normalize(layers.Layer):
     def call(self, inputs, **kwargs):
-        tf.debugging.assert_rank(inputs, 2)
-        square_sum = tf.reduce_sum(tf.square(inputs), axis=1, keepdims=True)
-        inv_norm = tf.math.rsqrt(tf.maximum(square_sum, 1e-12))
-        return inputs * tf.stop_gradient(inv_norm)
+        # tf.debugging.assert_rank(inputs, 2)
+        # square_sum = tf.reduce_sum(tf.square(inputs), axis=1, keepdims=True)
+        # inv_norm = tf.math.rsqrt(tf.maximum(square_sum, 1e-12))
+        # return inputs * tf.stop_gradient(inv_norm)
+        return tf.nn.l2_normalize(inputs, axis=1)
 
 
 class MeasureNorm(layers.Layer):
