@@ -98,7 +98,7 @@ def make_model(args, nclass, input_shape):
     if args.proj_dim is None or args.proj_dim <= 0:
         projection = custom_layers.Identity(name='projection')
     else:
-        projection = layers.Dense(args.proj_dim, name='projection',
+        projection = layers.Dense(args.proj_dim, name='projection', use_bias=False,
                                   kernel_regularizer=regularizer, bias_regularizer=regularizer)
     if args.proj_norm == 'sn':
         projection = custom_layers.SpectralNormalization(projection, name='sn_projection')
