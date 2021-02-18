@@ -26,23 +26,21 @@ def add_regularization_with_reset(model, regularizer):
 def optional_normalize(norm, feats1, feats2):
     if norm == 'l2':
         # L2 normalize
-        feats = custom_layers.L2Normalize()(feats1)
+        feats1 = custom_layers.L2Normalize()(feats1)
         feats2 = custom_layers.L2Normalize()(feats2)
     elif norm == 'bn':
         # Average L2 norm with BN
         batchnorm = layers.BatchNormalization(scale=False, center=False)
-        feats, feats2 = batchnorm(feats1), batchnorm(feats2)
+        feats1, feats2 = batchnorm(feats1), batchnorm(feats2)
 
         # Scale down by sqrt of feature dimension
         feats_scale = 1 / (feats1.shape[-1] ** 0.5)
         scale = custom_layers.Scale(feats_scale)
-        feats, feats2 = scale(feats), scale(feats2)
+        feats1, feats2 = scale(feats1), scale(feats2)
     else:
         # No normalization
         assert norm is None or norm == 'sn'
-        feats = feats1
-        feats2 = feats2
-    return feats, feats2
+    return feats1, feats2
 
 
 def make_model(args, nclass, input_shape):
