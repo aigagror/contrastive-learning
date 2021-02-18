@@ -161,8 +161,8 @@ class SpectralNormalization(tf.keras.layers.Wrapper):
 
             sigma = tf.matmul(tf.matmul(v, w), u, transpose_b=True)
 
-            self.w.assign(self.w / sigma)
-            self.u.assign(u)
+            self.w.assign(tf.cast(self.w / sigma, tf.float32))
+            self.u.assign(tf.cast(u, tf.float32))
 
     def get_config(self):
         config = {"power_iterations": self.power_iterations}
