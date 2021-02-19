@@ -23,6 +23,8 @@ parser.add_argument('--backbone', choices=['small-resnet50v2', 'resnet50v2', 're
 parser.add_argument('--feat-norm', choices=['l2', 'bn'])
 parser.add_argument('--proj-norm', choices=['l2', 'bn', 'sn'])
 parser.add_argument('--proj-dim', type=int, default=128)
+parser.add_argument('--stop_gradient', action='store_true')
+
 
 # Loss objective
 parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'], default='ce')

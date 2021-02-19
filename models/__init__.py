@@ -120,6 +120,8 @@ def make_model(args, nclass, input_shape):
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))
 
     # Label logits
+    if args.stop_gradient:
+        feats = tf.stop_gradient(feats)
     prediction = layers.Dense(nclass, name='label',
                               kernel_regularizer=regularizer if args.optimizer != 'lamb' else None,
                               bias_regularizer=regularizer if args.optimizer != 'lamb' else None,
