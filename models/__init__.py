@@ -120,7 +120,9 @@ def make_model(args, nclass, input_shape):
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))
 
     # Label logits
-    prediction = layers.Dense(nclass, name='label', kernel_regularizer=regularizer, bias_regularizer=regularizer,
+    prediction = layers.Dense(nclass, name='label',
+                              kernel_regularizer=regularizer if args.optimizer is not 'lamb' else None,
+                              bias_regularizer=regularizer if args.optimizer is not 'lamb' else None,
                               dtype=tf.float32)(feats)
 
     # Model
