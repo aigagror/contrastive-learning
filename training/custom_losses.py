@@ -100,30 +100,42 @@ class PartialSupCon(ConLoss):
         self.assert_inputs(y_true, y_pred)
         dtype = y_pred.dtype
 
-        # Masks
-        inst_mask = tf.cast((y_true == 2), dtype)
-        partial_class_mask = tf.cast((y_true == 1), dtype)
-        partial_class_sum = tf.math.reduce_sum(partial_class_mask, axis=1)
-        partial_mask = tf.cast((y_true <= 1), dtype)
-
         # Similarities
         sims = y_pred / self.temp
         sims = sims - tf.stop_gradient(tf.reduce_max(sims, axis=1, keepdims=True))
 
+        # Masks
+        inst_mask = tf.cast((y_true == 2), dtype)
+        non_neg_mask = tf.cast((y_true >= 1), dtype)
+        inst_sum = tf.math.reduce_sum(inst_mask, axis=1)
+
+        proper_class_mask = tf.cast((y_true == 1), dtype)
+        non_inst_mask = tf.cast((y_true <= 1), dtype)
+        proper_class_sum = tf.math.reduce_sum(proper_class_mask, axis=1)
+
         # Log probs
         exp = tf.math.exp(sims)
-        partial_sum_exp = tf.math.reduce_sum(exp * partial_mask, axis=1, keepdims=True)
-        partial_log_prob = sims - tf.math.log(partial_sum_exp + 1e-5)
+        non_inst_sum_exp = tf.math.reduce_sum(exp * non_inst_mask, axis=1, keepdims=True)
+        non_inst_log_prob = sims - tf.math.log(non_inst_sum_exp + 1e-5)
 
-        # Partial class positive pairs log prob
-        class_partial_log_prob = partial_class_mask * partial_log_prob
+        non_neg_sum_exp = tf.math.reduce_sum(exp * non_neg_mask, axis=1, keepdims=True)
+        non_neg_log_prob = sims - tf.math.log(non_neg_sum_exp + 1e-5)
+
+        # Class partial positive pairs log prob
+        class_partial_log_prob = proper_class_mask * non_inst_log_prob
         tf.debugging.assert_less_equal(class_partial_log_prob, tf.zeros_like(class_partial_log_prob))
         class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob, axis=1)
-        class_partial_log_prob = tf.math.divide_no_nan(class_partial_log_prob, partial_class_sum)
-        partial_supcon_loss = -class_partial_log_prob
+        class_partial_log_prob = tf.math.divide_no_nan(class_partial_log_prob, proper_class_sum)
+        class_partial_loss = -class_partial_log_prob
 
-        inst_loss = nn.softmax_cross_entropy_with_logits(inst_mask, sims)
-        loss = partial_supcon_loss + inst_loss
+        # Instance partial positive pairs log prob
+        inst_partial_log_prob = inst_mask * non_neg_log_prob
+        tf.debugging.assert_less_equal(inst_partial_log_prob, tf.zeros_like(inst_partial_log_prob))
+        inst_partial_log_prob = tf.math.reduce_sum(inst_partial_log_prob, axis=1)
+        inst_partial_log_prob = tf.math.divide_no_nan(inst_partial_log_prob, inst_sum)
+        inst_partial_loss = -inst_partial_log_prob
+
+        loss = class_partial_loss + inst_partial_loss
         return loss
 
 
