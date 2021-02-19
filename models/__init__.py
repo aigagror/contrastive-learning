@@ -114,7 +114,8 @@ def make_model(args, nclass, input_shape):
     proj_feats2 = custom_layers.Identity(name='proj_feats2')(proj_feats2)
 
     # Measure the norms of the projected features
-    proj_feats = custom_layers.MeasureNorm(name='proj_norm')(proj_feats)
+    if args.proj_dim is not None and args.proj_dim > 0:
+        proj_feats = custom_layers.MeasureNorm(name='proj_norm')(proj_feats)
 
     # Feature views
     proj_views = custom_layers.FeatViews(name='contrast', dtype=tf.float32)((proj_feats, proj_feats2))
