@@ -88,8 +88,8 @@ def make_model(args, nclass, input_shape):
     feats, feats2 = optional_normalize(args.feat_norm, raw_feats, raw_feats2)
 
     # Name the features
-    feats = tf.identity(feats, 'feats')
-    feats2 = tf.identity(feats2, 'feats2')
+    feats = custom_layers.Identity(name='feats')(feats)
+    feats2 = custom_layers.Identity(name='feats2')(feats2)
 
     # Measure the norms of the features
     if args.feat_norm is not None:
@@ -118,8 +118,8 @@ def make_model(args, nclass, input_shape):
     proj_feats, proj_feats2 = optional_normalize(args.proj_norm, proj_feats, proj_feats2)
 
     # Name the projected features
-    proj_feats = tf.identity(proj_feats, 'proj_feats')
-    proj_feats2 = tf.identity(proj_feats2, 'proj_feats2')
+    proj_feats = custom_layers.Identity(name='proj_feats')(proj_feats)
+    proj_feats2 = custom_layers.Identity(name='proj_feats2')(proj_feats2)
 
     # Measure the norms of the projected features
     if args.proj_dim is not None and args.proj_dim > 0:
