@@ -92,7 +92,8 @@ def make_model(args, nclass, input_shape):
     feats2 = tf.identity(feats2, 'feats2')
 
     # Measure the norms of the features
-    feats = custom_layers.MeasureNorm(name='feat_norm')(feats)
+    if args.feat_norm is not None:
+        feats = custom_layers.MeasureNorm(name='feat_norm')(feats)
 
     # Projection
     if args.proj_dim is None or args.proj_dim <= 0:
