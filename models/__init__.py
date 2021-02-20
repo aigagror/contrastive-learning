@@ -26,8 +26,9 @@ def add_regularization_with_reset(model, regularizer):
 def optional_normalize(norm, feats1, feats2):
     if norm == 'l2':
         # L2 normalize
-        feats1 = custom_layers.L2Normalize()(feats1)
-        feats2 = custom_layers.L2Normalize()(feats2)
+        l2_norm = custom_layers.L2Normalize()
+        feats1 = l2_norm(feats1)
+        feats2 = l2_norm(feats2)
     elif norm == 'bn':
         # Average L2 norm with BN
         batchnorm = layers.BatchNormalization(scale=False, center=False)
