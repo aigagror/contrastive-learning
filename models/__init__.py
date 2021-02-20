@@ -99,9 +99,13 @@ def make_model(args, nclass, input_shape):
         projection = custom_layers.Identity(name='projection')
     else:
         projection = tf.keras.Sequential([
-            layers.Dense(2048, activation='relu', kernel_regularizer=regularizer, bias_regularizer=regularizer),
-            layers.Dense(2048, activation='relu', kernel_regularizer=regularizer, bias_regularizer=regularizer),
-            layers.Dense(args.proj_dim, kernel_regularizer=regularizer, bias_regularizer=regularizer)
+            layers.Dense(2048, kernel_regularizer=regularizer, bias_regularizer=regularizer),
+            layers.BatchNormalization(),
+            layers.ReLU(),
+            layers.Dense(2048, kernel_regularizer=regularizer, bias_regularizer=regularizer),
+            layers.BatchNormalization(),
+            layers.ReLU(),
+            layers.Dense(args.proj_dim, kernel_regularizer=regularizer, use_bias=False)
         ], name='projection')
     if args.proj_norm == 'sn':
         projection = custom_layers.SpectralNormalization(projection, name='sn_projection')
