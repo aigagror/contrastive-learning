@@ -135,7 +135,7 @@ class PartialSupCon(ConLoss):
         inst_partial_log_prob = tf.math.divide_no_nan(inst_partial_log_prob, inst_sum)
         inst_partial_loss = -inst_partial_log_prob
 
-        loss = 0.75 * class_partial_loss + 0.25 * inst_partial_loss
+        loss = class_partial_loss + inst_partial_loss
         return loss
 
 
