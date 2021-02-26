@@ -7,7 +7,7 @@ import tensorflow as tf
 
 import utils
 from training import lr_schedule, get_lr_scheduler
-from tqdm.auto import tqdm
+
 
 class TestTraining(unittest.TestCase):
     def test_plot_lr_schedules(self):
@@ -19,10 +19,11 @@ class TestTraining(unittest.TestCase):
             lr_scheduler = get_lr_scheduler(args)
 
             x, y = [], []
-            for step in tqdm(range(args.train_steps * args.epochs)):
+            for step in range(args.train_steps * args.epochs):
                 x.append(step)
                 y.append(lr_scheduler(step).numpy())
-            plt.plot(x, y, label=f'{args}')
+            plt.plot(x, y, label='cosine-decay' if args.cosine_decay else 'piecewise-decay')
+        plt.legend()
         plt.savefig('out/lr_schedules.jpg')
 
     def test_lr_schedule(self):
