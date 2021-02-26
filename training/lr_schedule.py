@@ -51,8 +51,7 @@ class WarmUpAndCosineDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
         with tf.name_scope(self._name or 'WarmUpAndCosineDecay'):
             warmup_steps = int(
                 round(self.warmup_epochs * self.steps_epoch))
-            learning_rate = (
-                step / float(warmup_steps) * self.lr if warmup_steps else self.lr)
+            learning_rate = tf.cast(step, tf.float32) / warmup_steps * self.lr if warmup_steps else self.lr
 
             # Cosine decay learning rate schedule
             total_steps = self.steps_epoch * self.epochs
