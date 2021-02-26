@@ -34,8 +34,12 @@ def get_callbacks(args):
 
 def compile_model(args, model):
     # LR schedule
-    lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup, args.lr_decays,
-                                                                start_step=args.init_epoch * args.train_steps)
+    if args.use_cosine_decay:
+        lr_scheduler = lr_schedule.WarmUpAndCosineDecay(args.lr, args.train_steps, args.warmup, args.epochs)
+    else:
+        lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup,
+                                                                    args.lr_decays,
+                                                                    start_step=args.init_epoch * args.train_steps)
     # Optimizer
     if args.optimizer == 'sgd':
         opt = optimizers.SGD(lr_scheduler, momentum=0.9, nesterov=True)

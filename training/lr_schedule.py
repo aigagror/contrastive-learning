@@ -1,3 +1,5 @@
+import math
+
 import tensorflow as tf
 
 
@@ -36,6 +38,43 @@ class PiecewiseConstantDecayWithWarmup(tf.keras.optimizers.schedules.PiecewiseCo
         }
 
 
+class WarmUpAndCosineDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
+    """Applies a warmup schedule on a given learning rate decay schedule."""
+
+    def __init__(self, lr, steps_epoch, warmup_epochs, epochs, name=None):
+        super(WarmUpAndCosineDecay, self).__init__()
+        self.lr = lr
+        self.steps_epoch = steps_epoch
+        self.warmup_epochs = warmup_epochs
+        self.epochs = epochs
+        self._name = name
+
+    def __call__(self, step):
+        with tf.name_scope(self._name or 'WarmUpAndCosineDecay'):
+            warmup_steps = int(
+                round(self.warmup_epochs * self.steps_epoch))
+            learning_rate = (
+                step / float(warmup_steps) * self.lr if warmup_steps else self.lr)
+
+            # Cosine decay learning rate schedule
+            total_steps = self.steps_epoch * self.epochs
+            cosine_decay = tf.keras.experimental.CosineDecay(
+                self.lr, total_steps - warmup_steps)
+            learning_rate = tf.where(step < warmup_steps, learning_rate,
+                                     cosine_decay(step - warmup_steps))
+
+            return learning_rate
+
+    def get_config(self):
+        return {
+            'lr': self.lr,
+            'steps_epoch': self.steps_epoch,
+            'warmup_epochs': self.warmup_epochs,
+            'epochs': self.epochs,
+        }
+
+
 custom_objects = {
-    'PiecewiseConstantDecayWithWarmup': PiecewiseConstantDecayWithWarmup
+    'PiecewiseConstantDecayWithWarmup': PiecewiseConstantDecayWithWarmup,
+    'WarmUpAndCosineDecay': WarmUpAndCosineDecay,
 }
