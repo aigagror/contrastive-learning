@@ -44,7 +44,7 @@ parser.add_argument('--bsz', type=int)
 parser.add_argument('--warmup', type=int, default=0)
 parser.add_argument('--lr', type=float)
 parser.add_argument('--lr-decays', type=int, nargs='+', help='decays learning rate at the specified epochs')
-parser.add_argument('--use-cosine-decay', action='store_true')
+parser.add_argument('--cosine-decay', action='store_true')
 
 parser.add_argument('--recompile', action='store_true')
 

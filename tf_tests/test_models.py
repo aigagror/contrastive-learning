@@ -46,18 +46,6 @@ class TestModel(unittest.TestCase):
         # Assert regularization on at least 40 modules
         self.assertGreaterEqual(len(model.losses), 40)
 
-    def test_num_l2_reg(self):
-        for loss, feat_norm, proj_norm, target_reg in [('ce', '', '', 4), ('supcon', '', '', 5),
-                                                       ('ce', '--feat-norm=bn', '--proj-norm=sn', 2),
-                                                       ('supcon', '--feat-norm=bn', '--proj-norm=sn', 2)]:
-            args = f'--data-id=tf_flowers --backbone=affine --weight-decay=1e-3 --loss={loss} {feat_norm} {proj_norm}'
-            args = utils.parser.parse_args(args.split())
-            utils.setup(args)
-
-            model = models.make_model(args, nclass=10, input_shape=[32, 32, 3])
-
-            self.assertEqual(len(model.losses), target_reg, str((loss, feat_norm, target_reg)))
-
     def test_no_l2_reg(self):
         args = '--data-id=tf_flowers --backbone=affine --weight-decay=0 ' \
                '--bsz=8 --lr=1e-3 --loss=ce '

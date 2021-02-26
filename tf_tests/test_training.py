@@ -2,13 +2,29 @@ import os
 import tempfile
 import unittest
 
+import matplotlib.pyplot as plt
 import tensorflow as tf
 
 import utils
-from training import lr_schedule
-
+from training import lr_schedule, get_lr_scheduler
+from tqdm.auto import tqdm
 
 class TestTraining(unittest.TestCase):
+    def test_plot_lr_schedules(self):
+        plt.figure()
+        for args in ['--warmup=5 --lr=5e-1 --train-steps=10 --epochs=90 --cosine-decay ',
+                     '--warmup=5 --lr=5e-1 --train-steps=10 --epochs=90 --lr-decays 30 60 80 ']:
+            args = utils.parser.parse_args(args.split())
+
+            lr_scheduler = get_lr_scheduler(args)
+
+            x, y = [], []
+            for step in tqdm(range(args.train_steps * args.epochs)):
+                x.append(step)
+                y.append(lr_scheduler(step).numpy())
+            plt.plot(x, y, label=f'{args}')
+        plt.savefig('out/lr_schedules.jpg')
+
     def test_lr_schedule(self):
         args = '--warmup=5 --lr=5e-1 --lr-decays 30 60 80 --train-steps=1000'
         args = utils.parser.parse_args(args.split())

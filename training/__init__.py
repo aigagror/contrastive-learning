@@ -34,23 +34,11 @@ def get_callbacks(args):
 
 def compile_model(args, model):
     # LR schedule
-    if args.use_cosine_decay:
-        lr_scheduler = lr_schedule.WarmUpAndCosineDecay(args.lr, args.train_steps, args.warmup, args.epochs)
-    else:
-        lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup,
-                                                                    args.lr_decays,
-                                                                    start_step=args.init_epoch * args.train_steps)
+    lr_scheduler = get_lr_scheduler(args)
+
     # Optimizer
-    if args.optimizer == 'sgd':
-        opt = optimizers.SGD(lr_scheduler, momentum=0.9, nesterov=True)
-    elif args.optimizer == 'adam':
-        opt = optimizers.Adam(lr_scheduler)
-    elif args.optimizer == 'lamb':
-        opt = tfa.optimizers.LAMB(lr_scheduler, weight_decay_rate=args.weight_decay)
-    else:
-        raise Exception(f'unknown optimizer {args.optimizer}')
-    logging.info(f'{opt.__class__.__name__} optimizer')
-    logging.info(f'starting learning rate: {lr_scheduler(0)}')
+    opt = get_optimizer(args, lr_scheduler)
+    logging.info(f'{opt.__class__.__name__} optimizer with {lr_scheduler.__class__.__name__} scheduler')
 
     # Loss and metrics
     ce_loss = tf.keras.losses.SparseCategoricalCrossentropy(name='ce', from_logits=True)
@@ -72,3 +60,25 @@ def compile_model(args, model):
 
     # Compile
     model.compile(opt, losses, metrics, steps_per_execution=args.steps_exec)
+
+
+def get_optimizer(args, lr_scheduler):
+    if args.optimizer == 'sgd':
+        opt = optimizers.SGD(lr_scheduler, momentum=0.9, nesterov=True)
+    elif args.optimizer == 'adam':
+        opt = optimizers.Adam(lr_scheduler)
+    elif args.optimizer == 'lamb':
+        opt = tfa.optimizers.LAMB(lr_scheduler, weight_decay_rate=args.weight_decay)
+    else:
+        raise Exception(f'unknown optimizer {args.optimizer}')
+    return opt
+
+
+def get_lr_scheduler(args):
+    if args.cosine_decay:
+        lr_scheduler = lr_schedule.WarmUpAndCosineDecay(args.lr, args.train_steps, args.warmup, args.epochs)
+    else:
+        lr_scheduler = lr_schedule.PiecewiseConstantDecayWithWarmup(args.lr, args.train_steps, args.warmup,
+                                                                    args.lr_decays,
+                                                                    start_step=args.init_epoch * args.train_steps)
+    return lr_scheduler
