@@ -40,18 +40,21 @@ def plot_tsne(args, strategy, model, ds_val, max_iter=None):
     proj_embed = manifold.TSNE().fit_transform(all_proj)
 
     classes = np.unique(all_labels)
-    f, ax = plt.subplots(1, 2)
-    f.set_size_inches(13, 5)
-    ax[0].set_title('feats')
-    ax[1].set_title('projected features')
+
+    plt.figure()
+    plt.title('TSNE features')
     for c in classes:
         class_feats_embed = feats_embed[all_labels == c]
+        plt.scatter(class_feats_embed[:, 0], class_feats_embed[:, 1], label=f'{c}', alpha=0.1)
+    plt.savefig(os.path.join('out/', 'proj-tsne.pdf'))
+
+    plt.figure()
+    plt.title('TSNE projected features')
+    for c in classes:
         class_proj_embed = proj_embed[all_labels == c]
+        plt.scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}', alpha=0.1)
+    plt.savefig(os.path.join('out/', 'proj-tsne.pdf'))
 
-        ax[0].scatter(class_feats_embed[:, 0], class_feats_embed[:, 1], label=f'{c}', alpha=0.1)
-        ax[1].scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}', alpha=0.1)
-
-    f.savefig(os.path.join('out/', 'tsne.pdf'))
     logging.info("plotted tsne to 'out/'")
 
 
