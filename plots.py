@@ -48,8 +48,8 @@ def plot_tsne(args, strategy, model, ds_val, max_iter=None):
         class_feats_embed = feats_embed[all_labels == c]
         class_proj_embed = proj_embed[all_labels == c]
 
-        ax[0].scatter(class_feats_embed[:, 0], class_feats_embed[:, 1], label=f'{c}')
-        ax[1].scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}')
+        ax[0].scatter(class_feats_embed[:, 0], class_feats_embed[:, 1], label=f'{c}', alpha=0.1)
+        ax[1].scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}', alpha=0.1)
 
     f.savefig(os.path.join('out/', 'tsne.jpg'))
     logging.info("plotted tsne to 'out/'")
