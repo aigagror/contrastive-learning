@@ -46,7 +46,7 @@ def plot_tsne(args, strategy, model, ds_val, max_iter=None):
     for c in classes:
         class_feats_embed = feats_embed[all_labels == c]
         plt.scatter(class_feats_embed[:, 0], class_feats_embed[:, 1], label=f'{c}', alpha=0.1)
-    plt.savefig(os.path.join('out/', 'proj-tsne.pdf'))
+    plt.savefig(os.path.join('out/', 'tsne.pdf'))
 
     plt.figure()
     plt.title('TSNE projected features')
