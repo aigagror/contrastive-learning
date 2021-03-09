@@ -51,7 +51,7 @@ def plot_tsne(args, strategy, model, ds_val, max_iter=None):
         ax[0].scatter(class_feats_embed[:, 0], class_feats_embed[:, 1], label=f'{c}', alpha=0.1)
         ax[1].scatter(class_proj_embed[:, 0], class_proj_embed[:, 1], label=f'{c}', alpha=0.1)
 
-    f.savefig(os.path.join('out/', 'tsne.jpg'))
+    f.savefig(os.path.join('out/', 'tsne.pdf'))
     logging.info("plotted tsne to 'out/'")
 
 
@@ -138,5 +138,5 @@ def plot_hist_sims(args, strategy, model, ds_val, max_iter=None):
     ax[1].hist(proj_inst_sims, label='inst', weights=np.ones_like(proj_inst_sims) / len(proj_inst_sims), alpha=0.5)
     ax[1].legend()
 
-    f.savefig(os.path.join('out/', 'similarity-types.jpg'))
+    f.savefig(os.path.join('out/', 'similarity-types.pdf'))
     logging.info("plotted similarity histograms to 'out/'")
