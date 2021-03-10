@@ -162,7 +162,7 @@ def load_augment_configs(args):
     first_view_val_config = augmentations.ViewConfig(name='image', rand_crop=False, augment_fn=None)
     second_view_val_config = augmentations.ViewConfig(name='image2', rand_crop=True, augment_fn=augment_fn)
 
-    view_train_configs = [first_view_train_config, second_view_train_config],
+    view_train_configs = [first_view_train_config, second_view_train_config]
     view_val_configs = [first_view_val_config, second_view_val_config]
 
     augment_train_config = augmentations.AugmentConfig(view_train_configs)
