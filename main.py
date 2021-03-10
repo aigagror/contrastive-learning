@@ -51,8 +51,7 @@ def run(args):
     train(args, model, ds_train, ds_val)
 
     # Plot
-    if args.loss != 'ce':
-        plots.plot_hist_sims(args, strategy, model, ds_val)
+    plots.plot_hist_sims(args, strategy, model, ds_val)
     if args.tsne:
         plots.plot_tsne(args, strategy, model, ds_val)
 

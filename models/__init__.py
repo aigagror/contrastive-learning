@@ -137,11 +137,8 @@ def make_model(args, nclass, input_shape):
                               dtype=tf.float32)(feats)
 
     # Model
-    inputs = [input]
-    outputs = [prediction]
-    if args.loss != 'ce':
-        inputs.append(input2)
-        outputs.append(proj_views)
+    inputs = [input, input2]
+    outputs = [prediction, proj_views]
 
     model = keras.Model(inputs, outputs)
 

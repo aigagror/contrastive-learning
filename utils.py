@@ -103,10 +103,7 @@ def setup(args):
     mixed_precision.set_global_policy(policy)
 
     # Dataset arguments
-    if args.loss == 'ce':
-        args.views, args.with_batch_sims = ['image'], False
-    else:
-        args.views, args.with_batch_sims = ['image', 'image2'], True
+    args.views, args.with_batch_sims = ['image', 'image2'], True
 
     return strategy
 
@@ -165,10 +162,8 @@ def load_augment_configs(args):
     first_view_val_config = augmentations.ViewConfig(name='image', rand_crop=False, augment_fn=None)
     second_view_val_config = augmentations.ViewConfig(name='image2', rand_crop=True, augment_fn=augment_fn)
 
-    view_train_configs, view_val_configs = [first_view_train_config], [first_view_val_config]
-    if args.loss != 'ce':
-        view_train_configs.append(second_view_train_config)
-        view_val_configs.append(second_view_val_config)
+    view_train_configs = [first_view_train_config, second_view_train_config],
+    view_val_configs = [first_view_val_config, second_view_val_config]
 
     augment_train_config = augmentations.AugmentConfig(view_train_configs)
     augment_val_config = augmentations.AugmentConfig(view_val_configs)
