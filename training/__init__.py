@@ -19,6 +19,10 @@ def train(args, model, ds_train, ds_val):
     except KeyboardInterrupt:
         logging.info('keyboard interrupt caught. ending training early')
 
+    if args.no_save and (args.epochs - args.init_epoch) > 0:
+        logging.info('saving model')
+        model.save(os.path.join(args.out, 'model'))
+
 
 def get_callbacks(args):
     cbks = [callbacks.TensorBoard(os.path.join(args.out, 'logs'), update_freq=args.update_freq, write_graph=False,
