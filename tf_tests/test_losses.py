@@ -23,14 +23,14 @@ class LossesTest(unittest.TestCase):
 
     # Error
     def test_y_true_greater_than_two_error(self):
-        for loss in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
+        for loss in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.HierCon(0.1)]:
             x = tf.zeros([3, 3])
             y = 3 * tf.eye(3, dtype=tf.uint8)
             with self.assertRaises(Exception):
                 loss(y, x)
 
     def test_y_true_no_inst(self):
-        for loss in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
+        for loss in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.HierCon(0.1)]:
             x = tf.zeros([3, 3])
             y = tf.eye(3, dtype=tf.uint8)
             with self.assertRaises(Exception):
@@ -38,7 +38,7 @@ class LossesTest(unittest.TestCase):
 
     # Positive singular losses with various shapes
     def test_losses_format_and_output(self):
-        for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
+        for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.HierCon(0.1)]:
             for _ in range(100):
                 n = tf.random.uniform([], minval=1, maxval=4, dtype=tf.int32)
                 d = tf.random.uniform([], minval=1, maxval=32, dtype=tf.int32)
@@ -52,8 +52,8 @@ class LossesTest(unittest.TestCase):
                 ])
 
     # Test cross entropy equivalency
-    def test_cross_entropy_impl_of_partial_supcon(self):
-        loss_fn = custom_losses.PartialSupCon(0.1)
+    def test_cross_entropy_impl_of_hiercon(self):
+        loss_fn = custom_losses.HierCon(0.1)
 
         n, d = 4, 32
         for _ in range(100):
@@ -87,8 +87,8 @@ class LossesTest(unittest.TestCase):
             inst_loss, partial_ce_loss = tf.reduce_mean(inst_loss), tf.reduce_mean(partial_ce_loss)
 
             ce_loss = partial_ce_loss + inst_loss
-            partial_supcon_loss = loss_fn(labels, x)
-            tf.debugging.assert_near(ce_loss, partial_supcon_loss, atol=1e-2)
+            hiercon_loss = loss_fn(labels, x)
+            tf.debugging.assert_near(ce_loss, hiercon_loss, atol=1e-2)
 
     # Test cross entropy correctness
     def test_zero_loss(self):
@@ -103,7 +103,7 @@ class LossesTest(unittest.TestCase):
 
     def test_non_zero_loss(self):
         n, d = 4, 32
-        for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.PartialSupCon(0.1)]:
+        for loss_fn in [custom_losses.SimCLR(0.1), custom_losses.SupCon(0.1), custom_losses.HierCon(0.1)]:
             y = self.rand_labels(n)
             x = self.rand_feat_views(n, d)
             loss = loss_fn(y, x)
@@ -126,7 +126,7 @@ class LossesTest(unittest.TestCase):
                 tf.debugging.assert_equal(ref_order, order)
 
     def test_distribute_equivalent(self):
-        for LossClass in [custom_losses.SimCLR, custom_losses.SupCon, custom_losses.PartialSupCon]:
+        for LossClass in [custom_losses.SimCLR, custom_losses.SupCon, custom_losses.HierCon]:
             strategy = tf.distribute.MirroredStrategy(['CPU:0', 'CPU:1'])
             global_y = self.rand_labels(4)
             global_x = self.rand_feat_views(4, 32)

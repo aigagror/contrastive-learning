@@ -93,7 +93,7 @@ class SupCon(ConLoss):
         return nn.softmax_cross_entropy_with_logits(labels, sims)
 
 
-class PartialSupCon(ConLoss):
+class HierCon(ConLoss):
 
     def call(self, y_true, y_pred):
         y_true, y_pred = self.process_y(y_true, y_pred)
@@ -143,5 +143,5 @@ custom_objects = {
     'NoOp': NoOp,
     'SimCLR': SimCLR,
     'SupCon': SupCon,
-    'PartialSupCon': PartialSupCon,
+    'HierCon': HierCon,
 }

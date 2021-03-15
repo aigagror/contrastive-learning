@@ -53,7 +53,7 @@ def compile_model(args, model):
 
     contrast_loss_dict = {
         'supcon': custom_losses.SupCon(args.temp),
-        'partial-supcon': custom_losses.PartialSupCon(args.temp),
+        'hiercon': custom_losses.HierCon(args.temp),
         'simclr': custom_losses.SimCLR(args.temp),
         'no-op': custom_losses.NoOp()
     }

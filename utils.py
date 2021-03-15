@@ -26,7 +26,7 @@ parser.add_argument('--proj-dim', type=int, default=128)
 parser.add_argument('--stop-gradient', action='store_true')
 
 # Loss objective
-parser.add_argument('--loss', choices=['ce', 'supcon', 'partial-supcon', 'simclr', 'no-op'], default='ce')
+parser.add_argument('--loss', choices=['ce', 'supcon', 'hiercon', 'simclr', 'no-op'], default='ce')
 parser.add_argument('--temp', type=float, default=0.1)
 parser.add_argument('--weight-decay', type=float, default=1e-4)
 
