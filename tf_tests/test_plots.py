@@ -30,17 +30,17 @@ class TestPlots(unittest.TestCase):
 
     def test_hist(self):
         args, strategy, model, ds_val = self.basic_usage()
-        plots.plot_hist_sims(args, strategy, model, ds_val, max_iter=1)
+        plots.plot_hist_sims(args, strategy, model, ds_val)
         logging.info(f'hist saved to {args.out}')
 
     def test_distributed_hist(self):
         args, strategy, model, ds_val = self.basic_usage()
-        plots.plot_hist_sims(args, strategy, model, ds_val, max_iter=1)
+        plots.plot_hist_sims(args, strategy, model, ds_val)
         logging.info(f'hist saved to {args.out}')
 
     def test_tsne(self):
         args, strategy, model, ds_val = self.basic_usage()
-        plots.plot_tsne(args, strategy, model, ds_val, max_iter=1)
+        plots.plot_tsne(args, strategy, model, ds_val)
         logging.info(f'tsne saved to {args.out}')
 
 
