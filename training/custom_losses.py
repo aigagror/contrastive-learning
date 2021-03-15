@@ -138,10 +138,55 @@ class HierCon(ConLoss):
         loss = class_partial_loss + inst_partial_loss
         return loss
 
+class HierCon2(ConLoss):
+
+    def call(self, y_true, y_pred):
+        y_true, y_pred = self.process_y(y_true, y_pred)
+        self.assert_inputs(y_true, y_pred)
+        dtype = y_pred.dtype
+
+        # Similarities
+        sims = y_pred / self.temp
+        sims = sims - tf.stop_gradient(tf.reduce_max(sims, axis=1, keepdims=True))
+
+        # Masks
+        inst_mask = tf.cast((y_true == 2), dtype)
+        non_neg_mask = tf.cast((y_true >= 1), dtype)
+        inst_sum = tf.math.reduce_sum(inst_mask, axis=1)
+
+        proper_class_mask = tf.cast((y_true == 1), dtype)
+        non_inst_mask = tf.cast((y_true <= 1), dtype)
+        proper_class_sum = tf.math.reduce_sum(proper_class_mask, axis=1)
+
+        # Log probs
+        exp = tf.math.exp(sims)
+        non_inst_sum_exp = tf.math.reduce_sum(exp * non_inst_mask, axis=1, keepdims=True)
+        non_inst_log_prob = sims - tf.math.log(non_inst_sum_exp + 1e-5)
+
+        sum_exp = tf.math.reduce_sum(exp, axis=1, keepdims=True)
+        log_prob = sims - tf.math.log(sum_exp + 1e-5)
+
+        # Class partial positive pairs log prob
+        class_partial_log_prob = proper_class_mask * non_inst_log_prob
+        tf.debugging.assert_less_equal(class_partial_log_prob, tf.zeros_like(class_partial_log_prob))
+        class_partial_log_prob = tf.math.reduce_sum(class_partial_log_prob, axis=1)
+        class_partial_log_prob = tf.math.divide_no_nan(class_partial_log_prob, proper_class_sum)
+        class_partial_loss = -class_partial_log_prob
+
+        # Instance positive pairs log prob
+        inst_log_prob = inst_mask * log_prob
+        tf.debugging.assert_less_equal(inst_log_prob, tf.zeros_like(inst_log_prob))
+        inst_log_prob = tf.math.reduce_sum(inst_log_prob, axis=1)
+        inst_log_prob = tf.math.divide_no_nan(inst_log_prob, inst_sum)
+        inst_loss = -inst_log_prob
+
+        loss = class_partial_loss + inst_loss
+        return loss
 
 custom_objects = {
     'NoOp': NoOp,
     'SimCLR': SimCLR,
     'SupCon': SupCon,
     'HierCon': HierCon,
+    'HierCon2': HierCon2,
 }
