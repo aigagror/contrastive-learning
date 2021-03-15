@@ -2,6 +2,7 @@ import logging
 import os
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from matplotlib import pyplot as plt
 
@@ -71,27 +72,46 @@ def get_sims(strategy, model, ds_val):
     return sim_dict, proj_sim_dict
 
 
-def plot_hist_sims(args, strategy, model, ds_val):
-    logging.info('plotting similarities histograms')
-
-    sim_dict, proj_sim_dict = get_sims(strategy, model, ds_val)
-
-    # Plot
+def plot_sim_hist(sim_dict, proj_sim_dict):
     plt.figure()
     plt.title('similarities')
     for key in ['neg', 'class', 'inst']:
         plt.hist(sim_dict[key], label=key, weights=np.ones_like(sim_dict[key]) / len(sim_dict[key]), alpha=0.5)
     plt.legend()
     plt.savefig(os.path.join('out/', 'sims.pdf'))
-
     plt.figure()
     plt.title('projected similarities')
     for key in ['neg', 'class', 'inst']:
-        plt.hist(proj_sim_dict[key], label=key, weights=np.ones_like(proj_sim_dict[key]) / len(proj_sim_dict[key]), alpha=0.5)
+        plt.hist(proj_sim_dict[key], label=key, weights=np.ones_like(proj_sim_dict[key]) / len(proj_sim_dict[key]),
+                 alpha=0.5)
     plt.legend()
     plt.savefig(os.path.join('out/', 'proj-sims.pdf'))
-
     logging.info("plotted similarity histograms to 'out/'")
+
+
+def log_sim_moments(sim_dict, proj_sim_dict):
+    sim_moment_df, proj_sim_moment_df = pd.DataFrame(), pd.DataFrame()
+    for key in ['neg', 'class', 'inst']:
+        mean, std = np.mean(sim_dict[key]), np.std(sim_dict[key])
+        sim_moment_df = sim_moment_df.append({'type': key, 'mean': mean, 'std': std}, ignore_index=True)
+
+        mean, std = np.mean(proj_sim_dict[key]), np.std(proj_sim_dict[key])
+        proj_sim_moment_df = proj_sim_moment_df.append({'type': key, 'mean': mean, 'std': std}, ignore_index=True)
+    sim_moment_df.to_csv('out/sim-moments.csv')
+    proj_sim_moment_df.to_csv('out/proj-sim-moments.csv')
+    logging.info("saved similarity moments to 'out/'")
+
+
+def plot_hist_sims(args, strategy, model, ds_val):
+    logging.info('plotting similarities histograms')
+
+    sim_dict, proj_sim_dict = get_sims(strategy, model, ds_val)
+
+    # Plot similarity histograms
+    plot_sim_hist(sim_dict, proj_sim_dict)
+
+    # Log similarity moments
+    log_sim_moments(sim_dict, proj_sim_dict)
 
 
 def get_feats(strategy, model, ds_val):
