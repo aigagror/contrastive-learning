@@ -19,11 +19,11 @@ def run(args):
 
     # Data
     _, ds_info = tfds.load(args.data_id, try_gcs=True, data_dir='gs://aigagror/datasets', with_info=True)
-    train_augment_config, val_augment_config = utils.load_augment_configs(args)
+    train_augconfig, val_augconfig = utils.load_augment_configs(args)
     val_split_name = get_val_split_name(ds_info)
 
-    ds_train = load_distributed_datasets(args, strategy, ds_info, 'train', train_augment_config)
-    ds_val = load_distributed_datasets(args, strategy, ds_info, val_split_name, val_augment_config)
+    ds_train = load_distributed_datasets(args, strategy, ds_info, 'train', train_augconfig, shuffle=True)
+    ds_val = load_distributed_datasets(args, strategy, ds_info, val_split_name, val_augconfig)
 
     # Set training and validation steps
     utils.set_epoch_steps(args, ds_info)
@@ -56,7 +56,7 @@ def run(args):
 
     # Plot
     local_strategy = tf.distribute.get_strategy()
-    local_ds_val = load_distributed_datasets(args, local_strategy, ds_info, val_split_name, val_augment_config)
+    local_ds_val = load_distributed_datasets(args, local_strategy, ds_info, val_split_name, val_augconfig)
     plots.plot_hist_sims(args, strategy, model, ds_val)
     if args.tsne:
         plots.plot_instance_tsne(args, model, local_ds_val)

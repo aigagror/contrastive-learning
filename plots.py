@@ -10,7 +10,7 @@ from sklearn import manifold
 from data import augmentations
 
 
-def _extract_sim_types(labels, feats1, feats2, proj1, proj2):
+def _extract_sims(labels, feats1, feats2, proj1, proj2):
     # Similarities
     sims = tf.matmul(feats1, tf.transpose(feats2))
     proj_sims = tf.matmul(proj1, tf.transpose(proj2))
@@ -34,72 +34,10 @@ def _extract_sim_types(labels, feats1, feats2, proj1, proj2):
     proj_neg_sims = tf.boolean_mask(proj_sims, neg_mask)
     proj_class_sims = tf.boolean_mask(proj_sims, class_mask)
     proj_inst_sims = tf.boolean_mask(proj_sims, inst_mask)
-    return (neg_sims, class_sims, inst_sims), (proj_neg_sims, proj_class_sims, proj_inst_sims)
 
-
-def _tf_get_sims(strategy, model, ds_val):
-    outputs = [model.get_layer(name=name).output for name in ['feats', 'feats2', 'proj_feats', 'proj_feats2']]
-    feat_model = tf.keras.Model(model.input, outputs)
-
-    @tf.function
-    def run_model(inputs, targets):
-        feats1, feats2, proj1, proj2 = feat_model(inputs)
-        labels = targets['label']
-        return labels, feats1, feats2, proj1, proj2
-
-    neg_sims, class_sims, inst_sims = np.array([]), np.array([]), np.array([])
-    proj_neg_sims, proj_class_sims, proj_inst_sims = np.array([]), np.array([]), np.array([])
-    for i, (inputs, targets) in enumerate(ds_val):
-        labels, feats1, feats2, proj1, proj2 = strategy.run(run_model, [inputs, targets])
-
-        # All gather
-        feats1 = strategy.gather(feats1, axis=0)
-        feats2 = strategy.gather(feats2, axis=0)
-        proj1 = strategy.gather(proj1, axis=0)
-        proj2 = strategy.gather(proj2, axis=0)
-        labels = strategy.gather(labels, axis=0)
-
-        sims, proj_sims = _extract_sim_types(labels, feats1, feats2, proj1, proj2)
-
-        # Similarity types
-        neg_sims = np.append(neg_sims, sims[0].numpy())
-        class_sims = np.append(class_sims, sims[1].numpy())
-        inst_sims = np.append(inst_sims, sims[2].numpy())
-
-        # Projected similarity types
-        proj_neg_sims = np.append(proj_neg_sims, proj_sims[0].numpy())
-        proj_class_sims = np.append(proj_class_sims, proj_sims[1].numpy())
-        proj_inst_sims = np.append(proj_inst_sims, proj_sims[2].numpy())
     sim_dict = {'neg': neg_sims, 'class': class_sims, 'inst': inst_sims}
     proj_sim_dict = {'neg': proj_neg_sims, 'class': proj_class_sims, 'inst': proj_inst_sims}
     return sim_dict, proj_sim_dict
-
-
-def _tf_get_feats_and_labels(strategy, model, ds_val):
-    outputs = [model.get_layer(name=name).output for name in ['feats', 'proj_feats']]
-    feat_model = tf.keras.Model(model.input, outputs)
-
-    @tf.function
-    def run_model(inputs, targets):
-        feats, proj = feat_model(inputs)
-        return feats, proj, targets['label']
-
-    all_feats, all_proj, all_labels = [], [], []
-    for i, (inputs, targets) in enumerate(ds_val):
-        feats, proj, labels = strategy.run(run_model, [inputs, targets])
-
-        feats = strategy.gather(feats, axis=0)
-        proj = strategy.gather(proj, axis=0)
-        labels = strategy.gather(labels, axis=0)
-
-        all_feats.append(feats.numpy())
-        all_proj.append(proj.numpy())
-        all_labels.append(labels.numpy())
-
-    all_feats = np.concatenate(all_feats)
-    all_proj = np.concatenate(all_proj)
-    all_labels = np.concatenate(all_labels)
-    return all_feats, all_proj, all_labels
 
 
 def _log_sim_moments(sim_dict, proj_sim_dict):
@@ -128,13 +66,31 @@ def _scatter_tsne_label(filepath, feats_embed, all_labels, title=None, legend=Fa
     return classes
 
 
-def plot_sim_hist(sim_dict, proj_sim_dict):
+def _extract_feats_and_labels(args, strategy, model, ds_val):
+    outputs = [model.get_layer(name=name).output for name in ['feats', 'feats2', 'proj_feats', 'proj_feats2']]
+    with strategy.scope():
+        feat_model = tf.keras.Model(model.input, outputs)
+    np_labels = _get_np_labels(args, strategy, ds_val)
+    feats, feats2, proj_feats, proj_feats2 = feat_model.predict(ds_val, steps=args.val_steps)
+    return np_labels, feats, feats2, proj_feats, proj_feats2
+
+
+def _get_np_labels(args, strategy, ds):
+    all_labels = np.array([])
+    for _, (inputs, targets) in zip(range(args.val_steps), ds):
+        labels = strategy.gather(targets['label'], axis=0)
+        all_labels = np.concatenate([all_labels, labels.numpy().flatten()])
+    return all_labels
+
+
+def _plot_hist_sims_helper(sim_dict, proj_sim_dict):
     plt.figure()
     plt.title('similarities')
     for key in ['neg', 'class', 'inst']:
         plt.hist(sim_dict[key], label=key, weights=np.ones_like(sim_dict[key]) / len(sim_dict[key]), alpha=0.5)
     plt.legend()
     plt.savefig(os.path.join('out/', 'sims.pdf'))
+
     plt.figure()
     plt.title('projected similarities')
     for key in ['neg', 'class', 'inst']:
@@ -148,10 +104,12 @@ def plot_sim_hist(sim_dict, proj_sim_dict):
 def plot_hist_sims(args, strategy, model, ds_val):
     logging.info('plotting similarities histograms')
 
-    sim_dict, proj_sim_dict = _tf_get_sims(strategy, model, ds_val)
+    np_labels, feats, feats2, proj_feats, proj_feats2 = _extract_feats_and_labels(args, strategy, model, ds_val)
+
+    sim_dict, proj_sim_dict = _extract_sims(np_labels, feats, feats2, proj_feats, proj_feats2)
 
     # Plot similarity histograms
-    plot_sim_hist(sim_dict, proj_sim_dict)
+    _plot_hist_sims_helper(sim_dict, proj_sim_dict)
 
     # Log similarity moments
     _log_sim_moments(sim_dict, proj_sim_dict)
@@ -160,15 +118,15 @@ def plot_hist_sims(args, strategy, model, ds_val):
 def plot_tsne(args, strategy, model, ds_val):
     logging.info('plotting tsne of features')
 
-    all_feats, all_proj, all_labels = _tf_get_feats_and_labels(strategy, model, ds_val)
+    np_labels, feats, feats2, proj_feats, proj_feats2 = _extract_feats_and_labels(args, strategy, model, ds_val)
 
-    feats_embed = manifold.TSNE().fit_transform(all_feats)
-    proj_embed = manifold.TSNE().fit_transform(all_proj)
+    feats_embed = manifold.TSNE().fit_transform(feats)
+    proj_embed = manifold.TSNE().fit_transform(proj_feats)
 
-    _scatter_tsne_label(os.path.join('out/', 'tsne.pdf'), feats_embed, all_labels,
+    _scatter_tsne_label(os.path.join('out/', 'tsne.pdf'), feats_embed, np_labels,
                         title='TSNE features')
 
-    _scatter_tsne_label(os.path.join('out/', 'proj-tsne.pdf'), proj_embed, all_labels,
+    _scatter_tsne_label(os.path.join('out/', 'proj-tsne.pdf'), proj_embed, np_labels,
                         title='TSNE projected features')
 
     logging.info("plotted tsne to 'out/'")
@@ -178,11 +136,10 @@ def plot_instance_tsne(args, model, local_ds_val):
     logging.info('plotting instance tsne of features')
 
     # Anchor image
-    ds_anchor = local_ds_val.unbatch().shuffle(10).take(1)
+    ds_anchor = local_ds_val.unbatch().shuffle(100).take(1)
     images, targets = next(iter(ds_anchor))
     anchor_image = images['image']
     anchor_class = targets['label']
-    logging.info(f'class: {anchor_class}')
 
     # Number of samples per category
     n_samples = 1024
