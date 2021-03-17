@@ -1,7 +1,7 @@
-from absl import logging
 import os
 
 import tensorflow_datasets as tfds
+from absl import logging
 from tensorflow import keras
 
 import models

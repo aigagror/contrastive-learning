@@ -1,7 +1,7 @@
-from absl import logging
 import unittest
 
 import tensorflow_datasets as tfds
+from absl import logging
 
 import data
 import models

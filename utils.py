@@ -1,9 +1,9 @@
 import argparse
-from absl import logging
 import os
 import shutil
 
 import tensorflow as tf
+from absl import logging
 from tensorflow.keras import mixed_precision
 
 from data import augmentations

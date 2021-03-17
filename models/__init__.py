@@ -1,6 +1,5 @@
-from absl import logging
-
 import tensorflow as tf
+from absl import logging
 from tensorflow import keras
 from tensorflow.keras import applications, layers
 

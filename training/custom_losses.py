@@ -138,6 +138,7 @@ class HierCon(ConLoss):
         loss = class_partial_loss + inst_partial_loss
         return loss
 
+
 class HierCon2(ConLoss):
 
     def call(self, y_true, y_pred):
@@ -182,6 +183,7 @@ class HierCon2(ConLoss):
 
         loss = class_partial_loss + inst_loss
         return loss
+
 
 custom_objects = {
     'NoOp': NoOp,

@@ -1,8 +1,8 @@
-from absl import logging
 import os
 
 import tensorflow as tf
 import tensorflow_addons as tfa
+from absl import logging
 from tensorflow.keras import callbacks, optimizers
 
 from training import custom_losses, lr_schedule

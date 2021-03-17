@@ -1,8 +1,8 @@
-from absl import logging
 import unittest
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
+from absl import logging
 
 import data
 import data.preprocess

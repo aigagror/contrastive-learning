@@ -1,8 +1,8 @@
-from absl import logging
 from functools import partial
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
+from absl import logging
 
 from data import augmentations
 from data.preprocess import process_encoded_example
