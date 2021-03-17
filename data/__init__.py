@@ -1,4 +1,4 @@
-import logging
+from absl import logging
 from functools import partial
 
 import tensorflow as tf

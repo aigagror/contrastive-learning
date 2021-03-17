@@ -763,6 +763,7 @@ class AutoAugment(ImageAugment):
                 'v0': self.policy_v0(),
                 'test': self.policy_test(),
                 'simple': self.policy_simple(),
+                'gray': self.policy_gray()
             }
 
         if augmentation_name not in self.available_policies:
@@ -891,6 +892,16 @@ class AutoAugment(ImageAugment):
             [('Equalize', 1.0, 4), ('AutoContrast', 0.6, 2)],
             [('Posterize', 0.8, 2), ('Solarize', 0.6, 10)],
             [('Solarize', 0.6, 8), ('Equalize', 0.6, 1)],
+        ]
+        return policy
+
+    @staticmethod
+    def policy_gray():
+        """Same as `policy_simple`, except with RGB dependent ops removed."""
+
+        policy = [
+            [('Solarize', 0.4, 2), ('Solarize', 0.6, 2)],
+            [('Posterize', 0.8, 2), ('Solarize', 0.6, 10)],
         ]
         return policy
 

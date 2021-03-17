@@ -1,5 +1,5 @@
 import argparse
-import logging
+from absl import logging
 import os
 import shutil
 
@@ -66,12 +66,7 @@ parser.add_argument('--update-freq', type=str, default='epoch', help='tensorboar
 
 def setup(args):
     # Logging
-    logging.getLogger().setLevel(args.log_level.upper())
-
-    # Removed duplicate stream in TF logger
-    tf_logger = logging.getLogger('tensorflow')
-    for h in tf_logger.handlers:
-        tf_logger.removeHandler(h)
+    logging.set_verbosity(args.log_level.upper())
 
     # Output directory
     args.out = os.path.join(args.base_dir, args.loss, args.data_id, f'{args.backbone}-{args.feat_norm}')

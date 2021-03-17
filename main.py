@@ -1,4 +1,4 @@
-import logging
+from absl import logging
 import os
 
 import tensorflow_datasets as tfds
@@ -53,6 +53,7 @@ def run(args):
     # Plot
     plots.plot_hist_sims(args, strategy, model, ds_val)
     if args.tsne:
+        plots.plot_instance_tsne(args, strategy, model, ds_val)
         plots.plot_tsne(args, strategy, model, ds_val)
 
     # Upload Tensorboard data
