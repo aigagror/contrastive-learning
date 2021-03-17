@@ -53,16 +53,13 @@ def _log_sim_moments(sim_dict, proj_sim_dict):
     logging.info("saved similarity moments to 'out/'")
 
 
-def _scatter_tsne_label(filepath, feats_embed, all_labels, title=None, legend=False):
+def _scatter_tsne_label(feats_embed, all_labels, title=None):
     plt.figure()
     plt.title(title)
     classes = np.unique(all_labels)
     for c in classes:
         class_feats_embed = feats_embed[all_labels == c]
         plt.scatter(class_feats_embed[:, 0], class_feats_embed[:, 1], label=c, alpha=0.2)
-    if legend:
-        plt.legend()
-    plt.savefig(filepath)
     return classes
 
 
@@ -130,11 +127,11 @@ def plot_tsne(args, strategy, model, ds_val):
     feats_embed = manifold.TSNE().fit_transform(feats)
     proj_embed = manifold.TSNE().fit_transform(proj_feats)
 
-    _scatter_tsne_label(os.path.join('out/', 'tsne.pdf'), feats_embed, np_labels,
-                        title='TSNE features')
+    _scatter_tsne_label(feats_embed, np_labels, title='TSNE features')
+    plt.savefig(os.path.join('out/', 'tsne.pdf'))
 
-    _scatter_tsne_label(os.path.join('out/', 'proj-tsne.pdf'), proj_embed, np_labels,
-                        title='TSNE projected features')
+    _scatter_tsne_label(proj_embed, np_labels, title='TSNE projected features')
+    plt.savefig(os.path.join('out/', 'proj-tsne.pdf'))
 
     logging.info("plotted tsne to 'out/'")
 
@@ -167,10 +164,10 @@ def plot_instance_tsne(args, model, local_ds_val):
 
     all_images = [anchor_image] + augmented_images + class_samples + neg_samples
     all_images = tf.stack(all_images)
-    all_labels = np.array(['anchor']
-                          + ['instance'] * len(augmented_images)
+    all_labels = np.array(['negative'] * len(neg_samples)
                           + ['class'] * len(class_samples)
-                          + ['negative'] * len(neg_samples))
+                          + ['instance'] * len(augmented_images)
+                          + ['anchor'])
 
     # Compute features
     feat_model = tf.keras.Model(model.input[0], model.get_layer(name='feats').output)
@@ -188,10 +185,14 @@ def plot_instance_tsne(args, model, local_ds_val):
     proj_embed = manifold.TSNE().fit_transform(proj_feats)
 
     # Plot
-    _scatter_tsne_label(os.path.join('out/', 'inst-tsne.pdf'), feats_embed, all_labels,
-                        title='Instance TSNE features', legend=True)
+    _scatter_tsne_label(feats_embed[1:], all_labels[1:], title='Instance TSNE features')
+    plt.scatter(feats_embed[0, 0], feats_embed[0, 1], label=all_labels[0])
+    plt.legend()
+    plt.savefig(os.path.join('out/', 'inst-tsne.pdf'))
 
-    _scatter_tsne_label(os.path.join('out/', 'inst-proj-tsne.pdf'), proj_embed, all_labels,
-                        title='Instance TSNE projected features', legend=True)
+    _scatter_tsne_label(proj_embed[1:], all_labels[1:], title='Instance TSNE projected features')
+    plt.scatter(proj_embed[0, 0], proj_embed[0, 1], label=all_labels[0])
+    plt.legend()
+    plt.savefig(os.path.join('out/', 'inst-proj-tsne.pdf'))
 
     logging.info("plotted instance tsne to 'out/'")
