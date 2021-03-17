@@ -185,13 +185,13 @@ def plot_instance_tsne(args, model, local_ds_val):
     proj_embed = manifold.TSNE().fit_transform(proj_feats)
 
     # Plot
-    _scatter_tsne_label(feats_embed[1:], all_labels[1:], title='Instance TSNE features')
-    plt.scatter(feats_embed[0, 0], feats_embed[0, 1], label=all_labels[0])
+    _scatter_tsne_label(feats_embed[:-1], all_labels[:-1], title='Instance TSNE features')
+    plt.scatter(feats_embed[-1, 0], feats_embed[-1, 1], label=all_labels[-1])
     plt.legend()
     plt.savefig(os.path.join('out/', 'inst-tsne.pdf'))
 
-    _scatter_tsne_label(proj_embed[1:], all_labels[1:], title='Instance TSNE projected features')
-    plt.scatter(proj_embed[0, 0], proj_embed[0, 1], label=all_labels[0])
+    _scatter_tsne_label(proj_embed[:-1], all_labels[:-1], title='Instance TSNE projected features')
+    plt.scatter(proj_embed[-1, 0], proj_embed[-1, 1], label=all_labels[-1])
     plt.legend()
     plt.savefig(os.path.join('out/', 'inst-proj-tsne.pdf'))
 
