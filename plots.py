@@ -72,6 +72,13 @@ def _extract_feats_and_labels(args, strategy, model, ds_val):
         feat_model = tf.keras.Model(model.input, outputs)
     np_labels = _get_np_labels(args, strategy, ds_val)
     feats, feats2, proj_feats, proj_feats2 = feat_model.predict(ds_val, steps=args.val_steps)
+
+    # Cast in case of bfloat16
+    feats = tf.cast(feats, tf.float32)
+    feats2 = tf.cast(feats2, tf.float32)
+    proj_feats = tf.cast(proj_feats, tf.float32)
+    proj_feats2 = tf.cast(proj_feats2, tf.float32)
+
     return np_labels, feats, feats2, proj_feats, proj_feats2
 
 
