@@ -179,6 +179,10 @@ def plot_instance_tsne(args, model, local_ds_val):
     feats = feat_model(all_images)
     proj_feats = proj_feat_model(all_images)
 
+    # Cast in case of bfloat16
+    feats = tf.cast(feats, tf.float32)
+    proj_feats = tf.cast(proj_feats, tf.float32)
+
     # Compute TSNE
     feats_embed = manifold.TSNE().fit_transform(feats)
     proj_embed = manifold.TSNE().fit_transform(proj_feats)
