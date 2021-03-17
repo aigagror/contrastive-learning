@@ -1,5 +1,6 @@
 import os
 
+import tensorflow as tf
 import tensorflow_datasets as tfds
 from absl import logging
 from tensorflow import keras
@@ -8,7 +9,7 @@ import models
 import plots
 import training
 import utils
-from data import load_distributed_datasets
+from data import load_distributed_datasets, get_val_split_name
 from training import train
 
 
@@ -19,7 +20,10 @@ def run(args):
     # Data
     _, ds_info = tfds.load(args.data_id, try_gcs=True, data_dir='gs://aigagror/datasets', with_info=True)
     train_augment_config, val_augment_config = utils.load_augment_configs(args)
-    ds_train, ds_val = load_distributed_datasets(args, ds_info, strategy, train_augment_config, val_augment_config)
+    val_split_name = get_val_split_name(ds_info)
+
+    ds_train = load_distributed_datasets(args, strategy, ds_info, 'train', train_augment_config)
+    ds_val = load_distributed_datasets(args, strategy, ds_info, val_split_name, val_augment_config)
 
     # Set training and validation steps
     utils.set_epoch_steps(args, ds_info)
@@ -51,9 +55,11 @@ def run(args):
     train(args, model, ds_train, ds_val)
 
     # Plot
+    local_strategy = tf.distribute.get_strategy()
+    local_ds_val = load_distributed_datasets(args, local_strategy, ds_info, val_split_name, val_augment_config)
     plots.plot_hist_sims(args, strategy, model, ds_val)
     if args.tsne:
-        plots.plot_instance_tsne(args, strategy, model, ds_val)
+        plots.plot_instance_tsne(args, model, local_ds_val)
         plots.plot_tsne(args, strategy, model, ds_val)
 
     # Upload Tensorboard data

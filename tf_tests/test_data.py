@@ -19,7 +19,7 @@ class TestData(unittest.TestCase):
 
         _, ds_info = tfds.load(args.data_id, try_gcs=True, data_dir='gs://aigagror/datasets', with_info=True)
         train_augment_config, val_augment_config = utils.load_augment_configs(args)
-        ds_train, ds_val = data.load_distributed_datasets(args, ds_info, strategy, train_augment_config,
+        ds_train, ds_val = data.load_distributed_datasets(args, strategy, ds_info, train_augment_config,
                                                           val_augment_config)
 
         ds_train, ds_val = ds_train.map(lambda x, y: {**x, **y}), ds_val.map(lambda x, y: {**x, **y})

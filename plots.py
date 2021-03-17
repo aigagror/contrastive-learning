@@ -174,11 +174,11 @@ def plot_tsne(args, strategy, model, ds_val):
     logging.info("plotted tsne to 'out/'")
 
 
-def plot_instance_tsne(args, strategy, model, ds_val):
+def plot_instance_tsne(args, model, local_ds_val):
     logging.info('plotting instance tsne of features')
 
     # Anchor image
-    ds_anchor = ds_val.unbatch().shuffle(10).take(1)
+    ds_anchor = local_ds_val.unbatch().shuffle(10).take(1)
     images, targets = next(iter(ds_anchor))
     anchor_image = images['image']
     anchor_class = targets['label']
@@ -195,8 +195,8 @@ def plot_instance_tsne(args, strategy, model, ds_val):
         augmented_images.append(augment_fn(anchor_image))
 
     # Class and negatives
-    ds_class = ds_val.unbatch().filter(lambda x, y: y['label'] == anchor_class)
-    ds_neg = ds_val.unbatch().filter(lambda x, y: y['label'] != anchor_class)
+    ds_class = local_ds_val.unbatch().filter(lambda x, y: y['label'] == anchor_class)
+    ds_neg = local_ds_val.unbatch().filter(lambda x, y: y['label'] != anchor_class)
 
     class_samples = list(ds_class.take(n_samples).map(lambda x, y: x['image']).as_numpy_iterator())
     neg_samples = list(ds_neg.take(n_samples).map(lambda x, y: x['image']).as_numpy_iterator())

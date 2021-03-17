@@ -60,13 +60,9 @@ def source_dataset(input_ctx, ds_info, data_id, split, cache, shuffle, repeat, a
     return ds
 
 
-def load_distributed_datasets(args, ds_info, strategy, train_augment_config, val_augment_config):
-    ds_train_fn = partial(source_dataset, ds_info=ds_info, data_id=args.data_id, split='train', cache=args.cache,
-                          shuffle=True, repeat=True, augment_config=train_augment_config, global_bsz=args.bsz)
-    val_split_name = get_val_split_name(ds_info)
-    ds_val_fn = partial(source_dataset, ds_info=ds_info, data_id=args.data_id, split=val_split_name, cache=False,
-                        shuffle=False, repeat=False, augment_config=val_augment_config, global_bsz=args.bsz)
+def load_distributed_datasets(args, strategy, ds_info, split, train_augment_config):
+    ds_fn = partial(source_dataset, ds_info=ds_info, data_id=args.data_id, split=split, cache=args.cache,
+                    shuffle=True, repeat=True, augment_config=train_augment_config, global_bsz=args.bsz)
 
-    ds_train = strategy.distribute_datasets_from_function(ds_train_fn)
-    ds_val = strategy.distribute_datasets_from_function(ds_val_fn)
-    return ds_train, ds_val
+    ds = strategy.distribute_datasets_from_function(ds_fn)
+    return ds
