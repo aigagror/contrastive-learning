@@ -88,14 +88,12 @@ def _get_np_labels(args, strategy, ds):
 
 def _plot_hist_sims_helper(sim_dict, proj_sim_dict):
     plt.figure()
-    plt.title('similarities')
     for key in ['neg', 'class', 'inst']:
         plt.hist(sim_dict[key], label=key, weights=np.ones_like(sim_dict[key]) / len(sim_dict[key]), alpha=0.5)
     plt.legend()
     plt.savefig(os.path.join('out/', 'sims.pdf'))
 
     plt.figure()
-    plt.title('projected similarities')
     for key in ['neg', 'class', 'inst']:
         plt.hist(proj_sim_dict[key], label=key, weights=np.ones_like(proj_sim_dict[key]) / len(proj_sim_dict[key]),
                  alpha=0.5)
